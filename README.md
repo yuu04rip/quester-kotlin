@@ -5,6 +5,28 @@
 
 L’idea principale è contrastare la procrastinazione attraverso un sistema di missioni, progressi e ricompense: completare i compiti dà soddisfazione immediata e rende più semplice costruire abitudini positive.
 
+## MVP (prima release)
+Per la prima versione funzionante del progetto abbiamo definito un **MVP (Minimum Viable Product)**, cioè un set ridotto di funzionalità essenziali da implementare e testare prima delle estensioni avanzate.
+
+### Casi d’uso inclusi nel MVP
+- **UC5**: Creare evento/missione  
+- **UC6**: Visualizzare dati per evento  
+- **UC7**: Confermare la todolist di un evento  
+- **UC9**: Tracciamento XP e aggiornamento livello base  
+
+### Obiettivo del MVP
+Consentire un flusso completo minimo:
+1. l’utente crea una missione,
+2. ne visualizza i dettagli,
+3. completa i sotto-task,
+4. ottiene aggiornamento dei progressi (XP/livello).
+
+### Fuori dal MVP (iterazioni successive)
+- UC8: Riscatto missioni completate  
+- UC10–UC11: Level-up avanzato e valuta in-game completa  
+- UC12–UC14: Notifiche e negozio  
+
+> Nota: questo perimetro iniziale ci permette di sviluppare una base stabile, coerente con l’architettura MVVM e facilmente testabile.
 ## Obiettivo
 L’obiettivo del progetto è sviluppare un’app Android in **Kotlin** che unisca:
 - organizzazione personale
