@@ -5,26 +5,6 @@
 
 L’idea principale è contrastare la procrastinazione attraverso un sistema di missioni, progressi e ricompense: completare i compiti dà soddisfazione immediata e rende più semplice costruire abitudini positive.
 
-## MVP (prima release)
-Per la prima versione funzionante del progetto abbiamo definito un **MVP (Minimum Viable Product)**, cioè un set ridotto di funzionalità essenziali da implementare e testare prima delle estensioni avanzate.
-
-### Casi d’uso inclusi nel MVP
-- **UC5**: Creare evento/missione  
-- **UC6**: Visualizzare dati per evento  
-- **UC7**: Confermare la todolist di un evento  
-- **UC9**: Tracciamento XP e aggiornamento livello base  
-
-### Obiettivo del MVP
-Consentire un flusso completo minimo:
-1. l’utente crea una missione,
-2. ne visualizza i dettagli,
-3. completa i sotto-task,
-4. ottiene aggiornamento dei progressi (XP/livello).
-
-### Fuori dal MVP (iterazioni successive)
-- UC8: Riscatto missioni completate  
-- UC10–UC11: Level-up avanzato e valuta in-game completa  
-- UC12–UC14: Notifiche e negozio  
 
 > Nota: questo perimetro iniziale ci permette di sviluppare una base stabile, coerente con l’architettura MVVM e facilmente testabile.
 ## Obiettivo
@@ -50,10 +30,65 @@ Le funzionalità che vogliamo implementare sono:
 
 > Nota: il progetto è in fase iniziale, quindi alcune funzionalità potranno essere modificate o semplificate durante lo sviluppo.
 
-## Stato del progetto
-🚧 **Work in progress**  
-Questa repository contiene la versione iniziale del progetto, attualmente in fase di analisi, progettazione e sviluppo.
+## Stato progetto
 
+### ✅ Backend/Logica completata (MVP)
+- Data layer con Room:
+  - `User`, `Mission`, `SubTask`, `ShopItem`, `OwnedCosmetic`
+- DAO:
+  - `UserDao`, `MissionDao`, `SubTaskDao`, `ShopDao`, `OwnedCosmeticDao`
+- Database:
+  - `AppDatabase` + `DatabaseProvider`
+- Repository:
+  - `UserRepository`, `MissionRepository`, `AuthRepository`
+- Auth:
+  - registrazione/login con hash password PBKDF2
+  - sessione persistente via DataStore (`SessionManager`)
+  - `AuthService` per orchestrazione auth end-to-end
+- Mission orchestration:
+  - creazione missione da form (`createMissionFromForm`)
+  - toggle subtask con auto-completamento missione
+  - reward XP idempotente (no doppio reward)
+- Gamification:
+  - `CurrencyService` (coins su level-up/eventi/redeem)
+- Shop:
+  - `ShopService.purchase` con check saldo/item/owned
+- Reminder:
+  - `ReminderService` con WorkManager (schedule/cancel)
+  - `ReminderWorker` predisposto per notifica locale
+
+### ⏳ Da completare
+- UI Compose definitiva
+- ViewModel completi per tutte le schermate
+- Navigation app (Auth/Home/Profile/Shop/Mission details)
+
+---
+
+## Requisiti tecnici
+- minSdk: 24
+- targetSdk: 34
+- Kotlin: 2.0.21
+- AGP: 8.5.2
+- Room: 2.6.1
+- WorkManager: 2.9.1
+- DataStore Preferences: 1.1.1
+
+---
+
+## Test
+
+### Test strumentali implementati
+- `AppDatabaseTest`
+- `AuthRepositoryTest`
+- `MissionServiceTest`
+- `CurrencyServiceTest`
+- `ShopServiceTest`
+- `ReminderServiceTest`
+
+### Esecuzione test
+```bash
+./gradlew connectedDebugAndroidTest
+```
 ## Contesto accademico
 Progetto realizzato per l’esame di **Programmazione Mobile**.
 

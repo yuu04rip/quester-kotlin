@@ -26,6 +26,9 @@ interface MissionDao {
     @Query("SELECT * FROM missions WHERE id = :missionId LIMIT 1")
     fun getMissionById(missionId: Long): Flow<Mission?>
 
+    @Query("SELECT * FROM missions WHERE id = :missionId LIMIT 1")
+    suspend fun getMissionByIdOnce(missionId: Long): Mission?
+
     @Update
     suspend fun updateMission(mission: Mission)
 

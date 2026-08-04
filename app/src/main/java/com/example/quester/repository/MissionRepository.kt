@@ -5,12 +5,8 @@ import com.example.quester.data.dao.SubTaskDao
 import com.example.quester.data.model.Mission
 import com.example.quester.data.model.SubTask
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
-/**
- * Repository missioni:
- * - isola la UI dai dettagli del database
- * - contiene logica dati legata a missioni e subtask
- */
 class MissionRepository(
     private val missionDao: MissionDao,
     private val subTaskDao: SubTaskDao
@@ -25,9 +21,7 @@ class MissionRepository(
     suspend fun createMission(mission: Mission, subTasks: List<String>) {
         val missionId = missionDao.insertMission(mission)
         if (subTasks.isNotEmpty()) {
-            val items = subTasks.map { text ->
-                SubTask(missionId = missionId, text = text)
-            }
+            val items = subTasks.map { text -> SubTask(missionId = missionId, text = text) }
             subTaskDao.insertSubTasks(items)
         }
     }
@@ -45,4 +39,27 @@ class MissionRepository(
         val total = subTaskDao.countAllSubTasks(missionId)
         return total > 0 && done == total
     }
+
+    // --- AGGIUNTE ---
+
+    suspend fun getMissionByIdOnce(missionId: Long): Mission? {
+        return missionDao.getMissionById(missionId).first()
+    }
+
+    suspend fun markMissionCompleted(missionId: Long) {
+        val mission = getMissionByIdOnce(missionId) ?: return
+        if (!mission.completed) {
+            missionDao.updateMission(mission.copy(completed = true))
+        }
+    }
+    suspend fun markMissionXpAwarded(missionId: Long) {
+        val m = missionDao.getMissionByIdOnce(missionId) ?: return
+        if (!m.xpAwarded) missionDao.updateMission(m.copy(xpAwarded = true))
+    }
+
+    suspend fun redeemMission(missionId: Long) {
+        val m = missionDao.getMissionByIdOnce(missionId) ?: return
+        if (!m.redeemed) missionDao.updateMission(m.copy(redeemed = true))
+    }
 }
+

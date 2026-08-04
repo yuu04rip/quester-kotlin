@@ -36,7 +36,15 @@ class AppDatabaseTest {
 
     @Test
     fun user_insert_and_read() = runBlocking {
-        val userId = db.userDao().insertUser(User(username = "tester"))
+        val userId = db.userDao().insertUser(
+            User(
+                username = "tester",
+                passwordHash = "test_hash",
+                xpTotale = 0,
+                livello = 1,
+                coins = 0
+            )
+        )
         val user = db.userDao().getUser()
 
         assertTrue(userId > 0)
