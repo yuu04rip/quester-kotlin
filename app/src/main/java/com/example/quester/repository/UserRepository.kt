@@ -4,6 +4,7 @@ import com.example.quester.data.dao.OwnedCosmeticDao
 import com.example.quester.data.dao.UserDao
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
+import kotlinx.coroutines.flow.Flow
 
 class UserRepository(
     private val userDao: UserDao,
@@ -14,6 +15,8 @@ class UserRepository(
     }
 
     suspend fun getUser(): User? = userDao.getUser()
+
+    fun getUserFlow(): Flow<User?> = userDao.getUserFlow()
 
     suspend fun createInitialUser(username: String) {
         val existing = userDao.getUser()
@@ -71,6 +74,11 @@ class UserRepository(
         val current = userDao.getUser() ?: return false
         val ownedDao = ownedCosmeticDao ?: return false
         return ownedDao.isOwned(current.id, itemId)
+    }
+
+    fun getOwnedCosmeticsFlow(userId: Long): Flow<List<OwnedCosmetic>> {
+        val ownedDao = ownedCosmeticDao ?: throw IllegalStateException("OwnedCosmeticDao not provided")
+        return ownedDao.getOwnedByUser(userId)
     }
 
     suspend fun getOwnedCosmetics(): List<OwnedCosmetic> {

@@ -45,6 +45,7 @@ class MissionService(
             if (!mission.completed) {
                 missionRepository.markMissionCompleted(missionId)
                 userRepository.addXp(mission.xpReward)
+                currencyService.onMissionRedeemed() // Award coins
             }
         }
     }

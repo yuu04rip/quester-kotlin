@@ -3,6 +3,7 @@ package com.example.quester.data.repository
 import com.example.quester.data.dao.MissionDao
 import com.example.quester.data.dao.SubTaskDao
 import com.example.quester.data.model.Mission
+import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.data.model.SubTask
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -12,6 +13,8 @@ class MissionRepository(
     private val subTaskDao: SubTaskDao
 ) {
     fun getAllMissions(): Flow<List<Mission>> = missionDao.getAllMissions()
+
+    fun getAllMissionsWithSubTasks(): Flow<List<MissionWithSubTasks>> = missionDao.getAllMissionsWithSubTasks()
 
     fun getMissionById(missionId: Long): Flow<Mission?> = missionDao.getMissionById(missionId)
 

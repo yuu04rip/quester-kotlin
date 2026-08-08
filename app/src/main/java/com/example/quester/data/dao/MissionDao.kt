@@ -6,7 +6,9 @@ import androidx.room.Delete
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Transaction
 import com.example.quester.data.model.Mission
+import com.example.quester.data.model.MissionWithSubTasks
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -22,6 +24,10 @@ interface MissionDao {
 
     @Query("SELECT * FROM missions ORDER BY id DESC")
     fun getAllMissions(): Flow<List<Mission>>
+
+    @Transaction
+    @Query("SELECT * FROM missions ORDER BY id DESC")
+    fun getAllMissionsWithSubTasks(): Flow<List<MissionWithSubTasks>>
 
     @Query("SELECT * FROM missions WHERE id = :missionId LIMIT 1")
     fun getMissionById(missionId: Long): Flow<Mission?>
