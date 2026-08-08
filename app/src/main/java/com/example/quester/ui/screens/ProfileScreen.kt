@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.quester.R
 import com.example.quester.data.repository.UserRepository
 import kotlinx.coroutines.flow.flowOf
 
@@ -78,7 +79,6 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Numero livello con font sicuro
                 Text(
                     text = "Livello ${u.livello}",
                     style = MaterialTheme.typography.titleMedium,
@@ -98,11 +98,9 @@ fun ProfileScreen(
                         label = "XP Totali",
                         color = Color(0xFFFFB300)
                     )
-                    StatItem(
-                        icon = Icons.Default.ShoppingCart,
+                    CoinStatItem(
                         value = "${u.coins}",
-                        label = "Monete",
-                        color = Color(0xFF4CAF50)
+                        label = "Monete"
                     )
                 }
 
@@ -164,12 +162,50 @@ fun ProfileScreen(
     }
 }
 
+// StatItem originale per le icone vettoriali (ImageVector)
 @Composable
-fun StatItem(icon: ImageVector, value: String, label: String, color: Color) {
+fun StatItem(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    color: Color
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(32.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(32.dp)
+        )
 
-        // Numero con font sicuro (fix principale)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = FontFamily.SansSerif
+        )
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun CoinStatItem(
+    value: String,
+    label: String
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            painter = painterResource(id = R.drawable.coin),
+            contentDescription = null,
+            tint = Color.Unspecified,  // 🔥 IMPORTANTE: mantiene i colori originali!
+            modifier = Modifier.size(40.dp)
+        )
+
         Text(
             text = value,
             style = MaterialTheme.typography.titleLarge,
@@ -199,7 +235,6 @@ fun CosmeticItem(itemId: String) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // itemId spesso contiene numeri -> font sicuro
             Text(
                 text = itemId,
                 style = MaterialTheme.typography.labelSmall,
@@ -210,4 +245,10 @@ fun CosmeticItem(itemId: String) {
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileScreenPreview() {
+    // Preview
 }

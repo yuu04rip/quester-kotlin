@@ -8,15 +8,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.quester.R
 import com.example.quester.data.dao.ShopDao
 import com.example.quester.data.model.ShopItem
 import com.example.quester.data.repository.UserRepository
@@ -64,7 +65,7 @@ fun ShopScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Mostra le monete dell'utente nel negozio
+                    // Mostra le monete dell'utente nel negozio con icona personalizzata
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer,
                         shape = RoundedCornerShape(16.dp)
@@ -73,12 +74,16 @@ fun ShopScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
+                            // QUI usi la tua icona PNG personalizzata
                             Icon(
-                                imageVector = Icons.Default.Star,
+                                painter = painterResource(id = R.drawable.coin),
                                 contentDescription = null,
-                                tint = Color(0xFFFFB300),
+                                tint = Color.Unspecified,  // Mantiene i colori originali del PNG
                                 modifier = Modifier.size(20.dp)
                             )
+                            // Oppure se vuoi colorarla diversamente:
+                            // tint = Color(0xFFFFB300)
+
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${user?.coins ?: 0}",
@@ -164,10 +169,11 @@ fun ProductCard(item: ShopItem, onBuyClick: () -> Unit) {
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // QUI usi la tua icona PNG anche per il prezzo
                 Icon(
-                    imageVector = Icons.Default.Star,
+                    painter = painterResource(id = R.drawable.coin),
                     contentDescription = null,
-                    tint = Color(0xFFFFB300),
+                    tint = Color.Unspecified,  // Mantiene i colori originali
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -191,11 +197,3 @@ fun ProductCard(item: ShopItem, onBuyClick: () -> Unit) {
         }
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun ShopScreenPreview() {
-    // Requires services
-}
-*/
