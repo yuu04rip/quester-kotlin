@@ -31,7 +31,7 @@ import com.example.quester.ui.components.MagicBurstButton
 import com.example.quester.ui.theme.QuesterTheme
 import kotlinx.coroutines.launch
 
-// Theme Colors
+// Colori Tema Fantasy
 private val FantasyBackground = Color(0xFF0D0B14)
 private val FantasySurface = Color(0xFF171321)
 private val FantasySurfaceLight = Color(0xFF221B2E)

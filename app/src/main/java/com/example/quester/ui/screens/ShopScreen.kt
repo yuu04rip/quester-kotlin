@@ -21,21 +21,30 @@ import com.example.quester.R
 import com.example.quester.data.dao.ShopDao
 import com.example.quester.data.model.ShopItem
 import com.example.quester.data.repository.UserRepository
+import com.example.quester.data.session.SessionManager
 import com.example.quester.domain.service.PurchaseResult
 import com.example.quester.domain.service.ShopService
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 @Composable
 fun ShopScreen(
     shopService: ShopService,
     shopDao: ShopDao,
-    userRepository: UserRepository
+    userRepository: UserRepository,
+    sessionManager: SessionManager // 👈 Passato SessionManager
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // 1. Legge l'ID dell'utente attualmente loggato
+    val loggedUserId by sessionManager.loggedUserId.collectAsState(initial = null)
+
+    // 2. Recupera i dati dell'utente specifico dalla repository
+    val user by (loggedUserId?.let { userRepository.getUserByIdFlow(it) } ?: flowOf(null))
+        .collectAsState(initial = null)
+
     val shopItems by shopDao.getAllItems().collectAsState(initial = emptyList())
-    val user by userRepository.getUserFlow().collectAsState(initial = null)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -65,7 +74,7 @@ fun ShopScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Mostra le monete dell'utente nel negozio con icona personalizzata
+                    // Mostra le monete dell'utente loggato
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer,
                         shape = RoundedCornerShape(16.dp)
@@ -74,15 +83,12 @@ fun ShopScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            // QUI usi la tua icona PNG personalizzata
                             Icon(
                                 painter = painterResource(id = R.drawable.coin),
                                 contentDescription = null,
-                                tint = Color.Unspecified,  // Mantiene i colori originali del PNG
+                                tint = Color.Unspecified,
                                 modifier = Modifier.size(20.dp)
                             )
-                            // Oppure se vuoi colorarla diversamente:
-                            // tint = Color(0xFFFFB300)
 
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
@@ -129,7 +135,6 @@ fun ShopScreen(
     }
 }
 
-// Componente per la singola scheda del prodotto
 @Composable
 fun ProductCard(item: ShopItem, onBuyClick: () -> Unit) {
     Card(
@@ -169,11 +174,10 @@ fun ProductCard(item: ShopItem, onBuyClick: () -> Unit) {
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // QUI usi la tua icona PNG anche per il prezzo
                 Icon(
                     painter = painterResource(id = R.drawable.coin),
                     contentDescription = null,
-                    tint = Color.Unspecified,  // Mantiene i colori originali
+                    tint = Color.Unspecified,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))

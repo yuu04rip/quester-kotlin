@@ -12,35 +12,43 @@ class AuthService(
     val isAuthenticated: Flow<Boolean> = sessionManager.isLoggedIn
 
     suspend fun register(username: String, email: String?, password: String): AuthResult {
-        val validationError = validateForRegister(username, email, password)
+        val cleanUsername = username.trim().lowercase()
+        val cleanEmail = email?.trim()?.lowercase()
+
+        val validationError = validateForRegister(cleanUsername, cleanEmail, password)
         if (validationError != null) return AuthResult.Error(validationError)
 
-        val res = authRepository.register(username, email, password)
-        if (res is AuthResult.Success) sessionManager.createSession(res.user.id)
+        val res = authRepository.register(cleanUsername, cleanEmail, password)
+        if (res is AuthResult.Success) {
+            sessionManager.clearSession()
+            sessionManager.createSession(res.user.id)
+        }
         return res
     }
 
     suspend fun login(identity: String, password: String): AuthResult {
-        if (identity.isBlank()) return AuthResult.Error("Username o email obbligatorio")
+        val cleanIdentity = identity.trim().lowercase()
+
+        if (cleanIdentity.isBlank()) return AuthResult.Error("Username o email obbligatorio")
         if (password.isBlank()) return AuthResult.Error("Password obbligatoria")
 
-        val res = authRepository.login(identity, password)
-        if (res is AuthResult.Success) sessionManager.createSession(res.user.id)
+        val res = authRepository.login(cleanIdentity, password)
+        if (res is AuthResult.Success) {
+            sessionManager.clearSession()
+            sessionManager.createSession(res.user.id)
+        }
         return res
     }
 
     suspend fun logout() = sessionManager.clearSession()
 
     private fun validateForRegister(username: String, email: String?, password: String): String? {
-        val u = username.trim()
-        val e = email?.trim()
+        if (username.isBlank()) return "Username obbligatorio"
+        if (username.length < 3) return "Username troppo corto (minimo 3 caratteri)"
 
-        if (u.isBlank()) return "Username obbligatorio"
-        if (u.length < 3) return "Username troppo corto (minimo 3 caratteri)"
-
-        if (!e.isNullOrBlank()) {
+        if (!email.isNullOrBlank()) {
             val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
-            if (!emailRegex.matches(e)) return "Email non valida"
+            if (!emailRegex.matches(email)) return "Email non valida"
         }
 
         if (password.length < 8) return "Password troppo corta (minimo 8 caratteri)"

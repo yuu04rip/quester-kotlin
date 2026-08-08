@@ -8,29 +8,29 @@ class AuthRepository(
     private val userDao: UserDao
 ) {
     suspend fun register(username: String, email: String?, password: String): AuthResult {
-        val u = username.trim()
-        val e = email?.trim()?.lowercase()?.ifBlank { null }
+        val cleanUsername = username.trim().lowercase()
+        val cleanEmail = email?.trim()?.lowercase()?.ifBlank { null }
 
-        val existingUsername = userDao.getUserByUsername(u)
+        val existingUsername = userDao.getUserByUsername(cleanUsername)
         if (existingUsername != null) return AuthResult.Error("Username già esistente")
 
-        if (e != null) {
-            val existingEmail = userDao.getUserByEmail(e)
+        if (cleanEmail != null) {
+            val existingEmail = userDao.getUserByEmail(cleanEmail)
             if (existingEmail != null) return AuthResult.Error("Email già registrata")
         }
 
         val hash = PasswordHasher.hash(password)
-        val user = User(username = u, email = e, passwordHash = hash)
+        val user = User(username = cleanUsername, email = cleanEmail, passwordHash = hash)
         val id = userDao.insertUser(user)
         if (id == -1L) return AuthResult.Error("Errore creazione utente")
 
-        val created = userDao.getUserByUsername(u) ?: return AuthResult.Error("Errore creazione utente")
+        val created = userDao.getUserByUsername(cleanUsername) ?: return AuthResult.Error("Errore creazione utente")
         return AuthResult.Success(created)
     }
 
     suspend fun login(identity: String, password: String): AuthResult {
-        val i = identity.trim()
-        val user = userDao.getUserByIdentity(i) ?: return AuthResult.Error("Credenziali non valide")
+        val cleanIdentity = identity.trim().lowercase()
+        val user = userDao.getUserByIdentity(cleanIdentity) ?: return AuthResult.Error("Credenziali non valide")
         val ok = PasswordHasher.verify(password, user.passwordHash)
         return if (ok) AuthResult.Success(user) else AuthResult.Error("Credenziali non valide")
     }

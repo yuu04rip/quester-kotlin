@@ -2,28 +2,37 @@ package com.example.quester.domain.service
 
 import com.example.quester.data.model.User
 import com.example.quester.data.repository.UserRepository
+import com.example.quester.data.session.SessionManager
+import kotlinx.coroutines.flow.first
 
 class AccountService(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
 ) {
-    suspend fun ensureUserExists(defaultUsername: String = "player"): User {
-        val existing = userRepository.getUser()
-        if (existing != null) return existing
-        userRepository.createInitialUser(defaultUsername)
-        return requireNotNull(userRepository.getUser())
+    /**
+     * Recupera l'utente attualmente attivo dalla sessione.
+     */
+    suspend fun getCurrentUser(): User? {
+        val userId = sessionManager.loggedUserId.first() ?: return null
+        return userRepository.getUserById(userId)
     }
 
-    suspend fun loginOrLoadUser(): User {
-        return ensureUserExists()
-    }
-
+    /**
+     * Aggiorna lo username dell'utente loggato.
+     */
     suspend fun updateUsername(newUsername: String) {
+        val userId = sessionManager.loggedUserId.first()
+            ?: throw IllegalStateException("Nessun utente autenticato")
+
         require(newUsername.isNotBlank()) { "Username vuoto" }
-        userRepository.updateUsername(newUsername.trim())
+        userRepository.updateUsername(userId, newUsername.trim())
     }
 
+    /**
+     * Elimina tutti i dati utente e svuota la sessione.
+     */
     suspend fun deleteAccountAndData() {
-        // Se hai dao/repo multipli, fai cleanup orchestrato qui
         userRepository.deleteUserAndProgress()
+        sessionManager.clearSession()
     }
 }

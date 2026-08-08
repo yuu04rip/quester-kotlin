@@ -7,6 +7,7 @@ import com.example.quester.data.database.AppDatabase
 import com.example.quester.data.model.ShopItem
 import com.example.quester.data.model.User
 import com.example.quester.data.repository.UserRepository
+import com.example.quester.data.session.SessionManager
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -20,7 +21,9 @@ class ShopServiceTest {
 
     private lateinit var db: AppDatabase
     private lateinit var userRepository: UserRepository
+    private lateinit var sessionManager: SessionManager
     private lateinit var shopService: ShopService
+    private var testUserId: Long = 0L
 
     @Before
     fun setup() = runBlocking {
@@ -29,16 +32,21 @@ class ShopServiceTest {
             .allowMainThreadQueries()
             .build()
 
-        userRepository = UserRepository(db.userDao())
+        sessionManager = SessionManager(ctx)
+        userRepository = UserRepository(db.userDao(), db.ownedCosmeticDao())
         shopService = ShopService(
             userRepository = userRepository,
             shopDao = db.shopDao(),
-            ownedDao = db.ownedCosmeticDao()
+            ownedDao = db.ownedCosmeticDao(),
+            sessionManager = sessionManager
         )
 
-        db.userDao().insertUser(
+        testUserId = db.userDao().insertUser(
             User(username = "buyer", passwordHash = "hash", xpTotale = 0, livello = 1, coins = 200)
         )
+
+        sessionManager.createSession(testUserId)
+
         db.shopDao().upsertItems(
             listOf(
                 ShopItem(id = "hat_1", name = "Cool Hat", price = 120),
@@ -48,7 +56,8 @@ class ShopServiceTest {
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
+        sessionManager.clearSession()
         db.close()
     }
 
@@ -57,7 +66,7 @@ class ShopServiceTest {
         val result = shopService.purchase("hat_1")
         assertTrue(result is PurchaseResult.Success)
 
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(80, user.coins)
 
         val owned = db.ownedCosmeticDao().isOwned(user.id, "hat_1")
@@ -69,7 +78,7 @@ class ShopServiceTest {
         val result = shopService.purchase("skin_1")
         assertTrue(result is PurchaseResult.InsufficientFunds)
 
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(200, user.coins)
     }
 
@@ -87,7 +96,7 @@ class ShopServiceTest {
         val second = shopService.purchase("hat_1")
         assertTrue(second is PurchaseResult.AlreadyOwned)
 
-        val user = db.userDao().getUser()!!
-        assertEquals(80, user.coins) // non scala una seconda volta
+        val user = db.userDao().getUserById(testUserId)!!
+        assertEquals(80, user.coins) // Non scala una seconda volta
     }
 }

@@ -20,13 +20,24 @@ import org.junit.runner.RunWith
 class AppDatabaseTest {
 
     private lateinit var db: AppDatabase
+    private var testUserId: Long = 0L
 
     @Before
-    fun createDb() {
+    fun createDb() = runBlocking {
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
+
+        testUserId = db.userDao().insertUser(
+            User(
+                username = "tester",
+                passwordHash = "test_hash",
+                xpTotale = 0,
+                livello = 1,
+                coins = 0
+            )
+        )
     }
 
     @After
@@ -36,18 +47,9 @@ class AppDatabaseTest {
 
     @Test
     fun user_insert_and_read() = runBlocking {
-        val userId = db.userDao().insertUser(
-            User(
-                username = "tester",
-                passwordHash = "test_hash",
-                xpTotale = 0,
-                livello = 1,
-                coins = 0
-            )
-        )
-        val user = db.userDao().getUser()
+        val user = db.userDao().getUserById(testUserId)
 
-        assertTrue(userId > 0)
+        assertTrue(testUserId > 0)
         assertNotNull(user)
         assertEquals("tester", user?.username)
     }
@@ -55,7 +57,7 @@ class AppDatabaseTest {
     @Test
     fun mission_with_subtasks_flow() = runBlocking {
         val missionId = db.missionDao().insertMission(
-            Mission(title = "M1", type = "DAILY")
+            Mission(userId = testUserId, title = "M1", type = "DAILY")
         )
 
         db.subTaskDao().insertSubTasks(
@@ -65,7 +67,7 @@ class AppDatabaseTest {
             )
         )
 
-        val missions = db.missionDao().getAllMissions().first()
+        val missions = db.missionDao().getAllMissionsForUser(testUserId).first()
         val subtasks = db.subTaskDao().getSubTasksByMissionId(missionId).first()
 
         assertEquals(1, missions.size)
@@ -82,7 +84,7 @@ class AppDatabaseTest {
     @Test
     fun delete_mission_cascades_subtasks() = runBlocking {
         val missionId = db.missionDao().insertMission(
-            Mission(title = "Missione con cascade", type = "DAILY")
+            Mission(userId = testUserId, title = "Missione con cascade", type = "DAILY")
         )
 
         db.subTaskDao().insertSubTasks(
@@ -95,7 +97,7 @@ class AppDatabaseTest {
         val beforeDelete = db.subTaskDao().getSubTasksByMissionId(missionId).first()
         assertEquals(2, beforeDelete.size)
 
-        val mission = db.missionDao().getMissionById(missionId).first()
+        val mission = db.missionDao().getMissionByIdOnce(missionId)
         requireNotNull(mission)
         db.missionDao().deleteMission(mission)
 

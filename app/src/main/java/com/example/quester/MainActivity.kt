@@ -4,27 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.example.quester.data.database.DatabaseProvider
+import com.example.quester.data.model.ShopItem
 import com.example.quester.data.repository.AuthRepository
 import com.example.quester.data.repository.MissionRepository
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
-import com.example.quester.domain.service.AuthService
-import com.example.quester.domain.service.CurrencyService
-import com.example.quester.domain.service.MissionService
-import com.example.quester.domain.service.ShopService
-import com.example.quester.data.model.ShopItem
-import androidx.compose.runtime.LaunchedEffect
+import com.example.quester.domain.service.*
 import com.example.quester.ui.screens.AuthScreen
 import com.example.quester.ui.screens.NavBar
 import com.example.quester.ui.theme.QuesterTheme
@@ -42,9 +32,32 @@ class MainActivity : ComponentActivity() {
 
             val userRepository = remember { UserRepository(database.userDao(), database.ownedCosmeticDao()) }
             val missionRepository = remember { MissionRepository(database.missionDao(), database.subTaskDao()) }
-            val currencyService = remember { CurrencyService(userRepository) }
-            val missionService = remember { MissionService(missionRepository, userRepository, currencyService) }
-            val shopService = remember { ShopService(userRepository, database.shopDao(), database.ownedCosmeticDao()) }
+
+            val currencyService = remember { CurrencyService(userRepository, sessionManager) }
+
+            // NUOVO: Crea il servizio di notifiche di sicurezza
+            val securityNotificationService = remember { SecurityNotificationService(context) }
+
+            // MODIFICATO: Passa anche securityNotificationService
+            val missionService = remember {
+                MissionService(
+                    missionRepository = missionRepository,
+                    userRepository = userRepository,
+                    currencyService = currencyService,
+                    sessionManager = sessionManager,
+                    securityNotificationService = securityNotificationService
+                )
+            }
+
+            // CORRETTO: ShopService con il parametro corretto 'ownedDao'
+            val shopService = remember {
+                ShopService(
+                    userRepository = userRepository,
+                    shopDao = database.shopDao(),
+                    ownedDao = database.ownedCosmeticDao(),  // Cambiato da ownedCosmeticDao a ownedDao
+                    sessionManager = sessionManager
+                )
+            }
 
             // Pre-populate shop items for demo
             LaunchedEffect(Unit) {
@@ -69,7 +82,8 @@ class MainActivity : ComponentActivity() {
                         userRepository = userRepository,
                         authService = authService,
                         shopService = shopService,
-                        shopDao = database.shopDao()
+                        shopDao = database.shopDao(),
+                        sessionManager = sessionManager
                     )
                 } else {
                     AuthScreen(
@@ -81,11 +95,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-/*@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    QuesterTheme {
-        NavBar()
-    }
-}*/

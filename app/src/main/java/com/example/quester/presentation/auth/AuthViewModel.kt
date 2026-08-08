@@ -6,6 +6,7 @@ import com.example.quester.data.repository.AuthResult
 import com.example.quester.domain.service.AuthService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
@@ -21,24 +22,40 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
+    init {
+        // Ascolta lo stato reale della sessione DataStore all'avvio dell'app
+        viewModelScope.launch {
+            authService.isAuthenticated.collect { loggedIn ->
+                _uiState.update { it.copy(isAuthenticated = loggedIn) }
+            }
+        }
+    }
+
     fun register(username: String, email: String?, password: String) = viewModelScope.launch {
-        _uiState.value = _uiState.value.copy(loading = true, error = null)
+        _uiState.update { it.copy(loading = true, error = null) }
         when (val res = authService.register(username, email, password)) {
-            is AuthResult.Success -> _uiState.value = AuthUiState(isAuthenticated = true)
-            is AuthResult.Error -> _uiState.value = AuthUiState(error = res.message)
+            is AuthResult.Success -> {
+                _uiState.update { it.copy(loading = false, error = null) }
+            }
+            is AuthResult.Error -> {
+                _uiState.update { it.copy(loading = false, error = res.message) }
+            }
         }
     }
 
     fun login(identity: String, password: String) = viewModelScope.launch {
-        _uiState.value = _uiState.value.copy(loading = true, error = null)
+        _uiState.update { it.copy(loading = true, error = null) }
         when (val res = authService.login(identity, password)) {
-            is AuthResult.Success -> _uiState.value = AuthUiState(isAuthenticated = true)
-            is AuthResult.Error -> _uiState.value = AuthUiState(error = res.message)
+            is AuthResult.Success -> {
+                _uiState.update { it.copy(loading = false, error = null) }
+            }
+            is AuthResult.Error -> {
+                _uiState.update { it.copy(loading = false, error = res.message) }
+            }
         }
     }
 
     fun logout() = viewModelScope.launch {
         authService.logout()
-        _uiState.value = AuthUiState(isAuthenticated = false)
     }
 }

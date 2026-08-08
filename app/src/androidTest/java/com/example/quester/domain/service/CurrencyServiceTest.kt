@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.quester.data.database.AppDatabase
 import com.example.quester.data.model.User
 import com.example.quester.data.repository.UserRepository
+import com.example.quester.data.session.SessionManager
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,7 +19,9 @@ class CurrencyServiceTest {
 
     private lateinit var db: AppDatabase
     private lateinit var userRepository: UserRepository
+    private lateinit var sessionManager: SessionManager
     private lateinit var currencyService: CurrencyService
+    private var testUserId: Long = 0L
 
     @Before
     fun setup() {
@@ -28,45 +31,48 @@ class CurrencyServiceTest {
                 .allowMainThreadQueries()
                 .build()
 
-            userRepository = UserRepository(db.userDao())
-            currencyService = CurrencyService(userRepository)
+            sessionManager = SessionManager(ctx)
+            userRepository = UserRepository(db.userDao(), db.ownedCosmeticDao())
+            currencyService = CurrencyService(userRepository, sessionManager)
 
-            db.userDao().insertUser(
+            testUserId = db.userDao().insertUser(
                 User(username = "tester", passwordHash = "hash", xpTotale = 0, livello = 1, coins = 0)
             )
+            sessionManager.createSession(testUserId)
         }
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
+        sessionManager.clearSession()
         db.close()
     }
 
     @Test
     fun onLevelUp_assigns_expected_coins() = runBlocking {
         currencyService.onLevelUp(beforeLevel = 1, afterLevel = 3) // +2 livelli => 100 coins
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(100, user.coins)
     }
 
     @Test
     fun onLevelUp_no_gain_assigns_zero() = runBlocking {
         currencyService.onLevelUp(beforeLevel = 2, afterLevel = 2)
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(0, user.coins)
     }
 
     @Test
     fun onSpecialEvent_adds_coins() = runBlocking {
         currencyService.onSpecialEvent(35)
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(35, user.coins)
     }
 
     @Test
     fun onMissionRedeemed_adds_fixed_reward() = runBlocking {
         currencyService.onMissionRedeemed()
-        val user = db.userDao().getUser()!!
+        val user = db.userDao().getUserById(testUserId)!!
         assertEquals(20, user.coins)
     }
 }

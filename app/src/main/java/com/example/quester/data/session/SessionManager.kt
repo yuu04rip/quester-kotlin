@@ -29,6 +29,8 @@ class SessionManager(private val context: Context) {
 
     suspend fun createSession(userId: Long) {
         context.sessionDataStore.edit { prefs ->
+            // Puliamo eventuali rimasugli prima di scrivere la nuova sessione
+            prefs.clear()
             prefs[Keys.LOGGED_USER_ID] = userId
             prefs[Keys.IS_LOGGED_IN] = true
         }
@@ -36,8 +38,8 @@ class SessionManager(private val context: Context) {
 
     suspend fun clearSession() {
         context.sessionDataStore.edit { prefs ->
-            prefs.remove(Keys.LOGGED_USER_ID)
-            prefs[Keys.IS_LOGGED_IN] = false
+            // Svuota completamente DataStore
+            prefs.clear()
         }
     }
 }
