@@ -7,16 +7,20 @@ import com.example.quester.domain.security.PasswordHasher
 class AuthRepository(
     private val userDao: UserDao
 ) {
-    suspend fun register(username: String, password: String): AuthResult {
+    suspend fun register(username: String, email: String?, password: String): AuthResult {
         val u = username.trim()
-        if (u.isBlank()) return AuthResult.Error("Username obbligatorio")
-        if (password.length < 6) return AuthResult.Error("Password troppo corta (min 6)")
+        val e = email?.trim()?.lowercase()?.ifBlank { null }
 
-        val existing = userDao.getUserByUsername(u)
-        if (existing != null) return AuthResult.Error("Username già esistente")
+        val existingUsername = userDao.getUserByUsername(u)
+        if (existingUsername != null) return AuthResult.Error("Username già esistente")
+
+        if (e != null) {
+            val existingEmail = userDao.getUserByEmail(e)
+            if (existingEmail != null) return AuthResult.Error("Email già registrata")
+        }
 
         val hash = PasswordHasher.hash(password)
-        val user = User(username = u, passwordHash = hash)
+        val user = User(username = u, email = e, passwordHash = hash)
         val id = userDao.insertUser(user)
         if (id == -1L) return AuthResult.Error("Errore creazione utente")
 
@@ -24,9 +28,9 @@ class AuthRepository(
         return AuthResult.Success(created)
     }
 
-    suspend fun login(username: String, password: String): AuthResult {
-        val u = username.trim()
-        val user = userDao.getUserByUsername(u) ?: return AuthResult.Error("Credenziali non valide")
+    suspend fun login(identity: String, password: String): AuthResult {
+        val i = identity.trim()
+        val user = userDao.getUserByIdentity(i) ?: return AuthResult.Error("Credenziali non valide")
         val ok = PasswordHasher.verify(password, user.passwordHash)
         return if (ok) AuthResult.Success(user) else AuthResult.Error("Credenziali non valide")
     }

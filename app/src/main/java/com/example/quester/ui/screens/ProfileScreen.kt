@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,7 +55,6 @@ fun ProfileScreen(
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 1. Avatar Utente
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -72,21 +72,22 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 2. Info Base: Username e Livello
                 Text(
                     text = u.username,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
+
+                // Numero livello con font sicuro
                 Text(
                     text = "Livello ${u.livello}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = FontFamily.SansSerif
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 3. Statistiche: XP e Monete
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -107,7 +108,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 4. Sezione Cosmetici Posseduti
                 Text(
                     text = "I Tuoi Cosmetici",
                     style = MaterialTheme.typography.titleLarge,
@@ -145,7 +145,6 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 5. Pulsante di Logout
                 OutlinedButton(
                     onClick = onLogout,
                     modifier = Modifier.fillMaxWidth(),
@@ -169,8 +168,20 @@ fun ProfileScreen(
 fun StatItem(icon: ImageVector, value: String, label: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(32.dp))
-        Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        // Numero con font sicuro (fix principale)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = FontFamily.SansSerif
+        )
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -181,17 +192,18 @@ fun CosmeticItem(itemId: String) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            // Qui andrebbe un'immagine o un'icona specifica per il cosmetico
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            // Mostriamo l'ID in piccolo per debug/test
+
+            // itemId spesso contiene numeri -> font sicuro
             Text(
                 text = itemId,
                 style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 4.dp)
@@ -199,11 +211,3 @@ fun CosmeticItem(itemId: String) {
         }
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    // ProfileScreen(...)
-}
-*/

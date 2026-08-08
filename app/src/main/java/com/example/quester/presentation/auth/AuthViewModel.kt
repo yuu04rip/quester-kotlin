@@ -21,17 +21,17 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
-    fun register(username: String, password: String) = viewModelScope.launch {
+    fun register(username: String, email: String?, password: String) = viewModelScope.launch {
         _uiState.value = _uiState.value.copy(loading = true, error = null)
-        when (val res = authService.register(username, password)) {
+        when (val res = authService.register(username, email, password)) {
             is AuthResult.Success -> _uiState.value = AuthUiState(isAuthenticated = true)
             is AuthResult.Error -> _uiState.value = AuthUiState(error = res.message)
         }
     }
 
-    fun login(username: String, password: String) = viewModelScope.launch {
+    fun login(identity: String, password: String) = viewModelScope.launch {
         _uiState.value = _uiState.value.copy(loading = true, error = null)
-        when (val res = authService.login(username, password)) {
+        when (val res = authService.login(identity, password)) {
             is AuthResult.Success -> _uiState.value = AuthUiState(isAuthenticated = true)
             is AuthResult.Error -> _uiState.value = AuthUiState(error = res.message)
         }

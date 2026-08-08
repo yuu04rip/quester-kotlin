@@ -34,39 +34,70 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun register_newUser_success() = runBlocking {
-        val result = authRepository.register("mario", "password123")
+    fun register_newUser_success_withOptionalEmail() = runBlocking {
+        val result = authRepository.register("mario", "mario@test.com", "Password1")
 
         assertTrue(result is AuthResult.Success)
         val success = result as AuthResult.Success
         assertEquals("mario", success.user.username)
+        assertEquals("mario@test.com", success.user.email)
         assertTrue(success.user.passwordHash.isNotBlank())
     }
 
     @Test
-    fun register_duplicateUsername_fails() = runBlocking {
-        authRepository.register("mario", "password123")
-        val result2 = authRepository.register("mario", "password456")
+    fun register_newUser_success_withoutEmail() = runBlocking {
+        val result = authRepository.register("luigi", null, "Password1")
 
-        assertTrue(result2 is AuthResult.Error)
-        val error = result2 as AuthResult.Error
-        assertTrue(error.message.contains("esistente", ignoreCase = true))
+        assertTrue(result is AuthResult.Success)
+        val success = result as AuthResult.Success
+        assertEquals("luigi", success.user.username)
+        assertEquals(null, success.user.email)
     }
 
     @Test
-    fun login_correctCredentials_success() = runBlocking {
-        authRepository.register("luigi", "securePass1")
-        val login = authRepository.login("luigi", "securePass1")
+    fun register_duplicateUsername_fails() = runBlocking {
+        authRepository.register("mario", "mario1@test.com", "Password1")
+        val result2 = authRepository.register("mario", "mario2@test.com", "Password2")
+
+        assertTrue(result2 is AuthResult.Error)
+        val error = result2 as AuthResult.Error
+        assertTrue(error.message.contains("username", ignoreCase = true))
+    }
+
+    @Test
+    fun register_duplicateEmail_fails() = runBlocking {
+        authRepository.register("mario", "same@test.com", "Password1")
+        val result2 = authRepository.register("luigi", "same@test.com", "Password2")
+
+        assertTrue(result2 is AuthResult.Error)
+        val error = result2 as AuthResult.Error
+        assertTrue(error.message.contains("email", ignoreCase = true))
+    }
+
+    @Test
+    fun login_correctCredentials_withUsername_success() = runBlocking {
+        authRepository.register("peach", "peach@test.com", "Password1")
+        val login = authRepository.login("peach", "Password1")
 
         assertTrue(login is AuthResult.Success)
         val success = login as AuthResult.Success
-        assertEquals("luigi", success.user.username)
+        assertEquals("peach", success.user.username)
+    }
+
+    @Test
+    fun login_correctCredentials_withEmail_success() = runBlocking {
+        authRepository.register("toad", "toad@test.com", "Password1")
+        val login = authRepository.login("toad@test.com", "Password1")
+
+        assertTrue(login is AuthResult.Success)
+        val success = login as AuthResult.Success
+        assertEquals("toad", success.user.username)
     }
 
     @Test
     fun login_wrongPassword_fails() = runBlocking {
-        authRepository.register("peach", "correctPass")
-        val login = authRepository.login("peach", "wrongPass")
+        authRepository.register("yoshi", "yoshi@test.com", "Password1")
+        val login = authRepository.login("yoshi", "WrongPass1")
 
         assertTrue(login is AuthResult.Error)
         val error = login as AuthResult.Error
@@ -75,17 +106,7 @@ class AuthRepositoryTest {
 
     @Test
     fun login_unknownUser_fails() = runBlocking {
-        val login = authRepository.login("bowser", "anyPass")
-
+        val login = authRepository.login("bowser", "AnyPass1")
         assertTrue(login is AuthResult.Error)
-    }
-
-    @Test
-    fun register_shortPassword_fails() = runBlocking {
-        val result = authRepository.register("toad", "123")
-
-        assertTrue(result is AuthResult.Error)
-        val error = result as AuthResult.Error
-        assertTrue(error.message.contains("Password", ignoreCase = true))
     }
 }
