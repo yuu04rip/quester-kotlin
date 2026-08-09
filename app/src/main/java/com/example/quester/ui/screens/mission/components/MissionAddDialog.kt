@@ -41,7 +41,6 @@ fun AddMissionDialog(
                 if (title.isNotBlank()) {
                     val parsedXp = xpReward.toIntOrNull() ?: selectedType.defaultXp
                     val finalXp = parsedXp.coerceIn(selectedType.minXp, selectedType.maxXp)
-                    // CORRETTO: senza named arguments
                     onMissionCreated(
                         title,
                         description,
@@ -49,6 +48,7 @@ fun AddMissionDialog(
                         finalXp,
                         subtasks.filter { it.isNotBlank() }
                     )
+                    // onDismiss() viene chiamato DOPO onMissionCreated
                     onDismiss()
                 }
             },

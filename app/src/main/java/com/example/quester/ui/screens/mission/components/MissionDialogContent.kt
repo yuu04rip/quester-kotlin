@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quester.ui.screens.mission.model.MissionType
 
-// Data class per raggruppare i parametri
 data class MissionDialogState(
     val title: String,
     val description: String,
@@ -23,7 +22,6 @@ data class MissionDialogState(
     val subtasks: List<String>
 )
 
-// Data class per i callback
 data class MissionDialogCallbacks(
     val onTitleChange: (String) -> Unit,
     val onDescriptionChange: (String) -> Unit,
@@ -42,6 +40,7 @@ fun MissionDialogContent(
     callbacks: MissionDialogCallbacks
 ) {
     AlertDialog(
+        // IMPORTANTE: onDismissRequest chiama callbacks.onDismiss
         onDismissRequest = callbacks.onDismiss,
         confirmButton = {
             Button(onClick = callbacks.onConfirm) {
@@ -63,7 +62,6 @@ fun MissionDialogContent(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Titolo
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = callbacks.onTitleChange,
@@ -72,7 +70,6 @@ fun MissionDialogContent(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Descrizione
                 OutlinedTextField(
                     value = state.description,
                     onValueChange = callbacks.onDescriptionChange,
@@ -81,7 +78,6 @@ fun MissionDialogContent(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Tipo missione
                 Text(
                     text = "Tipo di Missione:",
                     style = MaterialTheme.typography.labelLarge
@@ -99,7 +95,6 @@ fun MissionDialogContent(
                     }
                 }
 
-                // XP Reward
                 OutlinedTextField(
                     value = state.xpReward,
                     onValueChange = callbacks.onXpRewardChange,
@@ -113,7 +108,6 @@ fun MissionDialogContent(
 
                 HorizontalDivider()
 
-                // Subtasks
                 Text(
                     text = "Task della missione:",
                     style = MaterialTheme.typography.titleSmall,
@@ -129,7 +123,6 @@ fun MissionDialogContent(
                     )
                 }
 
-                // Pulsante aggiungi task
                 TextButton(
                     onClick = { callbacks.onSubtasksChange(state.subtasks + "") },
                     modifier = Modifier.align(Alignment.CenterHorizontally)

@@ -43,7 +43,6 @@ fun EditMissionDialog(
                 if (title.isNotBlank()) {
                     val parsedXp = xpReward.toIntOrNull() ?: selectedType.defaultXp
                     val finalXp = parsedXp.coerceIn(selectedType.minXp, selectedType.maxXp)
-                    // CORRETTO: senza named arguments
                     onMissionUpdated(
                         title,
                         description,
@@ -51,6 +50,7 @@ fun EditMissionDialog(
                         finalXp,
                         subtasks.filter { it.isNotBlank() }
                     )
+                    // onDismiss() viene chiamato DOPO onMissionUpdated
                     onDismiss()
                 }
             },
