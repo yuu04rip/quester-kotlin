@@ -40,22 +40,4 @@ interface UserDao {
 
     @Query("DELETE FROM users")
     suspend fun deleteAllUsers()
-
-    // NUOVE QUERY PER SICUREZZA
-
-    // Aggiorna reputation
-    @Query("UPDATE users SET reputation = reputation + :delta WHERE id = :userId")
-    suspend fun updateReputation(userId: Long, delta: Int)
-
-    // Aggiorna warnings
-    @Query("UPDATE users SET warnings = warnings + 1 WHERE id = :userId")
-    suspend fun incrementWarnings(userId: Long)
-
-    // Resetta XP giornalieri (chiamato quando cambia giorno)
-    @Query("UPDATE users SET xpEarnedToday = 0, lastXpResetDate = :resetDate WHERE id = :userId")
-    suspend fun resetDailyXp(userId: Long, resetDate: Long)
-
-    // Aggiungi XP giornalieri
-    @Query("UPDATE users SET xpEarnedToday = xpEarnedToday + :xpAmount WHERE id = :userId")
-    suspend fun addDailyXp(userId: Long, xpAmount: Int)
 }

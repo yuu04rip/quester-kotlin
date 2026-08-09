@@ -26,11 +26,5 @@ data class User(
     val xpTotale: Int = 0,
     val livello: Int = 1,
     val coins: Int = 0,
-    val profileImageUri: String? = null,
-
-    // NUOVI CAMPI PER SICUREZZA
-    val reputation: Int = 100,        // Punteggio fiducia (default 100)
-    val warnings: Int = 0,            // Numero di avvertimenti
-    val xpEarnedToday: Int = 0,       // XP guadagnati oggi
-    val lastXpResetDate: Long = System.currentTimeMillis() // Data ultimo reset XP giornaliero
+    val profileImageUri: String? = null
 )

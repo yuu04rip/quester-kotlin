@@ -20,13 +20,9 @@ class MissionService(
 ) {
 
     companion object {
-        private const val MAX_DAILY_MISSIONS = 5
         private const val MAX_SUBTASKS_PER_MISSION = 10
-        private const val MAX_DAILY_XP = 500
         private const val MIN_TIME_BETWEEN_COMPLETIONS = 30_000L
         private const val MIN_TIME_PER_MISSION = 30_000L
-        private const val REPUTATION_PENALTY = 10
-        private const val MAX_WARNINGS = 3
 
         // Costanti per messaggi di errore
         private const val ERROR_UNAUTHORIZED = "✦ Non sei autorizzato a modificare questa missione ✦"
@@ -61,17 +57,10 @@ class MissionService(
         val missionType = MissionType.fromDbValue(type)
         val validXp = validateAndNormalizeXp(xpReward, missionType)
 
-        if (!isTestMode) {
-            validateUserCanCreateMission(userId, validXp)
-        }
-
-        // 🔧 Validazione subtask - RIMOSSO il controllo sul minimo
-        // Ora le missioni possono essere create anche senza task
         val cleanSubtasks = subtasks.map { it.trim() }.filter { it.isNotBlank() }
         require(cleanSubtasks.size <= MAX_SUBTASKS_PER_MISSION) {
             "Massimo $MAX_SUBTASKS_PER_MISSION subtask per missione"
         }
-        // ✅ NON c'è più il controllo cleanSubtasks.size < MIN_SUBTASKS_PER_MISSION
 
         val verificationLevel = if (validXp > 200) VerificationLevel.MANUAL else VerificationLevel.AUTO
 
@@ -118,27 +107,6 @@ class MissionService(
         )
     }
 
-    private suspend fun validateUserCanCreateMission(userId: Long, xpReward: Int) {
-        val user = userRepository.getUserById(userId) ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
-
-        check(user.reputation >= 50) { "✦ La tua reputazione è troppo bassa per creare nuove missioni ✦" }
-
-        if (user.warnings >= MAX_WARNINGS) {
-            securityNotificationService?.sendAccountSuspendedAlert(userId)
-            throw IllegalStateException("✦ Il tuo account è stato sospeso. Contatta il Gran Consiglio. ✦")
-        }
-
-        val todayMissions = missionRepository.countMissionsCreatedToday(userId)
-        check(todayMissions < MAX_DAILY_MISSIONS) {
-            "✦ Hai raggiunto il limite di $MAX_DAILY_MISSIONS missioni giornaliere ✦"
-        }
-
-        val todayXp = userRepository.getXpEarnedToday(userId)
-        check(todayXp + xpReward <= MAX_DAILY_XP) {
-            "✦ Hai raggiunto il limite di $MAX_DAILY_XP XP giornalieri ✦"
-        }
-    }
-
     suspend fun updateMissionFromForm(
         mission: Mission,
         newTitle: String,
@@ -157,7 +125,6 @@ class MissionService(
             .map { it.trim() }
             .filter { it.isNotBlank() }
 
-        // 🔧 RIMOSSO anche qui il controllo sul minimo
         require(cleanSubtasks.size <= MAX_SUBTASKS_PER_MISSION) {
             "Massimo $MAX_SUBTASKS_PER_MISSION subtask per missione"
         }
@@ -189,14 +156,6 @@ class MissionService(
         check(mission.userId == userId) { ERROR_UNAUTHORIZED }
         check(!mission.completed) { ERROR_MISSION_ALREADY_COMPLETED }
 
-        if (!isTestMode) {
-            val user = userRepository.getUserById(userId) ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
-            if (user.warnings >= MAX_WARNINGS) {
-                securityNotificationService?.sendAccountSuspendedAlert(userId)
-                throw IllegalStateException("✦ Il tuo account è stato sospeso per comportamento sospetto ✦")
-            }
-        }
-
         missionRepository.updateSubTask(subTask.copy(done = done))
 
         val allDone = missionRepository.isMissionFullyCompleted(subTask.missionId)
@@ -208,7 +167,10 @@ class MissionService(
                 val timeCheckResult = validateCompletionTime(currentMission, userId)
                 if (timeCheckResult != null) {
                     resetMissionSubtasks(currentMission.id)
-                    handleSuspiciousBehavior(userId, currentMission.id, timeCheckResult)
+                    securityNotificationService?.sendSuspiciousBehaviorAlert(
+                        userId = userId,
+                        reason = timeCheckResult
+                    )
                     return
                 }
             }
@@ -226,19 +188,11 @@ class MissionService(
         val timeSpent = now - mission.createdAt
 
         if (timeSpent < MIN_TIME_PER_MISSION) {
-            securityNotificationService?.sendSuspiciousBehaviorAlert(
-                userId = userId,
-                reason = "Completata troppo velocemente (${timeSpent}ms)"
-            )
             return "Completata troppo velocemente (${timeSpent}ms)"
         }
 
         val lastCompletion = missionRepository.getLastCompletionTime(userId)
         if (lastCompletion != null && now - lastCompletion < MIN_TIME_BETWEEN_COMPLETIONS) {
-            securityNotificationService?.sendSuspiciousBehaviorAlert(
-                userId = userId,
-                reason = "Troppi completamenti in breve tempo"
-            )
             return "Troppi completamenti in breve tempo"
         }
 
@@ -258,7 +212,6 @@ class MissionService(
                         missionTitle = mission.title,
                         xpGained = mission.xpReward
                     )
-                    userRepository.increaseReputation(userId, 1)
                 }
             } catch (e: IllegalStateException) {
                 missionRepository.updateMission(mission.copy(completed = false))
@@ -270,14 +223,6 @@ class MissionService(
     suspend fun deleteMission(mission: Mission) {
         val userId = sessionManager.loggedUserId.first()
         check(mission.userId == userId) { "✦ Non sei autorizzato a eliminare questa missione ✦" }
-
-        if (!isTestMode) {
-            val user = userRepository.getUserById(userId) ?: return
-            if (user.warnings >= MAX_WARNINGS) {
-                securityNotificationService?.sendAccountSuspendedAlert(userId)
-                throw IllegalStateException("✦ Il tuo account è stato sospeso per comportamento sospetto ✦")
-            }
-        }
 
         reminderService?.cancelMissionReminder(mission.id)
         resetMissionSubtasks(mission.id)
@@ -322,16 +267,5 @@ class MissionService(
             userId = userId,
             missionTitle = mission.title
         )
-    }
-
-    private suspend fun handleSuspiciousBehavior(userId: Long, missionId: Long, reason: String) {
-        println("⚔ SUSPICIOUS: User $userId, Mission $missionId, Reason: $reason")
-        userRepository.decreaseReputation(userId, REPUTATION_PENALTY)
-        userRepository.addWarning(userId)
-
-        val user = userRepository.getUserById(userId)
-        if (user?.warnings ?: 0 >= MAX_WARNINGS) {
-            securityNotificationService?.sendAccountSuspendedAlert(userId)
-        }
     }
 }
