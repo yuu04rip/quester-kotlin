@@ -31,3 +31,7 @@ output-metadata.json
 
 # Google services secrets
 google-services.json
+
+# Room Database schemas
+app/schemas/
+*.json
