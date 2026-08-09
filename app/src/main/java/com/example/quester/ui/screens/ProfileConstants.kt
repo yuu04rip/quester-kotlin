@@ -27,10 +27,10 @@ const val XP_INCREMENT = 50      // Incremento lineare alternativo
 // Oppure puoi usare una progressione lineare con incremento
 fun getXpRequiredForLevel(level: Int): Int {
     // Opzione 1: Crescita esponenziale (più difficile)
-    // return (XP_BASE * Math.pow(level.toDouble(), 1.5)).toInt()
+    return (XP_BASE * Math.pow(level.toDouble(), 1.5)).toInt()
 
     // Opzione 2: Crescita lineare con incremento (più graduale)
-    return XP_BASE + (level - 1) * XP_INCREMENT
+    //return XP_BASE + (level - 1) * XP_INCREMENT
 
     // Opzione 3: Crescita quadratica (molto difficile)
     // return XP_BASE * level * level
