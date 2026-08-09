@@ -7,6 +7,8 @@ import com.example.quester.data.model.VerificationLevel
 import com.example.quester.data.repository.MissionRepository
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
+import com.example.quester.ui.screens.getMissionCoins
+import com.example.quester.ui.screens.getMissionXp
 import kotlinx.coroutines.flow.first
 
 class MissionService(
@@ -33,6 +35,8 @@ class MissionService(
         private const val ERROR_MISSION_NOT_FOUND = "❖ Missione non trovata nelle cronache"
     }
 
+    // ===== METODI DI VALIDAZIONE =====
+
     private fun validateAndNormalizeXp(xpReward: Int, missionType: MissionType): Int {
         return if (xpReward in missionType.minXp..missionType.maxXp) {
             xpReward
@@ -40,6 +44,34 @@ class MissionService(
             missionType.defaultXp
         }
     }
+
+    // ===== METODI PER LE RICOMPENSE SCALATE =====
+
+    /**
+     * Calcola le ricompense per una missione in base al livello del giocatore
+     */
+    private suspend fun calculateScaledRewards(
+        missionType: String,
+        userId: Long
+    ): ScaledRewards {
+        // Ottieni il livello del giocatore
+        val user = userRepository.getUserById(userId)
+            ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
+
+        val playerLevel = user.livello
+
+        // Calcola ricompense scalate
+        val coins = getMissionCoins(missionType, playerLevel)
+        val xp = getMissionXp(missionType, playerLevel)
+
+        return ScaledRewards(
+            coins = coins,
+            xp = xp,
+            playerLevel = playerLevel
+        )
+    }
+
+    // ===== CREAZIONE MISSIONE =====
 
     suspend fun createMissionFromForm(
         title: String,
@@ -55,6 +87,8 @@ class MissionService(
         require(title.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
 
         val missionType = MissionType.fromDbValue(type)
+
+        // Usa il valore base per la creazione (lo scaling avverrà al completamento)
         val validXp = validateAndNormalizeXp(xpReward, missionType)
 
         val cleanSubtasks = subtasks.map { it.trim() }.filter { it.isNotBlank() }
@@ -70,7 +104,7 @@ class MissionService(
             description = description?.trim().orEmpty(),
             type = missionType.dbValue,
             dueDate = dueDate,
-            xpReward = validXp,
+            xpReward = validXp,  // XP base della missione (senza scaling)
             createdAt = System.currentTimeMillis(),
             verificationLevel = verificationLevel.name
         )
@@ -88,6 +122,48 @@ class MissionService(
             )
         }
     }
+
+    // ===== COMPLETAMENTO MISSIONE =====
+
+    private suspend fun completeMission(mission: Mission, userId: Long) {
+        if (!mission.completed) {
+            try {
+                // Calcola le ricompense scalate in base al livello del giocatore
+                val scaledRewards = calculateScaledRewards(
+                    missionType = mission.type,
+                    userId = userId
+                )
+
+                // Usa le ricompense scalate invece di quelle base
+                val finalXp = scaledRewards.xp
+                val finalCoins = scaledRewards.coins
+
+                // Aggiorna la missione
+                missionRepository.markMissionCompleted(mission.id)
+
+                // Aggiungi XP e monete scalati
+                userRepository.addXp(userId, finalXp)
+                userRepository.addCoins(userId, finalCoins)
+
+                // Notifica di sicurezza
+                if (!isTestMode) {
+                    securityNotificationService?.sendMissionCompletionNotification(
+                        userId = userId,
+                        missionTitle = mission.title,
+                        xpGained = finalXp,
+                        coinsGained = finalCoins,
+                        playerLevel = scaledRewards.playerLevel
+                    )
+                }
+
+            } catch (e: IllegalStateException) {
+                missionRepository.updateMission(mission.copy(completed = false))
+                throw e
+            }
+        }
+    }
+
+    // ===== ALTRI METODI =====
 
     private fun scheduleReminderForMission(
         missionType: MissionType,
@@ -199,27 +275,6 @@ class MissionService(
         return null
     }
 
-    private suspend fun completeMission(mission: Mission, userId: Long) {
-        if (!mission.completed) {
-            try {
-                missionRepository.markMissionCompleted(mission.id)
-                userRepository.addXp(userId, mission.xpReward)
-                currencyService.onMissionRedeemed()
-
-                if (!isTestMode) {
-                    securityNotificationService?.sendMissionCompletionNotification(
-                        userId = userId,
-                        missionTitle = mission.title,
-                        xpGained = mission.xpReward
-                    )
-                }
-            } catch (e: IllegalStateException) {
-                missionRepository.updateMission(mission.copy(completed = false))
-                throw e
-            }
-        }
-    }
-
     suspend fun deleteMission(mission: Mission) {
         val userId = sessionManager.loggedUserId.first()
         check(mission.userId == userId) { "✦ Non sei autorizzato a eliminare questa missione ✦" }
@@ -233,11 +288,7 @@ class MissionService(
         missionRepository.restoreMission(mission, subTasks)
     }
 
-    suspend fun redeemCompletedMission(missionId: Long) {
-        // Implementazione se necessaria
-    }
-
-    // --- METODI PRIVATI ---
+    // ===== METODI PRIVATI =====
 
     private suspend fun resetMissionSubtasks(missionId: Long) {
         val allSubtasks = missionRepository.getSubTasksByMissionId(missionId).first()
@@ -269,3 +320,11 @@ class MissionService(
         )
     }
 }
+
+// ===== DATA CLASS PER RICOMPENSE SCALATE =====
+
+data class ScaledRewards(
+    val coins: Int,
+    val xp: Int,
+    val playerLevel: Int
+)

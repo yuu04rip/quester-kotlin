@@ -192,25 +192,21 @@ fun ProfileAvatar(
 
 @Composable
 fun FantasyXpProgress(
-    xpTotale: Int,
-    livello: Int
+    xpTotale: Int
+    // Parametro 'livello' rimosso perché non utilizzato
+    // Il livello viene calcolato automaticamente da xpTotale
 ) {
+    // Usa la funzione globale per calcolare il livello effettivo
+    val actualLevel = calculateLevelFromXp(xpTotale)
 
-    // Calcola l'XP necessario per il livello corrente
-    val xpForCurrentLevel = getXpRequiredForLevel(livello)
+    // Calcola l'XP necessario per il livello effettivo
+    val xpForCurrentLevel = getXpRequiredForLevel(actualLevel)
 
-    // Calcola l'XP totale accumulato fino al livello corrente
-    var totalXpForPreviousLevels = 0
-    for (i in 1 until livello) {
-        totalXpForPreviousLevels += getXpRequiredForLevel(i)
-    }
+    // Calcola l'XP nel livello corrente usando la funzione globale
+    val xpInCurrentLevel = getXpInCurrentLevel(xpTotale, actualLevel)
 
-    // Calcola l'XP nel livello corrente
-    val xpInCurrentLevel = xpTotale - totalXpForPreviousLevels
-
-    // Calcola il progresso (0.0 - 1.0)
-    val progress = (xpInCurrentLevel.toFloat() / xpForCurrentLevel).coerceIn(0f, 1f)
-
+    // Calcola il progresso usando la funzione globale
+    val progress = getXpProgress(xpTotale, actualLevel)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -223,7 +219,7 @@ fun FantasyXpProgress(
         ) {
 
             Text(
-                text = "Liv. $livello",
+                text = "Liv. $actualLevel",
                 style = MaterialTheme.typography.labelSmall,
                 color = FantasyTextSecondary,
                 fontFamily = FontFamily.Serif
@@ -237,7 +233,7 @@ fun FantasyXpProgress(
             )
 
             Text(
-                text = "Liv. ${livello + 1}",
+                text = "Liv. ${actualLevel + 1}",
                 style = MaterialTheme.typography.labelSmall,
                 color = FantasyTextSecondary,
                 fontFamily = FontFamily.Serif

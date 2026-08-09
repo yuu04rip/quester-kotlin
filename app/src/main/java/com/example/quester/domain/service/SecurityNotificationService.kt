@@ -58,6 +58,33 @@ class SecurityNotificationService(
     }
 
     /**
+     * Invia una notifica di completamento missione con ricompense complete
+     * (Versione con XP, monete e livello)
+     */
+    suspend fun sendMissionCompletionNotification(
+        userId: Long,
+        missionTitle: String,
+        xpGained: Int,
+        coinsGained: Int,
+        playerLevel: Int
+    ) {
+        sendSecurityAlert(
+            userId = userId,
+            title = "✦ Missione Completata ✦",
+            message = buildString {
+                appendLine("「$missionTitle」")
+                appendLine()
+                appendLine("⚔ XP guadagnati: $xpGained")
+                appendLine("🪙 Monete guadagnate: $coinsGained")
+                appendLine("⭐ Livello raggiunto: $playerLevel")
+                appendLine()
+                appendLine("★ Gloria eterna per l'eroe!")
+            },
+            priority = NotificationPriority.HIGH
+        )
+    }
+
+    /**
      * Invia un avviso di comportamento sospetto
      */
     suspend fun sendSuspiciousBehaviorAlert(

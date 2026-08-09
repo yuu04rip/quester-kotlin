@@ -22,8 +22,5 @@ class CurrencyService(
         userRepository.addCoins(userId, coins.coerceAtLeast(0))
     }
 
-    suspend fun onMissionRedeemed() {
-        val userId = sessionManager.loggedUserId.first() ?: return
-        userRepository.addCoins(userId, 20) // reward fisso MVP
-    }
+
 }

@@ -191,9 +191,9 @@ private fun ProfileCard(
                 modifier = Modifier.height(16.dp)
             )
 
+            // ✅ FIX: Rimosso il parametro 'livello' perché non più utilizzato
             FantasyXpProgress(
-                xpTotale = user.xpTotale,
-                livello = user.livello
+                xpTotale = user.xpTotale
             )
 
             Spacer(

@@ -15,6 +15,10 @@ enum class MissionType(
         fun fromDbValue(value: String): MissionType {
             return entries.find { it.dbValue.equals(value, ignoreCase = true) } ?: GIORNALIERO
         }
+
+        fun getRangeForType(type: String): IntRange {
+            return fromDbValue(type).minXp..fromDbValue(type).maxXp
+        }
     }
 }
 
