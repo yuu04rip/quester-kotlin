@@ -15,14 +15,13 @@ class MissionService(
     private val currencyService: CurrencyService,
     private val sessionManager: SessionManager,
     private val securityNotificationService: SecurityNotificationService? = null,
-    private val reminderService: ReminderService? = null,  // Aggiunto
+    private val reminderService: ReminderService? = null,
     private val isTestMode: Boolean = false
 ) {
 
     companion object {
         private const val MAX_DAILY_MISSIONS = 5
         private const val MAX_SUBTASKS_PER_MISSION = 10
-        private const val MIN_SUBTASKS_PER_MISSION = 1
         private const val MAX_DAILY_XP = 500
         private const val MIN_TIME_BETWEEN_COMPLETIONS = 30_000L
         private const val MIN_TIME_PER_MISSION = 30_000L
@@ -30,12 +29,12 @@ class MissionService(
         private const val MAX_WARNINGS = 3
 
         // Costanti per messaggi di errore
-        private const val ERROR_UNAUTHORIZED = "Non sei autorizzato a modificare questa missione"
-        private const val ERROR_MISSION_ALREADY_COMPLETED = "Questa missione è già stata completata"
-        private const val ERROR_CANNOT_MODIFY_COMPLETED = "Impossibile modificare una missione già completata"
-        private const val ERROR_USER_NOT_FOUND = "Utente non trovato"
-        private const val ERROR_USER_NOT_AUTHENTICATED = "Utente non autenticato"
-        private const val ERROR_MISSION_NOT_FOUND = "Missione non trovata"
+        private const val ERROR_UNAUTHORIZED = "✦ Non sei autorizzato a modificare questa missione ✦"
+        private const val ERROR_MISSION_ALREADY_COMPLETED = "✧ Questa missione è già stata completata ✧"
+        private const val ERROR_CANNOT_MODIFY_COMPLETED = "✧ Impossibile modificare una missione già completata ✧"
+        private const val ERROR_USER_NOT_FOUND = "❖ Utente non trovato nel reame"
+        private const val ERROR_USER_NOT_AUTHENTICATED = "❖ Utente non autenticato"
+        private const val ERROR_MISSION_NOT_FOUND = "❖ Missione non trovata nelle cronache"
     }
 
     private fun validateAndNormalizeXp(xpReward: Int, missionType: MissionType): Int {
@@ -57,7 +56,7 @@ class MissionService(
         val userId = sessionManager.loggedUserId.first()
             ?: throw IllegalStateException("Impossibile creare una missione: nessun utente autenticato.")
 
-        require(title.isNotBlank()) { "Titolo obbligatorio" }
+        require(title.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
 
         val missionType = MissionType.fromDbValue(type)
         val validXp = validateAndNormalizeXp(xpReward, missionType)
@@ -66,13 +65,13 @@ class MissionService(
             validateUserCanCreateMission(userId, validXp)
         }
 
+        // 🔧 Validazione subtask - RIMOSSO il controllo sul minimo
+        // Ora le missioni possono essere create anche senza task
         val cleanSubtasks = subtasks.map { it.trim() }.filter { it.isNotBlank() }
         require(cleanSubtasks.size <= MAX_SUBTASKS_PER_MISSION) {
             "Massimo $MAX_SUBTASKS_PER_MISSION subtask per missione"
         }
-        require(!(!isTestMode && cleanSubtasks.size < MIN_SUBTASKS_PER_MISSION)) {
-            "La missione deve avere almeno $MIN_SUBTASKS_PER_MISSION task"
-        }
+        // ✅ NON c'è più il controllo cleanSubtasks.size < MIN_SUBTASKS_PER_MISSION
 
         val verificationLevel = if (validXp > 200) VerificationLevel.MANUAL else VerificationLevel.AUTO
 
@@ -89,32 +88,27 @@ class MissionService(
 
         missionRepository.createMission(mission, cleanSubtasks)
 
-        // 🆕 PROGRAMMA IL PROMEMORIA IN BASE AL TIPO
         if (!isTestMode && reminderService != null) {
             scheduleReminderForMission(missionType, mission.id, mission.title)
         }
 
         if (!isTestMode) {
-            securityNotificationService?.sendSecurityAlert(
+            securityNotificationService?.sendMissionCreatedAlert(
                 userId = userId,
-                title = "Missione creata!",
-                message = "Hai creato la missione \"${mission.title}\""
+                missionTitle = mission.title
             )
         }
     }
 
-    /**
-     * Programma un promemoria per la missione in base al tipo
-     */
     private fun scheduleReminderForMission(
         missionType: MissionType,
         missionId: Long,
         missionTitle: String
     ) {
         val delayMinutes = when (missionType) {
-            MissionType.GIORNALIERO -> 12 * 60L  // 12 ore
-            MissionType.SETTIMANALE -> 3 * 24 * 60L  // 3 giorni
-            MissionType.SPECIALE -> 15 * 24 * 60L  // 15 giorni
+            MissionType.GIORNALIERO -> 12 * 60L
+            MissionType.SETTIMANALE -> 3 * 24 * 60L
+            MissionType.SPECIALE -> 15 * 24 * 60L
         }
 
         reminderService?.scheduleMissionReminder(
@@ -127,21 +121,21 @@ class MissionService(
     private suspend fun validateUserCanCreateMission(userId: Long, xpReward: Int) {
         val user = userRepository.getUserById(userId) ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
 
-        check(user.reputation >= 50) { "La tua reputazione è troppo bassa per creare nuove missioni" }
+        check(user.reputation >= 50) { "✦ La tua reputazione è troppo bassa per creare nuove missioni ✦" }
 
         if (user.warnings >= MAX_WARNINGS) {
             securityNotificationService?.sendAccountSuspendedAlert(userId)
-            throw IllegalStateException("Il tuo account è stato sospeso. Contatta il supporto.")
+            throw IllegalStateException("✦ Il tuo account è stato sospeso. Contatta il Gran Consiglio. ✦")
         }
 
         val todayMissions = missionRepository.countMissionsCreatedToday(userId)
         check(todayMissions < MAX_DAILY_MISSIONS) {
-            "Hai raggiunto il limite di $MAX_DAILY_MISSIONS missioni giornaliere"
+            "✦ Hai raggiunto il limite di $MAX_DAILY_MISSIONS missioni giornaliere ✦"
         }
 
         val todayXp = userRepository.getXpEarnedToday(userId)
         check(todayXp + xpReward <= MAX_DAILY_XP) {
-            "Hai raggiunto il limite di $MAX_DAILY_XP XP giornalieri"
+            "✦ Hai raggiunto il limite di $MAX_DAILY_XP XP giornalieri ✦"
         }
     }
 
@@ -153,7 +147,7 @@ class MissionService(
         newXpReward: Int,
         newSubtasksText: List<String>
     ) {
-        require(newTitle.isNotBlank()) { "Titolo obbligatorio" }
+        require(newTitle.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
         check(!mission.completed) { ERROR_CANNOT_MODIFY_COMPLETED }
 
         val userId = sessionManager.loggedUserId.first()
@@ -163,9 +157,7 @@ class MissionService(
             .map { it.trim() }
             .filter { it.isNotBlank() }
 
-        require(!(!isTestMode && cleanSubtasks.size < MIN_SUBTASKS_PER_MISSION)) {
-            "La missione deve avere almeno $MIN_SUBTASKS_PER_MISSION task"
-        }
+        // 🔧 RIMOSSO anche qui il controllo sul minimo
         require(cleanSubtasks.size <= MAX_SUBTASKS_PER_MISSION) {
             "Massimo $MAX_SUBTASKS_PER_MISSION subtask per missione"
         }
@@ -201,7 +193,7 @@ class MissionService(
             val user = userRepository.getUserById(userId) ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
             if (user.warnings >= MAX_WARNINGS) {
                 securityNotificationService?.sendAccountSuspendedAlert(userId)
-                throw IllegalStateException("Il tuo account è stato sospeso per comportamento sospetto")
+                throw IllegalStateException("✦ Il tuo account è stato sospeso per comportamento sospetto ✦")
             }
         }
 
@@ -222,8 +214,6 @@ class MissionService(
             }
 
             completeMission(currentMission, userId)
-
-            // Cancella il promemoria se la missione è stata completata
             reminderService?.cancelMissionReminder(currentMission.id)
         }
     }
@@ -238,7 +228,7 @@ class MissionService(
         if (timeSpent < MIN_TIME_PER_MISSION) {
             securityNotificationService?.sendSuspiciousBehaviorAlert(
                 userId = userId,
-                reason = "Hai completato una missione troppo velocemente. I task sono stati resettati. Riprova con calma."
+                reason = "Completata troppo velocemente (${timeSpent}ms)"
             )
             return "Completata troppo velocemente (${timeSpent}ms)"
         }
@@ -247,7 +237,7 @@ class MissionService(
         if (lastCompletion != null && now - lastCompletion < MIN_TIME_BETWEEN_COMPLETIONS) {
             securityNotificationService?.sendSuspiciousBehaviorAlert(
                 userId = userId,
-                reason = "Stai completando missioni troppo velocemente. I task sono stati resettati. Attendi qualche secondo."
+                reason = "Troppi completamenti in breve tempo"
             )
             return "Troppi completamenti in breve tempo"
         }
@@ -279,19 +269,17 @@ class MissionService(
 
     suspend fun deleteMission(mission: Mission) {
         val userId = sessionManager.loggedUserId.first()
-        check(mission.userId == userId) { "Non sei autorizzato a eliminare questa missione" }
+        check(mission.userId == userId) { "✦ Non sei autorizzato a eliminare questa missione ✦" }
 
         if (!isTestMode) {
             val user = userRepository.getUserById(userId) ?: return
             if (user.warnings >= MAX_WARNINGS) {
                 securityNotificationService?.sendAccountSuspendedAlert(userId)
-                throw IllegalStateException("Il tuo account è stato sospeso per comportamento sospetto")
+                throw IllegalStateException("✦ Il tuo account è stato sospeso per comportamento sospetto ✦")
             }
         }
 
-        // Cancella il promemoria se la missione viene eliminata
         reminderService?.cancelMissionReminder(mission.id)
-
         resetMissionSubtasks(mission.id)
         missionRepository.deleteMission(mission)
     }
@@ -330,15 +318,14 @@ class MissionService(
             missionRepository.updateMission(mission.copy(completed = false))
         }
 
-        securityNotificationService?.sendSecurityAlert(
+        securityNotificationService?.sendMissionResetAlert(
             userId = userId,
-            title = "Missione resettata",
-            message = "La missione \"${mission.title}\" è stata resettata. Puoi riprovare."
+            missionTitle = mission.title
         )
     }
 
     private suspend fun handleSuspiciousBehavior(userId: Long, missionId: Long, reason: String) {
-        println("⚠️ SUSPICIOUS: User $userId, Mission $missionId, Reason: $reason")
+        println("⚔ SUSPICIOUS: User $userId, Mission $missionId, Reason: $reason")
         userRepository.decreaseReputation(userId, REPUTATION_PENALTY)
         userRepository.addWarning(userId)
 

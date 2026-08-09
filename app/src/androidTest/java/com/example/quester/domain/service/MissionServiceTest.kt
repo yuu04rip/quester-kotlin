@@ -40,15 +40,13 @@ class MissionServiceTest {
         userRepository = UserRepository(db.userDao(), db.ownedCosmeticDao())
         currencyService = CurrencyService(userRepository, sessionManager)
 
-        // Crea il service in TEST MODE per saltare i controlli di tempo
-        // NOTA: reminderService = null perché nei test non vogliamo notifiche
         missionService = MissionService(
             missionRepository = missionRepository,
             userRepository = userRepository,
             currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
-            reminderService = null,  // Aggiunto: nessun promemoria nei test
+            reminderService = null,
             isTestMode = true
         )
 
@@ -106,16 +104,15 @@ class MissionServiceTest {
         val userAfter = db.userDao().getUserById(testUserId)!!
         assertEquals("XP dovrebbero essere $xpReward", xpReward, userAfter.xpTotale)
 
-        // Act - Tentativo di toggle dello stesso subtask (ORA GESTIAMO L'ECCEZIONE)
+        // Act - Tentativo di toggle dello stesso subtask
         try {
             missionService.toggleSubTask(subtaskList[1].copy(done = true), true)
             fail("Dovrebbe lanciare IllegalStateException perché la missione è già completata")
         } catch (e: IllegalStateException) {
-            assertEquals("Questa missione è già stata completata", e.message)
-            // Test passa - l'eccezione è attesa!
+            assertEquals("✧ Questa missione è già stata completata ✧", e.message)
         }
 
-        // Assert - Nessun doppio XP (verifichiamo che l'XP non sia cambiato)
+        // Assert - Nessun doppio XP
         val userAfterSecond = db.userDao().getUserById(testUserId)!!
         assertEquals("XP non dovrebbero raddoppiare", xpReward, userAfterSecond.xpTotale)
 
@@ -126,7 +123,7 @@ class MissionServiceTest {
 
     @Test
     fun delete_mission_removes_it_and_its_subtasks() = runBlocking {
-        // Arrange - Creazione missione con subtask
+        // Arrange
         val missionTitle = "Missione da Eliminare"
         val missionDescription = "Test cancella"
         val missionType = MissionType.GIORNALIERO.dbValue
@@ -142,19 +139,17 @@ class MissionServiceTest {
             subtasks = subtaskList
         )
 
-        // Assert - Verifica creazione
         val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
         val initialSubtasks = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
         assertEquals("Dovrebbero esserci 2 subtask", 2, initialSubtasks.size)
 
-        // Act - Eliminazione missione
+        // Act
         missionService.deleteMission(mission)
 
-        // Assert - Verifica eliminazione
+        // Assert
         val deletedMission = db.missionDao().getMissionByIdOnce(mission.id)
         assertNull("La missione dovrebbe essere eliminata", deletedMission)
 
-        // Assert - Verifica eliminazione subtask
         val subtasksAfterDelete = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
         assertTrue("I subtask dovrebbero essere stati eliminati", subtasksAfterDelete.isEmpty())
     }
@@ -231,7 +226,6 @@ class MissionServiceTest {
 
     @Test
     fun create_mission_with_xp_at_boundary_uses_boundary_value() = runBlocking {
-        // Arrange - test con valori ai limiti
         val testCases = listOf(
             MissionType.GIORNALIERO.minXp to MissionType.GIORNALIERO.minXp,
             MissionType.GIORNALIERO.maxXp to MissionType.GIORNALIERO.maxXp,
@@ -239,7 +233,6 @@ class MissionServiceTest {
         )
 
         testCases.forEachIndexed { index, (input, expected) ->
-            // Act
             missionService.createMissionFromForm(
                 title = "Test XP Boundary $index",
                 description = "Test XP ai limiti",
@@ -249,21 +242,16 @@ class MissionServiceTest {
                 subtasks = listOf("Task 1")
             )
 
-            // Assert
             val missions = db.missionDao().getAllMissionsForUser(testUserId).first()
             val mission = missions.find { it.title == "Test XP Boundary $index" }
             assertNotNull("Missione $index non trovata", mission)
-            assertEquals(
-                "XP ai limiti ($input) dovrebbe essere mantenuto",
-                expected,
-                mission?.xpReward
-            )
+            assertEquals("XP ai limiti ($input) dovrebbe essere mantenuto", expected, mission?.xpReward)
         }
     }
 
     @Test
     fun update_mission_all_fields_correctly() = runBlocking {
-        // Arrange - Creazione missione iniziale
+        // Arrange
         val originalTitle = "Original Title"
         val originalDesc = "Original Description"
         val originalType = MissionType.GIORNALIERO.dbValue
@@ -280,7 +268,7 @@ class MissionServiceTest {
 
         val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
 
-        // Act - Aggiornamento missione
+        // Act
         val newTitle = "Updated Title"
         val newDesc = "Updated Description"
         val newType = MissionType.SETTIMANALE.dbValue
@@ -296,7 +284,7 @@ class MissionServiceTest {
             newSubtasksText = newSubtasks
         )
 
-        // Assert - Verifica aggiornamento
+        // Assert
         val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertEquals("Titolo dovrebbe essere aggiornato", newTitle, updatedMission.title)
         assertEquals("Descrizione dovrebbe essere aggiornata", newDesc, updatedMission.description)
@@ -311,7 +299,7 @@ class MissionServiceTest {
 
     @Test
     fun update_mission_with_invalid_xp_uses_default() = runBlocking {
-        // Arrange - Creazione missione iniziale
+        // Arrange
         missionService.createMissionFromForm(
             title = "Original Mission",
             description = "Original Description",
@@ -324,13 +312,13 @@ class MissionServiceTest {
         val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
         val expectedXp = MissionType.GIORNALIERO.defaultXp // 20
 
-        // Act - Aggiornamento con XP fuori range (sopra il massimo)
+        // Act
         missionService.updateMissionFromForm(
             mission = mission,
             newTitle = "Updated Mission",
             newDescription = "Updated Description",
             newType = MissionType.GIORNALIERO.dbValue,
-            newXpReward = 999, // Fuori range
+            newXpReward = 999,
             newSubtasksText = listOf("Task 1")
         )
 
@@ -345,7 +333,7 @@ class MissionServiceTest {
 
     @Test
     fun restore_mission_restores_mission_and_subtasks() = runBlocking {
-        // Arrange - Creazione missione
+        // Arrange
         val missionTitle = "Missione da Ripristinare"
         val subtaskList = listOf("Subtask 1", "Subtask 2", "Subtask 3")
 
@@ -388,7 +376,7 @@ class MissionServiceTest {
         // Arrange
         val missionTitle = "Missione senza subtask"
 
-        // Act - In test mode, è permesso creare missioni senza subtask
+        // Act
         missionService.createMissionFromForm(
             title = missionTitle,
             description = "Test senza subtask",
@@ -431,11 +419,11 @@ class MissionServiceTest {
 
     @Test
     fun create_mission_with_special_type_uses_correct_range() = runBlocking {
-        // Arrange - Usa valori sopra il massimo per ogni tipo
+        // Arrange
         val testCases = listOf(
-            MissionType.GIORNALIERO to 999,    // Sopra max (50) → default 20
-            MissionType.SETTIMANALE to 999,     // Sopra max (200) → default 100
-            MissionType.SPECIALE to 1500        // Sopra max (1000) → default 250
+            MissionType.GIORNALIERO to 999,
+            MissionType.SETTIMANALE to 999,
+            MissionType.SPECIALE to 1500
         )
 
         testCases.forEach { (missionType, invalidXp) ->
@@ -463,9 +451,6 @@ class MissionServiceTest {
 
     @Test
     fun toggle_subtasks_too_fast_does_not_complete_mission() = runBlocking {
-        // Questo test verifica che il controllo del tempo funzioni
-        // Per questo NON usiamo test mode
-
         // Crea un service senza test mode per questo test
         val realMissionService = MissionService(
             missionRepository = missionRepository,
@@ -473,11 +458,11 @@ class MissionServiceTest {
             currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
-            reminderService = null,  // Aggiunto
+            reminderService = null,
             isTestMode = false
         )
 
-        // Arrange - Crea una missione
+        // Arrange
         realMissionService.createMissionFromForm(
             title = "Fast Mission",
             description = "Test completamento veloce",
@@ -494,11 +479,10 @@ class MissionServiceTest {
         realMissionService.toggleSubTask(subtasks[0], true)
         realMissionService.toggleSubTask(subtasks[1], true)
 
-        // Assert - La missione NON dovrebbe essere completata (troppo veloce)
+        // Assert - La missione NON dovrebbe essere completata
         val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertFalse("La missione non dovrebbe essere completata (troppo veloce)", updatedMission.completed)
 
-        // Verifica che l'utente non abbia ricevuto XP
         val user = db.userDao().getUserById(testUserId)!!
         assertEquals("Nessun XP dovrebbe essere stato assegnato", 0, user.xpTotale)
     }

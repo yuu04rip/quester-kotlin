@@ -22,12 +22,11 @@ class SecurityNotificationService(
         message: String,
         priority: NotificationPriority = NotificationPriority.HIGH
     ) {
-        // Usa WorkManager per inviare la notifica in background
         val inputData = workDataOf(
             "userId" to userId,
             "title" to title,
             "message" to message,
-            "priority" to priority.ordinal  // Converti enum in Int
+            "priority" to priority.ordinal
         )
 
         val request = OneTimeWorkRequestBuilder<SecurityNotificationWorker>()
@@ -52,8 +51,8 @@ class SecurityNotificationService(
     ) {
         sendSecurityAlert(
             userId = userId,
-            title = "Missione completata! 🎉",
-            message = "Hai completato \"$missionTitle\" e guadagnato $xpGained XP!",
+            title = "✦ Missione Completata ✦",
+            message = "「$missionTitle」\n\n⚔ XP guadagnati: $xpGained\n★ Gloria eterna per l'eroe!",
             priority = NotificationPriority.HIGH
         )
     }
@@ -67,8 +66,8 @@ class SecurityNotificationService(
     ) {
         sendSecurityAlert(
             userId = userId,
-            title = "⚠️ Attenzione!",
-            message = "Comportamento sospetto rilevato: $reason. Per favore, utilizza l'app correttamente.",
+            title = "⚔ Avviso dell'Ordine",
+            message = "§ $reason\n\n☆ Il Consiglio degli Eroi ti invita a seguire il codice d'onore.",
             priority = NotificationPriority.HIGH
         )
     }
@@ -79,9 +78,39 @@ class SecurityNotificationService(
     suspend fun sendAccountSuspendedAlert(userId: Long) {
         sendSecurityAlert(
             userId = userId,
-            title = "🚫 Account sospeso",
-            message = "Il tuo account è stato sospeso per comportamento sospetto. Contatta il supporto.",
+            title = "✧ Sentenza del Regno ✧",
+            message = "❖ Il tuo accesso al reame è stato sospeso.\n\n⚜ Contatta il Gran Consiglio per appello.",
             priority = NotificationPriority.CRITICAL
+        )
+    }
+
+    /**
+     * Notifica di missione creata
+     */
+    suspend fun sendMissionCreatedAlert(
+        userId: Long,
+        missionTitle: String
+    ) {
+        sendSecurityAlert(
+            userId = userId,
+            title = "✦ Nuova Avventura ✦",
+            message = "「$missionTitle」\n\n★ La tua leggenda inizia ora, eroe!",
+            priority = NotificationPriority.NORMAL
+        )
+    }
+
+    /**
+     * Notifica di missione resettata
+     */
+    suspend fun sendMissionResetAlert(
+        userId: Long,
+        missionTitle: String
+    ) {
+        sendSecurityAlert(
+            userId = userId,
+            title = "↺ Missione Resettata",
+            message = "「$missionTitle」\n\n☆ Il tempo si è fermato... Puoi ricominciare l'impresa.",
+            priority = NotificationPriority.LOW
         )
     }
 }

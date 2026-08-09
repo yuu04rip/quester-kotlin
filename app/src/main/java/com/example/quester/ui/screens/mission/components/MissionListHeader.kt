@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.quester.ui.components.FantasyTitle
 
 @Composable
 fun MissionListHeader(
@@ -24,14 +25,14 @@ fun MissionListHeader(
     ) {
         Column {
             Text(
-                text = "Ciao, $username! 👋",
+                text = "Ciao, $username!",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
+            FantasyTitle(
                 text = "Bacheca Missioni",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 

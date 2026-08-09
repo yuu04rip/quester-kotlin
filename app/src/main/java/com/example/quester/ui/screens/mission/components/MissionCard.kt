@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.data.model.SubTask
+import com.example.quester.ui.components.FantasyTitle
 
 @Composable
 fun MissionCard(
@@ -60,6 +61,8 @@ fun MissionCard(
     }
 }
 
+// ===== HEADER =====
+
 @Composable
 private fun MissionCardHeader(
     title: String,
@@ -73,67 +76,56 @@ private fun MissionCardHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
+        FantasyTitle(
             text = title,
+            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth(0.7f)  // Invece di weight
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Row {
             if (showReset && onResetClick != null) {
-                ResetButton(onClick = onResetClick)
+                IconButton(
+                    onClick = onResetClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Reset missione",
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
-            EditButton(onClick = onEditClick)
-            DeleteButton(onClick = onDeleteClick)
+
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Modifica missione",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Elimina missione",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
 
-@Composable
-private fun ResetButton(onClick: () -> Unit) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.size(36.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Refresh,
-            contentDescription = "Reset missione",
-            tint = Color(0xFFFF9800),
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-@Composable
-private fun EditButton(onClick: () -> Unit) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.size(36.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Edit,
-            contentDescription = "Modifica missione",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-@Composable
-private fun DeleteButton(onClick: () -> Unit) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.size(36.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = "Elimina missione",
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
+// ===== SUBTASKS =====
 
 @Composable
 private fun SubtasksSection(subtasks: List<SubTask>) {
@@ -179,6 +171,8 @@ private fun SubtaskItem(task: SubTask) {
     }
 }
 
+// ===== PROGRESS BAR =====
+
 @Composable
 private fun ProgressBar(progress: Float, percentage: Int) {
     Row(
@@ -214,6 +208,14 @@ private fun ProgressBar(progress: Float, percentage: Int) {
     }
 }
 
+// ===== FUNZIONI PURE =====
+
+/**
+ * Determina se mostrare il pulsante Reset
+ * - La missione non è completata
+ * - Ha almeno un subtask
+ * - Almeno un subtask è completato
+ */
 private fun shouldShowReset(missionWithTasks: MissionWithSubTasks): Boolean {
     val mission = missionWithTasks.mission
     val hasSubtasks = missionWithTasks.subTasks.isNotEmpty()
