@@ -9,12 +9,18 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ShopDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertItems(items: List<ShopItem>)
-
-    @Query("SELECT * FROM shop_items WHERE id = :itemId LIMIT 1")
-    suspend fun getItemById(itemId: String): ShopItem?
+    @Query("SELECT * FROM shop_items ORDER BY price ASC")
+    fun getAllItemsFlow(): Flow<List<ShopItem>>
 
     @Query("SELECT * FROM shop_items ORDER BY price ASC")
-    fun getAllItems(): Flow<List<ShopItem>>
+    suspend fun getAllItems(): List<ShopItem>
+
+    @Query("SELECT * FROM shop_items WHERE itemId = :itemId LIMIT 1")
+    suspend fun getItemByItemId(itemId: String): ShopItem?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)  // REPLACE evita duplicati
+    suspend fun upsertItems(items: List<ShopItem>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertItem(item: ShopItem)
 }

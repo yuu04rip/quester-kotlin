@@ -8,10 +8,10 @@ import com.example.quester.data.model.ShopItem
 import com.example.quester.data.model.User
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,10 +47,11 @@ class ShopServiceTest {
 
         sessionManager.createSession(testUserId)
 
+        // Inserisci oggetti nello shop
         db.shopDao().upsertItems(
             listOf(
-                ShopItem(id = "hat_1", name = "Cool Hat", price = 120),
-                ShopItem(id = "skin_1", name = "Blue Skin", price = 300)
+                ShopItem(itemId = "hat_1", name = "Cool Hat", price = 120),
+                ShopItem(itemId = "skin_1", name = "Blue Skin", price = 300)
             )
         )
     }
@@ -62,41 +63,109 @@ class ShopServiceTest {
     }
 
     @Test
-    fun purchase_success_scales_coins_and_owns_item() = runBlocking {
-        val result = shopService.purchase("hat_1")
-        assertTrue(result is PurchaseResult.Success)
+    fun buyItem_success_scales_coins_and_owns_item() = runBlocking {
+        // Arrange
+        val itemId = "hat_1"
+        val itemPrice = 120
+        val expectedCoins = 200 - itemPrice
+
+        // Act
+        val result = shopService.buyItem(itemId)
+
+        // Assert
+        assertTrue("L'acquisto dovrebbe avere successo", result)
 
         val user = db.userDao().getUserById(testUserId)!!
-        assertEquals(80, user.coins)
+        assertEquals("Le monete dovrebbero essere scalate correttamente", expectedCoins, user.coins)
 
-        val owned = db.ownedCosmeticDao().isOwned(user.id, "hat_1")
-        assertTrue(owned)
+        val owned = db.ownedCosmeticDao().isOwned(testUserId, itemId)
+        assertTrue("L'oggetto dovrebbe essere posseduto", owned)
     }
 
     @Test
-    fun purchase_insufficient_funds() = runBlocking {
-        val result = shopService.purchase("skin_1")
-        assertTrue(result is PurchaseResult.InsufficientFunds)
+    fun buyItem_insufficient_funds_returns_false() = runBlocking {
+        // Arrange
+        val itemId = "skin_1"  // Prezzo 300, ma l'utente ha 200 monete
+
+        // Act
+        val result = shopService.buyItem(itemId)
+
+        // Assert
+        assertFalse("L'acquisto dovrebbe fallire per fondi insufficienti", result)
 
         val user = db.userDao().getUserById(testUserId)!!
-        assertEquals(200, user.coins)
+        assertEquals("Le monete non dovrebbero essere scalate", 200, user.coins)
+
+        val owned = db.ownedCosmeticDao().isOwned(testUserId, itemId)
+        assertFalse("L'oggetto non dovrebbe essere posseduto", owned)
     }
 
     @Test
-    fun purchase_item_not_found() = runBlocking {
-        val result = shopService.purchase("not_exists")
-        assertTrue(result is PurchaseResult.ItemNotFound)
+    fun buyItem_item_not_found_returns_false() = runBlocking {
+        // Arrange
+        val invalidItemId = "not_exists"
+
+        // Act
+        val result = shopService.buyItem(invalidItemId)
+
+        // Assert
+        assertFalse("L'acquisto dovrebbe fallire per oggetto non trovato", result)
+
+        val user = db.userDao().getUserById(testUserId)!!
+        assertEquals("Le monete non dovrebbero essere scalate", 200, user.coins)
     }
 
     @Test
-    fun purchase_already_owned() = runBlocking {
-        val first = shopService.purchase("hat_1")
-        assertTrue(first is PurchaseResult.Success)
+    fun buyItem_already_owned_returns_false() = runBlocking {
+        // Arrange
+        val itemId = "hat_1"
 
-        val second = shopService.purchase("hat_1")
-        assertTrue(second is PurchaseResult.AlreadyOwned)
+        // Act - Primo acquisto (successo)
+        val firstResult = shopService.buyItem(itemId)
+        assertTrue("Il primo acquisto dovrebbe avere successo", firstResult)
+
+        // Act - Secondo acquisto (dovrebbe fallire perché già posseduto)
+        val secondResult = shopService.buyItem(itemId)
+
+        // Assert
+        assertFalse("Il secondo acquisto dovrebbe fallire per oggetto già posseduto", secondResult)
 
         val user = db.userDao().getUserById(testUserId)!!
-        assertEquals(80, user.coins) // Non scala una seconda volta
+        assertEquals("Le monete non dovrebbero essere scalate una seconda volta", 80, user.coins)
+
+        // Verifica che l'oggetto sia ancora posseduto una volta sola
+        val ownedList = db.ownedCosmeticDao().getOwnedByUser(testUserId).first()
+        val ownedCount = ownedList.count { owned -> owned.itemId == itemId }
+        assertEquals("L'oggetto dovrebbe essere posseduto una sola volta", 1, ownedCount)
+    }
+
+    @Test
+    fun buyItem_with_zero_coins_returns_false() = runBlocking {
+        // Arrange - Crea un utente con 0 monete
+        val poorUserId = db.userDao().insertUser(
+            User(username = "poor", passwordHash = "hash", xpTotale = 0, livello = 1, coins = 0)
+        )
+        sessionManager.createSession(poorUserId)
+
+        // Act
+        val result = shopService.buyItem("hat_1")
+
+        // Assert
+        assertFalse("L'acquisto con 0 monete dovrebbe fallire", result)
+
+        val user = db.userDao().getUserById(poorUserId)!!
+        assertEquals("Le monete dovrebbero rimanere 0", 0, user.coins)
+    }
+
+    @Test
+    fun buyItem_with_no_logged_user_returns_false() = runBlocking {
+        // Arrange
+        sessionManager.clearSession()
+
+        // Act
+        val result = shopService.buyItem("hat_1")
+
+        // Assert
+        assertFalse("L'acquisto senza utente loggato dovrebbe fallire", result)
     }
 }

@@ -3,6 +3,7 @@ package com.example.quester.domain.service
 import com.example.quester.data.dao.OwnedCosmeticDao
 import com.example.quester.data.dao.ShopDao
 import com.example.quester.data.model.OwnedCosmetic
+import com.example.quester.data.model.ShopItem
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
 import kotlinx.coroutines.flow.first
@@ -13,26 +14,47 @@ class ShopService(
     private val ownedDao: OwnedCosmeticDao,
     private val sessionManager: SessionManager
 ) {
-    suspend fun purchase(itemId: String): PurchaseResult {
-        val userId = sessionManager.loggedUserId.first() ?: return PurchaseResult.NoUser
-        val user = userRepository.getUserById(userId) ?: return PurchaseResult.NoUser
-        val item = shopDao.getItemById(itemId) ?: return PurchaseResult.ItemNotFound
 
-        if (ownedDao.isOwned(user.id, item.id)) return PurchaseResult.AlreadyOwned
-        if (user.coins < item.price) return PurchaseResult.InsufficientFunds
+    suspend fun buyItem(itemId: String): Boolean {
+        val userId = sessionManager.loggedUserId.first()
+            ?: return false
 
-        val spent = userRepository.spendCoins(userId, item.price)
-        if (!spent) return PurchaseResult.InsufficientFunds
+        // 1. Verifica se l'oggetto esiste
+        val item = shopDao.getItemByItemId(itemId) ?: return false
 
-        ownedDao.insertOwned(OwnedCosmetic(userId = user.id, itemId = item.id))
-        return PurchaseResult.Success
+        // 2. Verifica se l'utente possiede già l'oggetto
+        if (ownedDao.isOwned(userId, itemId)) {
+            return false
+        }
+
+        // 3. Verifica se l'utente ha abbastanza monete
+        val user = userRepository.getUserById(userId) ?: return false
+        if (user.coins < item.price) {
+            return false
+        }
+
+        // 4. Sottrai le monete
+        val success = userRepository.spendCoins(userId, item.price)
+        if (!success) return false
+
+        // 5. Aggiungi l'oggetto ai posseduti
+        userRepository.unlockCosmetic(userId, itemId)
+
+        return true
     }
-}
 
-sealed interface PurchaseResult {
-    data object Success : PurchaseResult
-    data object NoUser : PurchaseResult
-    data object ItemNotFound : PurchaseResult
-    data object AlreadyOwned : PurchaseResult
-    data object InsufficientFunds : PurchaseResult
+    // Metodo per ottenere tutti gli oggetti dello shop con stato "posseduto"
+    suspend fun getShopItemsWithOwnership(): List<Pair<ShopItem, Boolean>> {
+        val userId = sessionManager.loggedUserId.first()
+        val allItems = shopDao.getAllItems()
+        val ownedItems = if (userId != null) {
+            userRepository.getOwnedCosmetics(userId).map { it.itemId }.toSet()
+        } else {
+            emptySet()
+        }
+
+        return allItems.map { item ->
+            Pair(item, item.itemId in ownedItems)
+        }
+    }
 }

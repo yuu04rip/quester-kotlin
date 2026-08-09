@@ -25,12 +25,17 @@ fun MissionListScreen(
     userRepository: UserRepository,
     sessionManager: SessionManager
 ) {
-    // Stato
-    val state = rememberMissionListState()
+    // STATO DIRETTO - usando variabili locali invece di data class
+    var selectedMissionId by remember { mutableStateOf<Long?>(null) }
+    var missionToEdit by remember { mutableStateOf<MissionWithSubTasks?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var missionToReset by remember { mutableStateOf<MissionWithSubTasks?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf(FilterStatus.ALL) }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Dati
     val loggedUserId by sessionManager.loggedUserId.collectAsState(initial = null)
     val rawMissions by (loggedUserId?.let {
         missionRepository.getAllMissionsWithSubTasksForUser(it)
@@ -39,9 +44,8 @@ fun MissionListScreen(
         userRepository.getUserByIdFlow(it)
     } ?: flowOf(null)).collectAsState(initial = null)
 
-    val filteredMissions = filterMissions(rawMissions, state.searchQuery, state.selectedFilter)
+    val filteredMissions = filterMissions(rawMissions, searchQuery, selectedFilter)
 
-    // UI
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
@@ -59,25 +63,27 @@ fun MissionListScreen(
                 // Header
                 MissionListHeader(
                     username = user?.username ?: "Eroe",
-                    onAddClick = { state.showAddDialog = true }
+                    onAddClick = {
+                        showAddDialog = true  // Imposta direttamente la variabile
+                    }
                 )
 
                 // Filtri
                 SearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = { state.searchQuery = it }
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it }
                 )
                 FilterChips(
-                    selectedFilter = state.selectedFilter,
-                    onFilterSelected = { state.selectedFilter = it }
+                    selectedFilter = selectedFilter,
+                    onFilterSelected = { selectedFilter = it }
                 )
 
                 // Lista missioni
                 MissionListContent(
                     missions = filteredMissions,
                     callbacks = MissionListCallbacks(
-                        onMissionClick = { state.selectedMissionId = it.mission.id },
-                        onEditClick = { state.missionToEdit = it },
+                        onMissionClick = { selectedMissionId = it.mission.id },
+                        onEditClick = { missionToEdit = it },
                         onDeleteClick = { missionWithTasks ->
                             handleMissionDelete(
                                 missionWithTasks = missionWithTasks,
@@ -86,52 +92,110 @@ fun MissionListScreen(
                                 scope = scope
                             )
                         },
-                        onResetClick = { state.missionToReset = it }
+                        onResetClick = { missionToReset = it }
                     )
                 )
             }
 
-            // Dialoghi
-            MissionDialogsContainer(
-                state = state,
-                rawMissions = rawMissions,
-                missionService = missionService,
-                snackbarHostState = snackbarHostState,
-                scope = scope
-            )
+            // DIALOG RESET
+            missionToReset?.let { missionWithTasks ->
+                ResetMissionDialog(
+                    missionWithTasks = missionWithTasks,
+                    onDismiss = { missionToReset = null },
+                    onConfirm = { missionId ->
+                        scope.launch {
+                            try {
+                                missionService.resetMission(missionId)
+                                snackbarHostState.showSnackbar(
+                                    message = "Missione resettata con successo!",
+                                    duration = SnackbarDuration.Short
+                                )
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar(
+                                    message = "Errore: ${e.message}",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            missionToReset = null
+                        }
+                    }
+                )
+            }
+
+            // DIALOG AGGIUNTA - ora funziona correttamente
+            if (showAddDialog) {
+                AddMissionDialog(
+                    onDismiss = {
+                        showAddDialog = false  // Chiude il dialog
+                    },
+                    onMissionCreated = { title, description, type, xp, tasks ->
+                        scope.launch {
+                            missionService.createMissionFromForm(
+                                title = title,
+                                description = description,
+                                type = type.dbValue,
+                                dueDate = null,
+                                xpReward = xp,
+                                subtasks = tasks
+                            )
+                            showAddDialog = false  // Chiude il dialog dopo la creazione
+                        }
+                    }
+                )
+            }
+
+            // DIALOG MODIFICA
+            missionToEdit?.let { missionWithTasks ->
+                EditMissionDialog(
+                    missionWithTasks = missionWithTasks,
+                    onDismiss = { missionToEdit = null },
+                    onMissionUpdated = { title, description, type, xp, tasks ->
+                        scope.launch {
+                            missionService.updateMissionFromForm(
+                                mission = missionWithTasks.mission,
+                                newTitle = title,
+                                newDescription = description,
+                                newType = type.dbValue,
+                                newXpReward = xp,
+                                newSubtasksText = tasks
+                            )
+                            missionToEdit = null
+                        }
+                    }
+                )
+            }
+
+            // DIALOG DETTAGLI
+            selectedMissionId?.let { targetId ->
+                val currentMission = rawMissions.find { it.mission.id == targetId }
+                if (currentMission != null) {
+                    MissionDetailDialog(
+                        missionWithTasks = currentMission,
+                        onDismiss = { selectedMissionId = null },
+                        onTaskToggle = { subTask ->
+                            scope.launch {
+                                missionService.toggleSubTask(subTask, !subTask.done)
+                            }
+                        },
+                        onEditClick = {
+                            selectedMissionId = null
+                            missionToEdit = currentMission
+                        },
+                        onDeleteClick = {
+                            handleMissionDelete(
+                                missionWithTasks = currentMission,
+                                missionService = missionService,
+                                snackbarHostState = snackbarHostState,
+                                scope = scope
+                            )
+                            selectedMissionId = null
+                        }
+                    )
+                }
+            }
         }
     }
 }
-
-// ===== STATO =====
-
-@Composable
-private fun rememberMissionListState(): MissionListState {
-    var selectedMissionId by remember { mutableStateOf<Long?>(null) }
-    var missionToEdit by remember { mutableStateOf<MissionWithSubTasks?>(null) }
-    var showAddDialog by remember { mutableStateOf(false) }
-    var missionToReset by remember { mutableStateOf<MissionWithSubTasks?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf(FilterStatus.ALL) }
-
-    return MissionListState(
-        selectedMissionId = selectedMissionId,
-        missionToEdit = missionToEdit,
-        showAddDialog = showAddDialog,
-        missionToReset = missionToReset,
-        searchQuery = searchQuery,
-        selectedFilter = selectedFilter
-    )
-}
-
-private data class MissionListState(
-    var selectedMissionId: Long? = null,
-    var missionToEdit: MissionWithSubTasks? = null,
-    var showAddDialog: Boolean = false,
-    var missionToReset: MissionWithSubTasks? = null,
-    var searchQuery: String = "",
-    var selectedFilter: FilterStatus = FilterStatus.ALL
-)
 
 // ===== CALLBACKS =====
 
@@ -190,184 +254,60 @@ private fun MissionListContent(
     }
 }
 
-// ===== DIALOGHI =====
-
-@Composable
-private fun MissionDialogsContainer(
-    state: MissionListState,
-    rawMissions: List<MissionWithSubTasks>,
-    missionService: MissionService,
-    snackbarHostState: SnackbarHostState,
-    scope: kotlinx.coroutines.CoroutineScope
-) {
-    // Dialog Reset
-    ResetMissionDialog(
-        missionToReset = state.missionToReset,
-        onDismiss = { state.missionToReset = null },
-        onConfirm = { missionId ->
-            executeResetMission(
-                missionId = missionId,
-                missionService = missionService,
-                snackbarHostState = snackbarHostState,
-                scope = scope,
-                onComplete = { state.missionToReset = null }
-            )
-        }
-    )
-
-    // Dialog Aggiunta
-    if (state.showAddDialog) {
-        AddMissionDialog(
-            onDismiss = { state.showAddDialog = false },
-            onMissionCreated = { title, description, type, xp, tasks ->
-                scope.launch {
-                    missionService.createMissionFromForm(
-                        title = title,
-                        description = description,
-                        type = type.dbValue,
-                        dueDate = null,
-                        xpReward = xp,
-                        subtasks = tasks
-                    )
-                    state.showAddDialog = false
-                }
-            }
-        )
-    }
-
-    // Dialog Modifica
-    state.missionToEdit?.let { missionWithTasks ->
-        EditMissionDialog(
-            missionWithTasks = missionWithTasks,
-            onDismiss = { state.missionToEdit = null },
-            onMissionUpdated = { title, description, type, xp, tasks ->
-                scope.launch {
-                    missionService.updateMissionFromForm(
-                        mission = missionWithTasks.mission,
-                        newTitle = title,
-                        newDescription = description,
-                        newType = type.dbValue,
-                        newXpReward = xp,
-                        newSubtasksText = tasks
-                    )
-                    state.missionToEdit = null
-                }
-            }
-        )
-    }
-
-    // Dialog Dettagli
-    state.selectedMissionId?.let { targetId ->
-        val currentMission = rawMissions.find { it.mission.id == targetId }
-        if (currentMission != null) {
-            MissionDetailDialog(
-                missionWithTasks = currentMission,
-                onDismiss = { state.selectedMissionId = null },
-                onTaskToggle = { subTask ->
-                    scope.launch {
-                        missionService.toggleSubTask(subTask, !subTask.done)
-                    }
-                },
-                onEditClick = {
-                    state.selectedMissionId = null
-                    state.missionToEdit = currentMission
-                },
-                onDeleteClick = {
-                    handleMissionDelete(
-                        missionWithTasks = currentMission,
-                        missionService = missionService,
-                        snackbarHostState = snackbarHostState,
-                        scope = scope
-                    )
-                    state.selectedMissionId = null
-                }
-            )
-        }
-    }
-}
-
 // ===== DIALOG RESET =====
 
 @Composable
 private fun ResetMissionDialog(
-    missionToReset: MissionWithSubTasks?,
+    missionWithTasks: MissionWithSubTasks,
     onDismiss: () -> Unit,
     onConfirm: (Long) -> Unit
 ) {
-    missionToReset?.let { missionWithTasks ->
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                "Resettare la missione?",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column {
                 Text(
-                    "Resettare la missione?",
-                    style = MaterialTheme.typography.titleLarge
+                    "I task della missione \"${missionWithTasks.mission.title}\" verranno resettati.",
+                    style = MaterialTheme.typography.bodyMedium
                 )
-            },
-            text = {
-                Column {
-                    Text(
-                        "I task della missione \"${missionWithTasks.mission.title}\" verranno resettati.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Dovrai completarli di nuovo per ottenere gli XP.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (missionWithTasks.subTasks.any { it.done }) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Dovrai completarli di nuovo per ottenere gli XP.",
+                        "⚠️ ${missionWithTasks.subTasks.count { it.done }} task sono già stati completati e verranno azzerati.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.error
                     )
-                    if (missionWithTasks.subTasks.any { it.done }) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "⚠️ ${missionWithTasks.subTasks.count { it.done }} task sono già stati completati e verranno azzerati.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { onConfirm(missionWithTasks.mission.id) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary
-                    )
-                ) {
-                    Text("Reset")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("Annulla")
                 }
             }
-        )
-    }
-}
-
-// ===== ESECUZIONE AZIONI =====
-
-private fun executeResetMission(
-    missionId: Long,
-    missionService: MissionService,
-    snackbarHostState: SnackbarHostState,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onComplete: () -> Unit
-) {
-    scope.launch {
-        try {
-            missionService.resetMission(missionId)
-            snackbarHostState.showSnackbar(
-                message = "Missione resettata con successo!",
-                duration = SnackbarDuration.Short
-            )
-        } catch (e: Exception) {
-            snackbarHostState.showSnackbar(
-                message = "Errore: ${e.message}",
-                duration = SnackbarDuration.Short
-            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(missionWithTasks.mission.id) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text("Reset")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annulla")
+            }
         }
-        onComplete()
-    }
+    )
 }
 
 // ===== FUNZIONI PURE =====

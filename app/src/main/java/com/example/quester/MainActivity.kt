@@ -35,10 +35,8 @@ class MainActivity : ComponentActivity() {
 
             val currencyService = remember { CurrencyService(userRepository, sessionManager) }
 
-            // NUOVO: Crea il servizio di notifiche di sicurezza
             val securityNotificationService = remember { SecurityNotificationService(context) }
 
-            // MODIFICATO: Passa anche securityNotificationService
             val missionService = remember {
                 MissionService(
                     missionRepository = missionRepository,
@@ -49,25 +47,24 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            // CORRETTO: ShopService con il parametro corretto 'ownedDao'
             val shopService = remember {
                 ShopService(
                     userRepository = userRepository,
                     shopDao = database.shopDao(),
-                    ownedDao = database.ownedCosmeticDao(),  // Cambiato da ownedCosmeticDao a ownedDao
+                    ownedDao = database.ownedCosmeticDao(),
                     sessionManager = sessionManager
                 )
             }
 
-            // Pre-populate shop items for demo
+            // Pre-populate shop items - SENZA id
             LaunchedEffect(Unit) {
                 database.shopDao().upsertItems(
                     listOf(
-                        ShopItem("skin_knight", "Armatura da Cavaliere", 500),
-                        ShopItem("skin_wizard", "Veste da Mago", 800),
-                        ShopItem("skin_rogue", "Mantello del Ladro", 400),
-                        ShopItem("skin_dragon", "Squame di Drago", 2000),
-                        ShopItem("skin_slime", "Pelle di Slime", 100)
+                        ShopItem(itemId = "skin_slime", name = "Pelle di Slime", price = 100),
+                        ShopItem(itemId = "skin_rogue", name = "Mantello del Ladro", price = 400),
+                        ShopItem(itemId = "skin_knight", name = "Armatura da Cavaliere", price = 500),
+                        ShopItem(itemId = "skin_wizard", name = "Veste da Mago", price = 800),
+                        ShopItem(itemId = "skin_dragon", name = "Squame di Drago", price = 2000)
                     )
                 )
             }
