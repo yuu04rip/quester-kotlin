@@ -4,7 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -19,14 +25,6 @@ import com.example.quester.domain.service.MissionService
 import com.example.quester.domain.service.ShopService
 import com.example.quester.ui.screens.mission.MissionListScreen
 import kotlinx.coroutines.launch
-
-// Colori Tema Fantasy (stessi degli altri schermi)
-private val FantasyBackground = Color(0xFF0D0B14)
-private val FantasySurface = Color(0xFF171321)
-private val FantasyGoldLight = Color(0xFFF0CC78)
-private val FantasyPurple = Color(0xFF6B4C9A)
-private val FantasyText = Color(0xFFF3EBD8)
-private val FantasyTextSecondary = Color(0xFFC8BDA8)
 
 @Composable
 fun NavBar(
@@ -59,7 +57,7 @@ fun NavBar(
                     NavigationBarItem(
                         icon = {
                             Icon(
-                                screen.icon,
+                                imageVector = screen.icon,
                                 contentDescription = screen.title,
                                 tint = if (pagerState.currentPage == index) {
                                     FantasyGoldLight
@@ -70,7 +68,7 @@ fun NavBar(
                         },
                         label = {
                             Text(
-                                screen.title,
+                                text = screen.title,
                                 color = if (pagerState.currentPage == index) {
                                     FantasyGoldLight
                                 } else {

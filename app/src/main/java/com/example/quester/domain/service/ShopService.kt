@@ -19,31 +19,25 @@ class ShopService(
         val userId = sessionManager.loggedUserId.first()
             ?: return false
 
-        // 1. Verifica se l'oggetto esiste
         val item = shopDao.getItemByItemId(itemId) ?: return false
 
-        // 2. Verifica se l'utente possiede già l'oggetto
         if (ownedDao.isOwned(userId, itemId)) {
             return false
         }
 
-        // 3. Verifica se l'utente ha abbastanza monete
         val user = userRepository.getUserById(userId) ?: return false
         if (user.coins < item.price) {
             return false
         }
 
-        // 4. Sottrai le monete
         val success = userRepository.spendCoins(userId, item.price)
         if (!success) return false
 
-        // 5. Aggiungi l'oggetto ai posseduti
         userRepository.unlockCosmetic(userId, itemId)
 
         return true
     }
 
-    // Metodo per ottenere tutti gli oggetti dello shop con stato "posseduto"
     suspend fun getShopItemsWithOwnership(): List<Pair<ShopItem, Boolean>> {
         val userId = sessionManager.loggedUserId.first()
         val allItems = shopDao.getAllItems()

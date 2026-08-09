@@ -14,7 +14,6 @@ class UserRepository(
     companion object {
         private const val XP_PER_LEVEL = 100
 
-        // Costanti per messaggi di errore
         private const val ERROR_USERNAME_EMPTY = "Username vuoto"
         private const val ERROR_USERNAME_TAKEN = "Username già in uso"
         private const val ERROR_OWNED_DAO_NOT_PROVIDED = "OwnedCosmeticDao non fornito"
@@ -92,14 +91,15 @@ class UserRepository(
         return ownedDao.isOwned(userId, itemId)
     }
 
-    fun getOwnedCosmeticsFlow(userId: Long): Flow<List<OwnedCosmetic>> {
-        val ownedDao = ownedCosmeticDao ?: throw IllegalStateException(ERROR_OWNED_DAO_NOT_PROVIDED)
-        return ownedDao.getOwnedByUser(userId)
-    }
-
+    // Metodo per ottenere i cosmetici - USATO DAL PROFILO
     suspend fun getOwnedCosmetics(userId: Long): List<OwnedCosmetic> {
         val ownedDao = ownedCosmeticDao ?: return emptyList()
         return ownedDao.getOwnedByUser(userId).first()
+    }
+
+    fun getOwnedCosmeticsFlow(userId: Long): Flow<List<OwnedCosmetic>> {
+        val ownedDao = ownedCosmeticDao ?: throw IllegalStateException(ERROR_OWNED_DAO_NOT_PROVIDED)
+        return ownedDao.getOwnedByUser(userId)
     }
 
     suspend fun deleteUserAndProgress() {
