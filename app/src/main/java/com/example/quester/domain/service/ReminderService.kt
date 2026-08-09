@@ -7,6 +7,9 @@ import java.util.concurrent.TimeUnit
 class ReminderService(private val context: Context) {
 
     fun scheduleMissionReminder(missionId: Long, missionTitle: String, delayMinutes: Long) {
+        // Se delay è 0 o negativo, non programmare
+        if (delayMinutes <= 0) return
+
         val inputData = workDataOf(
             "missionId" to missionId,
             "missionTitle" to missionTitle

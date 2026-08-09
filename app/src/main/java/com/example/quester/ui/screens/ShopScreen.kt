@@ -275,9 +275,9 @@ private fun handleBuyItem(
         try {
             val success = shopService.buyItem(item.itemId)
             val message = if (success) {
-                "✨ ${item.name} acquistato! ✨"
+                "✦ ${item.name} acquistato! ✦"
             } else {
-                "❌ Monete insufficienti o già posseduto!"
+                "✗ Monete insufficienti o già posseduto!"
             }
             snackbarHostState.showSnackbar(
                 message = message,

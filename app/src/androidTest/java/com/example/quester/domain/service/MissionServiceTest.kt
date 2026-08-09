@@ -41,13 +41,15 @@ class MissionServiceTest {
         currencyService = CurrencyService(userRepository, sessionManager)
 
         // Crea il service in TEST MODE per saltare i controlli di tempo
+        // NOTA: reminderService = null perché nei test non vogliamo notifiche
         missionService = MissionService(
             missionRepository = missionRepository,
             userRepository = userRepository,
             currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
-            isTestMode = true  // IMPORTANTE: attiva la test mode
+            reminderService = null,  // Aggiunto: nessun promemoria nei test
+            isTestMode = true
         )
 
         testUserId = db.userDao().insertUser(
@@ -471,7 +473,8 @@ class MissionServiceTest {
             currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
-            isTestMode = false  // Test mode disattivato per questo test specifico
+            reminderService = null,  // Aggiunto
+            isTestMode = false
         )
 
         // Arrange - Crea una missione

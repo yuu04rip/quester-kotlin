@@ -56,6 +56,9 @@ private val FantasyPurpleDark = Color(0xFF2B1D42)
 private val FantasyText = Color(0xFFF3EBD8)
 private val FantasyTextSecondary = Color(0xFFC8BDA8)
 
+// Costanti per il calcolo dei livelli
+private const val XP_PER_LEVEL = 100
+
 @Composable
 fun ProfileScreen(
     userRepository: UserRepository,
@@ -91,7 +94,6 @@ fun ProfileScreen(
         )
     }
 
-    // CORRETTO: onRemoveImage restituisce Unit
     val onRemoveImage: () -> Unit = {
         loggedUserId?.let { userId ->
             scope.launch {
@@ -194,6 +196,14 @@ private fun ProfileContent(
                 HorizontalDivider(color = FantasyGold.copy(alpha = 0.35f))
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Statistiche con barra XP
+                FantasyXpProgress(
+                    xpTotale = user.xpTotale,
+                    livello = user.livello
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 // Statistiche
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -202,18 +212,12 @@ private fun ProfileContent(
                     FantasyStatItem(
                         icon = Icons.Default.Star,
                         value = "${user.xpTotale}",
-                        label = "XP",
-                        color = FantasyGold
-                    )
-                    FantasyStatItem(
-                        icon = Icons.Default.Star,
-                        value = "${user.xpTotale / 100 + 1}",
-                        label = "NEXT LVL",
+                        label = "XP TOTALI",
                         color = FantasyGold
                     )
                     FantasyCoinStatItem(
                         value = "${user.coins}",
-                        label = "Monete"
+                        label = "MONETE"
                     )
                 }
             }
@@ -269,6 +273,83 @@ private fun ProfileContent(
         )
     }
 }
+
+// ===== BARRA DI PROGRESSO XP =====
+
+@Composable
+private fun FantasyXpProgress(
+    xpTotale: Int,
+    livello: Int
+) {
+    val xpForCurrentLevel = (livello - 1) * XP_PER_LEVEL
+    val xpInCurrentLevel = xpTotale - xpForCurrentLevel
+    val progress = xpInCurrentLevel.toFloat() / XP_PER_LEVEL
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Liv. ${livello}",
+                style = MaterialTheme.typography.labelSmall,
+                color = FantasyTextSecondary,
+                fontFamily = FontFamily.Serif
+            )
+            Text(
+                text = "$xpInCurrentLevel / $XP_PER_LEVEL XP",
+                style = MaterialTheme.typography.labelSmall,
+                color = FantasyTextSecondary,
+                fontFamily = FontFamily.Serif
+            )
+            Text(
+                text = "Liv. ${livello + 1}",
+                style = MaterialTheme.typography.labelSmall,
+                color = FantasyTextSecondary,
+                fontFamily = FontFamily.Serif
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(FantasyPurpleDark.copy(alpha = 0.5f))
+                .border(1.dp, FantasyGold.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                FantasyPurple,
+                                FantasyGold
+                            )
+                        )
+                    )
+            )
+        }
+    }
+}
+
+// ===== FUNZIONI DI CALCOLO =====
+
+private fun getXpToNextLevel(xpTotale: Int, livello: Int): String {
+    val xpForNextLevel = livello * XP_PER_LEVEL
+    val xpRemaining = xpForNextLevel - xpTotale
+    return if (xpRemaining > 0) "$xpRemaining" else "MAX"
+}
+
+// ===== AVATAR =====
 
 @Composable
 private fun ProfileAvatar(
@@ -361,6 +442,8 @@ private fun ProfileAvatar(
     }
 }
 
+// ===== COSMETICI =====
+
 @Composable
 private fun CosmeticsGrid(
     ownedCosmetics: List<OwnedCosmetic>,
@@ -392,6 +475,8 @@ private fun CosmeticsGrid(
         }
     }
 }
+
+// ===== STAT ITEMS =====
 
 @Composable
 fun FantasyStatItem(
@@ -450,6 +535,8 @@ fun FantasyCoinStatItem(
         )
     }
 }
+
+// ===== COSMETIC ITEM =====
 
 @Composable
 fun FantasyCosmeticItem(itemId: String) {

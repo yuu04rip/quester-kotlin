@@ -15,6 +15,7 @@ class MissionService(
     private val currencyService: CurrencyService,
     private val sessionManager: SessionManager,
     private val securityNotificationService: SecurityNotificationService? = null,
+    private val reminderService: ReminderService? = null,  // Aggiunto
     private val isTestMode: Boolean = false
 ) {
 
@@ -88,6 +89,11 @@ class MissionService(
 
         missionRepository.createMission(mission, cleanSubtasks)
 
+        // 🆕 PROGRAMMA IL PROMEMORIA IN BASE AL TIPO
+        if (!isTestMode && reminderService != null) {
+            scheduleReminderForMission(missionType, mission.id, mission.title)
+        }
+
         if (!isTestMode) {
             securityNotificationService?.sendSecurityAlert(
                 userId = userId,
@@ -95,6 +101,27 @@ class MissionService(
                 message = "Hai creato la missione \"${mission.title}\""
             )
         }
+    }
+
+    /**
+     * Programma un promemoria per la missione in base al tipo
+     */
+    private fun scheduleReminderForMission(
+        missionType: MissionType,
+        missionId: Long,
+        missionTitle: String
+    ) {
+        val delayMinutes = when (missionType) {
+            MissionType.GIORNALIERO -> 12 * 60L  // 12 ore
+            MissionType.SETTIMANALE -> 3 * 24 * 60L  // 3 giorni
+            MissionType.SPECIALE -> 15 * 24 * 60L  // 15 giorni
+        }
+
+        reminderService?.scheduleMissionReminder(
+            missionId = missionId,
+            missionTitle = missionTitle,
+            delayMinutes = delayMinutes
+        )
     }
 
     private suspend fun validateUserCanCreateMission(userId: Long, xpReward: Int) {
@@ -195,6 +222,9 @@ class MissionService(
             }
 
             completeMission(currentMission, userId)
+
+            // Cancella il promemoria se la missione è stata completata
+            reminderService?.cancelMissionReminder(currentMission.id)
         }
     }
 
@@ -258,6 +288,9 @@ class MissionService(
                 throw IllegalStateException("Il tuo account è stato sospeso per comportamento sospetto")
             }
         }
+
+        // Cancella il promemoria se la missione viene eliminata
+        reminderService?.cancelMissionReminder(mission.id)
 
         resetMissionSubtasks(mission.id)
         missionRepository.deleteMission(mission)
