@@ -67,17 +67,19 @@ class MissionServiceTest {
         // Arrange
         val missionTitle = "Study"
         val missionDescription = "Do chapters"
-        val missionType = MissionType.GIORNALIERO.dbValue
-        val xpReward = 20
+        val missionType = MissionType.GIORNALIERO
         val subtasks = listOf("A", "B")
+
+
+        val expectedXp = missionType.xpReward  // 30 per GIORNALIERO
+        val expectedCoins = missionType.coinReward  // 1 per GIORNALIERO
 
         // Act - Creazione missione
         missionService.createMissionFromForm(
             title = missionTitle,
             description = missionDescription,
-            type = missionType,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = xpReward,
             subtasks = subtasks
         )
 
@@ -85,6 +87,7 @@ class MissionServiceTest {
         val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
         val subtaskList = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
         assertEquals("Dovrebbero esserci 2 subtask", 2, subtaskList.size)
+        assertEquals("XP dovrebbe essere quello fisso del tipo", expectedXp, mission.xpReward)
 
         // Act - Completamento primo subtask
         missionService.toggleSubTask(subtaskList[0], true)
@@ -100,9 +103,10 @@ class MissionServiceTest {
         val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertTrue("La missione dovrebbe essere completata", updatedMission.completed)
 
-        // Assert - XP assegnati correttamente
+        // Assert - XP e monete assegnati correttamente
         val userAfter = db.userDao().getUserById(testUserId)!!
-        assertEquals("XP dovrebbero essere $xpReward", xpReward, userAfter.xpTotale)
+        assertEquals("XP dovrebbero essere $expectedXp (fissi per tipo)", expectedXp, userAfter.xpTotale)
+        assertEquals("Monete dovrebbero essere $expectedCoins (fisse per tipo)", expectedCoins, userAfter.coins)
 
         // Act - Tentativo di toggle dello stesso subtask
         try {
@@ -114,7 +118,7 @@ class MissionServiceTest {
 
         // Assert - Nessun doppio XP
         val userAfterSecond = db.userDao().getUserById(testUserId)!!
-        assertEquals("XP non dovrebbero raddoppiare", xpReward, userAfterSecond.xpTotale)
+        assertEquals("XP non dovrebbero raddoppiare", expectedXp, userAfterSecond.xpTotale)
 
         // Verifica che la missione sia ancora completata
         val finalMission = db.missionDao().getMissionByIdOnce(mission.id)!!
@@ -126,16 +130,14 @@ class MissionServiceTest {
         // Arrange
         val missionTitle = "Missione da Eliminare"
         val missionDescription = "Test cancella"
-        val missionType = MissionType.GIORNALIERO.dbValue
-        val xpReward = 20
+        val missionType = MissionType.GIORNALIERO
         val subtaskList = listOf("Subtask 1", "Subtask 2")
 
         missionService.createMissionFromForm(
             title = missionTitle,
             description = missionDescription,
-            type = missionType,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = xpReward,
             subtasks = subtaskList
         )
 
@@ -155,97 +157,33 @@ class MissionServiceTest {
     }
 
     @Test
-    fun create_mission_with_xp_above_range_uses_default() = runBlocking {
-        // Arrange
-        val aboveMaxXp = 999
-        val expectedXp = MissionType.GIORNALIERO.defaultXp // 20
-
-        // Act
-        missionService.createMissionFromForm(
-            title = "Test XP Max",
-            description = "Test validazione XP max",
-            type = MissionType.GIORNALIERO.dbValue,
-            dueDate = null,
-            xpReward = aboveMaxXp,
-            subtasks = listOf("Task 1")
-        )
-
-        // Assert
-        val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
-        assertEquals(
-            "XP fuori range (sopra il massimo) dovrebbe usare il default (${MissionType.GIORNALIERO.defaultXp})",
-            expectedXp,
-            mission.xpReward
-        )
-    }
-
-    @Test
-    fun create_mission_with_xp_below_range_uses_default() = runBlocking {
-        // Arrange
-        val belowMinXp = 1
-        val expectedXp = MissionType.GIORNALIERO.defaultXp // 20
-
-        // Act
-        missionService.createMissionFromForm(
-            title = "Test XP Min",
-            description = "Test validazione XP min",
-            type = MissionType.GIORNALIERO.dbValue,
-            dueDate = null,
-            xpReward = belowMinXp,
-            subtasks = listOf("Task 1")
-        )
-
-        // Assert
-        val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
-        assertEquals(
-            "XP fuori range (sotto il minimo) dovrebbe usare il default (${MissionType.GIORNALIERO.defaultXp})",
-            expectedXp,
-            mission.xpReward
-        )
-    }
-
-    @Test
-    fun create_mission_with_valid_xp_uses_provided_value() = runBlocking {
-        // Arrange
-        val validXp = 30
-
-        // Act
-        missionService.createMissionFromForm(
-            title = "Test XP Valid",
-            description = "Test validazione XP valido",
-            type = MissionType.GIORNALIERO.dbValue,
-            dueDate = null,
-            xpReward = validXp,
-            subtasks = listOf("Task 1")
-        )
-
-        // Assert
-        val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
-        assertEquals("XP valido dovrebbe essere mantenuto", validXp, mission.xpReward)
-    }
-
-    @Test
-    fun create_mission_with_xp_at_boundary_uses_boundary_value() = runBlocking {
+    fun create_mission_uses_fixed_xp_for_type() = runBlocking {
+        // Arrange - Test per ogni tipo di missione
         val testCases = listOf(
-            MissionType.GIORNALIERO.minXp to MissionType.GIORNALIERO.minXp,
-            MissionType.GIORNALIERO.maxXp to MissionType.GIORNALIERO.maxXp,
-            MissionType.GIORNALIERO.defaultXp to MissionType.GIORNALIERO.defaultXp
+            MissionType.GIORNALIERO to 30,
+            MissionType.SETTIMANALE to 120,
+            MissionType.SPECIALE to 400
         )
 
-        testCases.forEachIndexed { index, (input, expected) ->
+        testCases.forEachIndexed { index, (missionType, expectedXp) ->
+            // Act
             missionService.createMissionFromForm(
-                title = "Test XP Boundary $index",
-                description = "Test XP ai limiti",
-                type = MissionType.GIORNALIERO.dbValue,
+                title = "Test XP ${missionType.label} $index",
+                description = "Test XP fisso per ${missionType.label}",
+                type = missionType.dbValue,
                 dueDate = null,
-                xpReward = input,
                 subtasks = listOf("Task 1")
             )
 
+            // Assert
             val missions = db.missionDao().getAllMissionsForUser(testUserId).first()
-            val mission = missions.find { it.title == "Test XP Boundary $index" }
-            assertNotNull("Missione $index non trovata", mission)
-            assertEquals("XP ai limiti ($input) dovrebbe essere mantenuto", expected, mission?.xpReward)
+            val mission = missions.find { it.title == "Test XP ${missionType.label} $index" }
+            assertNotNull("Missione ${missionType.label} non trovata", mission)
+            assertEquals(
+                "XP per ${missionType.label} dovrebbe essere $expectedXp",
+                expectedXp,
+                mission?.xpReward
+            )
         }
     }
 
@@ -254,15 +192,13 @@ class MissionServiceTest {
         // Arrange
         val originalTitle = "Original Title"
         val originalDesc = "Original Description"
-        val originalType = MissionType.GIORNALIERO.dbValue
-        val originalXp = 20
+        val originalType = MissionType.GIORNALIERO
 
         missionService.createMissionFromForm(
             title = originalTitle,
             description = originalDesc,
-            type = originalType,
+            type = originalType.dbValue,
             dueDate = null,
-            xpReward = originalXp,
             subtasks = listOf("Task 1", "Task 2")
         )
 
@@ -271,16 +207,14 @@ class MissionServiceTest {
         // Act
         val newTitle = "Updated Title"
         val newDesc = "Updated Description"
-        val newType = MissionType.SETTIMANALE.dbValue
-        val newXp = 150
+        val newType = MissionType.SETTIMANALE
         val newSubtasks = listOf("New Task 1", "New Task 2", "New Task 3")
 
         missionService.updateMissionFromForm(
             mission = mission,
             newTitle = newTitle,
             newDescription = newDesc,
-            newType = newType,
-            newXpReward = newXp,
+            newType = newType.dbValue,
             newSubtasksText = newSubtasks
         )
 
@@ -288,8 +222,8 @@ class MissionServiceTest {
         val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertEquals("Titolo dovrebbe essere aggiornato", newTitle, updatedMission.title)
         assertEquals("Descrizione dovrebbe essere aggiornata", newDesc, updatedMission.description)
-        assertEquals("Tipo dovrebbe essere aggiornato", newType, updatedMission.type)
-        assertEquals("XP dovrebbe essere aggiornato", newXp, updatedMission.xpReward)
+        assertEquals("Tipo dovrebbe essere aggiornato", newType.dbValue, updatedMission.type)
+        assertEquals("XP dovrebbe essere quello del nuovo tipo (${newType.xpReward})", newType.xpReward, updatedMission.xpReward)
 
         val updatedSubtasks = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
         assertEquals("Dovrebbero esserci 3 subtask", 3, updatedSubtasks.size)
@@ -298,51 +232,17 @@ class MissionServiceTest {
     }
 
     @Test
-    fun update_mission_with_invalid_xp_uses_default() = runBlocking {
-        // Arrange
-        missionService.createMissionFromForm(
-            title = "Original Mission",
-            description = "Original Description",
-            type = MissionType.GIORNALIERO.dbValue,
-            dueDate = null,
-            xpReward = 20,
-            subtasks = listOf("Task 1")
-        )
-
-        val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
-        val expectedXp = MissionType.GIORNALIERO.defaultXp // 20
-
-        // Act
-        missionService.updateMissionFromForm(
-            mission = mission,
-            newTitle = "Updated Mission",
-            newDescription = "Updated Description",
-            newType = MissionType.GIORNALIERO.dbValue,
-            newXpReward = 999,
-            newSubtasksText = listOf("Task 1")
-        )
-
-        // Assert
-        val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
-        assertEquals(
-            "XP fuori range nell'update dovrebbe usare il default (${MissionType.GIORNALIERO.defaultXp})",
-            expectedXp,
-            updatedMission.xpReward
-        )
-    }
-
-    @Test
     fun restore_mission_restores_mission_and_subtasks() = runBlocking {
         // Arrange
         val missionTitle = "Missione da Ripristinare"
         val subtaskList = listOf("Subtask 1", "Subtask 2", "Subtask 3")
+        val missionType = MissionType.GIORNALIERO
 
         missionService.createMissionFromForm(
             title = missionTitle,
             description = "Test ripristino",
-            type = MissionType.GIORNALIERO.dbValue,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = 20,
             subtasks = subtaskList
         )
 
@@ -362,7 +262,7 @@ class MissionServiceTest {
         // Assert - Verifica ripristino
         val restoredMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertEquals("Missione dovrebbe essere ripristinata", missionTitle, restoredMission.title)
-        assertEquals("XP dovrebbe essere ripristinato", 20, restoredMission.xpReward)
+        assertEquals("XP dovrebbe essere quello del tipo (${missionType.xpReward})", missionType.xpReward, restoredMission.xpReward)
         assertFalse("Missione dovrebbe essere non completata", restoredMission.completed)
 
         val restoredSubtasks = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
@@ -375,20 +275,21 @@ class MissionServiceTest {
     fun create_mission_with_empty_subtasks_creates_mission_without_subtasks() = runBlocking {
         // Arrange
         val missionTitle = "Missione senza subtask"
+        val missionType = MissionType.GIORNALIERO
 
         // Act
         missionService.createMissionFromForm(
             title = missionTitle,
             description = "Test senza subtask",
-            type = MissionType.GIORNALIERO.dbValue,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = 20,
             subtasks = emptyList()
         )
 
         // Assert
         val mission = db.missionDao().getAllMissionsForUser(testUserId).first().first()
         assertEquals("Missione dovrebbe essere creata", missionTitle, mission.title)
+        assertEquals("XP dovrebbe essere quello del tipo (${missionType.xpReward})", missionType.xpReward, mission.xpReward)
 
         val subtasks = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
         assertTrue("Non dovrebbero esserci subtask", subtasks.isEmpty())
@@ -398,14 +299,14 @@ class MissionServiceTest {
     fun create_mission_with_whitespace_subtasks_filters_them_out() = runBlocking {
         // Arrange
         val subtasksWithWhitespace = listOf("  ", "Task 1", "   ", "Task 2", "")
+        val missionType = MissionType.GIORNALIERO
 
         // Act
         missionService.createMissionFromForm(
             title = "Test Whitespace",
             description = "Test filtraggio whitespace",
-            type = MissionType.GIORNALIERO.dbValue,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = 20,
             subtasks = subtasksWithWhitespace
         )
 
@@ -415,38 +316,7 @@ class MissionServiceTest {
         assertEquals("Dovrebbero esserci solo 2 subtask validi", 2, subtasks.size)
         assertEquals("Primo subtask dovrebbe essere 'Task 1'", "Task 1", subtasks[0].text)
         assertEquals("Secondo subtask dovrebbe essere 'Task 2'", "Task 2", subtasks[1].text)
-    }
-
-    @Test
-    fun create_mission_with_special_type_uses_correct_range() = runBlocking {
-        // Arrange
-        val testCases = listOf(
-            MissionType.GIORNALIERO to 999,
-            MissionType.SETTIMANALE to 999,
-            MissionType.SPECIALE to 1500
-        )
-
-        testCases.forEach { (missionType, invalidXp) ->
-            // Act
-            missionService.createMissionFromForm(
-                title = "Test ${missionType.label}",
-                description = "Test range ${missionType.label}",
-                type = missionType.dbValue,
-                dueDate = null,
-                xpReward = invalidXp,
-                subtasks = listOf("Task 1")
-            )
-
-            // Assert
-            val missions = db.missionDao().getAllMissionsForUser(testUserId).first()
-            val mission = missions.find { it.title == "Test ${missionType.label}" }
-            assertNotNull("Missione ${missionType.label} non trovata", mission)
-            assertEquals(
-                "XP per ${missionType.label} dovrebbe usare il default (${missionType.defaultXp})",
-                missionType.defaultXp,
-                mission?.xpReward
-            )
-        }
+        assertEquals("XP dovrebbe essere quello del tipo (${missionType.xpReward})", missionType.xpReward, mission.xpReward)
     }
 
     @Test
@@ -463,12 +333,12 @@ class MissionServiceTest {
         )
 
         // Arrange
+        val missionType = MissionType.GIORNALIERO
         realMissionService.createMissionFromForm(
             title = "Fast Mission",
             description = "Test completamento veloce",
-            type = MissionType.GIORNALIERO.dbValue,
+            type = missionType.dbValue,
             dueDate = null,
-            xpReward = 20,
             subtasks = listOf("A", "B")
         )
 

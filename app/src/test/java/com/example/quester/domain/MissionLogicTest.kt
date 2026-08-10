@@ -6,172 +6,106 @@ import org.junit.Test
 
 class MissionLogicTest {
 
-    // ===== TEST VALIDAZIONE XP =====
+    // ===== TEST XP FISSO PER TIPO MISSIONE =====
 
     @Test
-    fun validateXp_withinRange_returnsSameValue() {
-        // Arrange
-        val xpReward = 30
-        val missionType = MissionType.GIORNALIERO
-
-        // Act
-        val result = validateAndNormalizeXp(xpReward, missionType)
-
-        // Assert
-        assertEquals(30, result)
+    fun giornaliero_hasCorrectXpAndCoins() {
+        assertEquals(30, MissionType.GIORNALIERO.xpReward)
+        assertEquals(1, MissionType.GIORNALIERO.coinReward)
     }
 
     @Test
-    fun validateXp_aboveRange_returnsDefault() {
-        // Arrange
-        val xpReward = 999
-        val missionType = MissionType.GIORNALIERO
-
-        // Act
-        val result = validateAndNormalizeXp(xpReward, missionType)
-
-        // Assert
-        assertEquals(MissionType.GIORNALIERO.defaultXp, result)
+    fun settimanale_hasCorrectXpAndCoins() {
+        assertEquals(120, MissionType.SETTIMANALE.xpReward)
+        assertEquals(5, MissionType.SETTIMANALE.coinReward)
     }
 
     @Test
-    fun validateXp_belowRange_returnsDefault() {
-        // Arrange
-        val xpReward = 1
-        val missionType = MissionType.GIORNALIERO
-
-        // Act
-        val result = validateAndNormalizeXp(xpReward, missionType)
-
-        // Assert
-        assertEquals(MissionType.GIORNALIERO.defaultXp, result)
-    }
-
-    @Test
-    fun validateXp_withSpecialType_returnsDefaultWhenAboveRange() {
-        // Arrange
-        val xpReward = 1500
-        val missionType = MissionType.SPECIALE
-
-        // Act
-        val result = validateAndNormalizeXp(xpReward, missionType)
-
-        // Assert
-        assertEquals(MissionType.SPECIALE.defaultXp, result)
-    }
-
-    @Test
-    fun validateXp_withSpecialType_returnsValueWhenWithinRange() {
-        // Arrange
-        val xpReward = 500
-        val missionType = MissionType.SPECIALE
-
-        // Act
-        val result = validateAndNormalizeXp(xpReward, missionType)
-
-        // Assert
-        assertEquals(500, result)
+    fun speciale_hasCorrectXpAndCoins() {
+        assertEquals(400, MissionType.SPECIALE.xpReward)
+        assertEquals(15, MissionType.SPECIALE.coinReward)
     }
 
     // ===== TEST CALCOLO LEVEL-UP =====
 
     @Test
     fun calculateLevel_fromZeroXp_returnsLevel1() {
-        // Arrange
         val xpTotale = 0
-
-        // Act
         val level = calculateLevel(xpTotale)
-
-        // Assert
         assertEquals(1, level)
     }
 
     @Test
     fun calculateLevel_from99Xp_returnsLevel1() {
-        // Arrange
         val xpTotale = 99
-
-        // Act
         val level = calculateLevel(xpTotale)
-
-        // Assert
         assertEquals(1, level)
     }
 
     @Test
     fun calculateLevel_from100Xp_returnsLevel2() {
-        // Arrange
         val xpTotale = 100
-
-        // Act
         val level = calculateLevel(xpTotale)
+        assertEquals(2, level)
+    }
 
-        // Assert
+    @Test
+    fun calculateLevel_from249Xp_returnsLevel2() {
+        val xpTotale = 249
+        val level = calculateLevel(xpTotale)
         assertEquals(2, level)
     }
 
     @Test
     fun calculateLevel_from250Xp_returnsLevel3() {
-        // Arrange
         val xpTotale = 250
-
-        // Act
         val level = calculateLevel(xpTotale)
-
-        // Assert
         assertEquals(3, level)
     }
 
     @Test
+    fun calculateLevel_from450Xp_returnsLevel4() {
+        val xpTotale = 450
+        val level = calculateLevel(xpTotale)
+        assertEquals(4, level)
+    }
+
+    @Test
+    fun calculateLevel_from700Xp_returnsLevel5() {
+        val xpTotale = 700
+        val level = calculateLevel(xpTotale)
+        assertEquals(5, level)
+    }
+
+    @Test
     fun calculateXpToNextLevel_fromLevel1_with0Xp_returns100() {
-        // Arrange
         val xpTotale = 0
         val livello = 1
-
-        // Act
         val xpNeeded = calculateXpToNextLevel(xpTotale, livello)
-
-        // Assert
         assertEquals(100, xpNeeded)
     }
 
     @Test
     fun calculateXpToNextLevel_fromLevel1_with50Xp_returns50() {
-        // Arrange
         val xpTotale = 50
         val livello = 1
-
-        // Act
         val xpNeeded = calculateXpToNextLevel(xpTotale, livello)
-
-        // Assert
         assertEquals(50, xpNeeded)
     }
 
     @Test
-    fun calculateXpToNextLevel_fromLevel2_with150Xp_returns50() {
-        // Arrange
+    fun calculateXpToNextLevel_fromLevel2_with150Xp_returns100() {
         val xpTotale = 150
         val livello = 2
-
-        // Act
         val xpNeeded = calculateXpToNextLevel(xpTotale, livello)
-
-        // Assert
-        assertEquals(50, xpNeeded)
+        assertEquals(100, xpNeeded)
     }
 
     @Test
-    fun calculateXpToNextLevel_fromLevel5_with500Xp_returns0() {
-        // Arrange
-        val xpTotale = 500
-        val livello = 5
-
-        // Act
+    fun calculateXpToNextLevel_fromLevel3_with450Xp_returns0() {
+        val xpTotale = 450
+        val livello = 3
         val xpNeeded = calculateXpToNextLevel(xpTotale, livello)
-
-        // Assert
         assertEquals(0, xpNeeded)
     }
 
@@ -179,40 +113,33 @@ class MissionLogicTest {
 
     @Test
     fun filterMissions_bySearchQuery_matchesTitle() {
-        // Arrange
         val missionTitle = "Missione di prova"
         val searchQuery = "prova"
-
-        // Act
         val matches = matchesSearchQuery(missionTitle, searchQuery)
-
-        // Assert
         assertTrue(matches)
     }
 
     @Test
     fun filterMissions_bySearchQuery_notMatches() {
-        // Arrange
         val missionTitle = "Missione di prova"
         val searchQuery = "altro"
-
-        // Act
         val matches = matchesSearchQuery(missionTitle, searchQuery)
-
-        // Assert
         assertFalse(matches)
     }
 
     @Test
     fun filterMissions_bySearchQuery_caseInsensitive() {
-        // Arrange
         val missionTitle = "Missione di Prova"
         val searchQuery = "prova"
-
-        // Act
         val matches = matchesSearchQuery(missionTitle, searchQuery)
+        assertTrue(matches)
+    }
 
-        // Assert
+    @Test
+    fun filterMissions_bySearchQuery_matchesDescription() {
+        val missionDescription = "Questa è una descrizione di prova"
+        val searchQuery = "prova"
+        val matches = matchesSearchQuery(missionDescription, searchQuery)
         assertTrue(matches)
     }
 
@@ -220,93 +147,106 @@ class MissionLogicTest {
 
     @Test
     fun calculateProgress_noSubtasks_returnsZero() {
-        // Arrange
         val subtasks = emptyList<Task>()
-
-        // Act
         val progress = calculateProgress(subtasks)
-
-        // Assert
         assertEquals(0f, progress, 0.01f)
     }
 
     @Test
     fun calculateProgress_allSubtasksDone_returnsOne() {
-        // Arrange
         val subtasks = listOf(
             Task(done = true),
             Task(done = true),
             Task(done = true)
         )
-
-        // Act
         val progress = calculateProgress(subtasks)
-
-        // Assert
         assertEquals(1f, progress, 0.01f)
     }
 
     @Test
     fun calculateProgress_halfSubtasksDone_returnsHalf() {
-        // Arrange
         val subtasks = listOf(
             Task(done = true),
             Task(done = false),
             Task(done = true),
             Task(done = false)
         )
-
-        // Act
         val progress = calculateProgress(subtasks)
-
-        // Assert
         assertEquals(0.5f, progress, 0.01f)
     }
 
     @Test
     fun calculateProgress_noSubtasksDone_returnsZero() {
-        // Arrange
         val subtasks = listOf(
             Task(done = false),
             Task(done = false)
         )
-
-        // Act
         val progress = calculateProgress(subtasks)
-
-        // Assert
         assertEquals(0f, progress, 0.01f)
+    }
+
+    @Test
+    fun calculateProgress_oneOfThreeDone_returnsOneThird() {
+        val subtasks = listOf(
+            Task(done = true),
+            Task(done = false),
+            Task(done = false)
+        )
+        val progress = calculateProgress(subtasks)
+        assertEquals(0.333f, progress, 0.01f)
     }
 
     // ===== FUNZIONI DI TEST (logica pura) =====
 
-    private fun validateAndNormalizeXp(xpReward: Int, missionType: MissionType): Int {
-        return if (xpReward in missionType.minXp..missionType.maxXp) {
-            xpReward
-        } else {
-            missionType.defaultXp
-        }
-    }
-
+    /**
+     * Calcola il livello in base all'XP totale usando la formula lineare
+     * XP = 100 + (livello - 1) * 50
+     */
     private fun calculateLevel(xpTotale: Int): Int {
-        return (xpTotale / 100) + 1
+        var remainingXp = xpTotale
+        var level = 1
+        while (true) {
+            val xpNeeded = 100 + (level - 1) * 50
+            if (remainingXp >= xpNeeded) {
+                remainingXp -= xpNeeded
+                level++
+            } else {
+                break
+            }
+        }
+        return level
     }
 
+    /**
+     * Calcola l'XP rimanente per il prossimo livello
+     */
     private fun calculateXpToNextLevel(xpTotale: Int, livello: Int): Int {
-        val xpForNextLevel = livello * 100
-        return (xpForNextLevel - xpTotale).coerceAtLeast(0)
+        val xpForCurrentLevel = 100 + (livello - 1) * 50
+        var remainingXp = xpTotale
+        // Sottrai l'XP dei livelli precedenti
+        for (i in 1 until livello) {
+            remainingXp -= 100 + (i - 1) * 50
+        }
+        return (xpForCurrentLevel - remainingXp).coerceAtLeast(0)
     }
 
-    private fun matchesSearchQuery(title: String, query: String): Boolean {
-        return title.contains(query, ignoreCase = true)
+    /**
+     * Verifica se una stringa contiene la query di ricerca (case insensitive)
+     */
+    private fun matchesSearchQuery(text: String, query: String): Boolean {
+        return text.contains(query, ignoreCase = true)
     }
 
+    /**
+     * Calcola il progresso di completamento dei subtask
+     */
     private fun calculateProgress(subtasks: List<Task>): Float {
         if (subtasks.isEmpty()) return 0f
         val done = subtasks.count { it.done }
         return done.toFloat() / subtasks.size
     }
 
-    // Data class per i test
+    // ===== DATA CLASS PER I TEST =====
+
     private data class Task(val done: Boolean)
 }

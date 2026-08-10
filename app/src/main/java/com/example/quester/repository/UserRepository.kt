@@ -4,9 +4,6 @@ import com.example.quester.data.dao.OwnedCosmeticDao
 import com.example.quester.data.dao.UserDao
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
-import com.example.quester.ui.screens.calculateLevelFromXp
-import com.example.quester.ui.screens.getXpInCurrentLevel
-import com.example.quester.ui.screens.getXpRequiredForLevel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -18,6 +15,19 @@ class UserRepository(
         private const val ERROR_USERNAME_EMPTY = "Username vuoto"
         private const val ERROR_USERNAME_TAKEN = "Username già in uso"
         private const val ERROR_OWNED_DAO_NOT_PROVIDED = "OwnedCosmeticDao non fornito"
+
+        // ===== COSTANTI XP E LIVELLI =====
+        private const val XP_BASE = 100
+        private const val XP_INCREMENT = 50
+        private const val MAX_LEVEL = 50
+
+        // ===== RICOMPENSE MISSIONI =====
+        const val XP_DAILY = 30
+        const val XP_WEEKLY = 120
+        const val XP_SPECIAL = 400
+        const val COINS_DAILY = 1
+        const val COINS_WEEKLY = 5
+        const val COINS_SPECIAL = 15
     }
 
     // ===== METODI GET =====
@@ -27,19 +37,89 @@ class UserRepository(
     fun getUserFlow(): Flow<User?> = userDao.getUserFlow()
     fun getUserByIdFlow(userId: Long): Flow<User?> = userDao.getUserByIdFlow(userId)
 
-    // ===== METODI XP =====
+    // ===== METODI XP E LIVELLI =====
+
+    /**
+     * Calcola l'XP necessario per raggiungere un determinato livello
+     * Formula: XP_BASE + (level - 1) * XP_INCREMENT
+     * LV1 = 100, LV2 = 150, LV3 = 200, ...
+     */
+    fun getXpRequiredForLevel(level: Int): Int {
+        return XP_BASE + (level - 1) * XP_INCREMENT
+    }
+
+    /**
+     * Calcola il livello partendo dall'XP totale
+     */
+    fun calculateLevelFromXp(totalXp: Int): Int {
+        var remainingXp = totalXp
+        var level = 1
+        while (level < MAX_LEVEL) {
+            val xpNeeded = getXpRequiredForLevel(level)
+            if (remainingXp >= xpNeeded) {
+                remainingXp -= xpNeeded
+                level++
+            } else {
+                break
+            }
+        }
+        return level.coerceAtMost(MAX_LEVEL)
+    }
+
+    /**
+     * Calcola l'XP accumulato nel livello corrente
+     */
+    fun getXpInCurrentLevel(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Int {
+        var totalXpForPreviousLevels = 0
+        for (i in 1 until level) {
+            totalXpForPreviousLevels += getXpRequiredForLevel(i)
+        }
+        return totalXp - totalXpForPreviousLevels
+    }
+
+    /**
+     * Calcola il progresso verso il prossimo livello (0.0 - 1.0)
+     */
+    fun getXpProgress(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Float {
+        val xpInCurrent = getXpInCurrentLevel(totalXp, level)
+        val xpNeeded = getXpRequiredForLevel(level)
+        return (xpInCurrent.toFloat() / xpNeeded).coerceIn(0f, 1f)
+    }
+
+    /**
+     * Calcola le monete ricevute al level-up in base al livello raggiunto
+     */
+    fun getLevelUpCoins(level: Int): Int {
+        return when (level) {
+            in 1..10 -> 3
+            in 11..20 -> 5
+            in 21..30 -> 8
+            in 31..40 -> 12
+            in 41..50 -> 20
+            else -> 0
+        }
+    }
 
     suspend fun addXp(userId: Long, xpGained: Int) {
         if (xpGained <= 0) return
         val current = getUserById(userId) ?: userDao.getUser() ?: return
+
+        val oldLevel = calculateLevelFromXp(current.xpTotale)
         val newXpTotal = current.xpTotale + xpGained
         val newLevel = calculateLevelFromXp(newXpTotal)
-        userDao.updateUser(
-            current.copy(
-                xpTotale = newXpTotal,
-                livello = newLevel
-            )
+
+        var updatedUser = current.copy(
+            xpTotale = newXpTotal,
+            livello = newLevel
         )
+
+        // Se c'è stato un level-up, aggiungi le monete
+        if (newLevel > oldLevel) {
+            val coinsEarned = getLevelUpCoins(newLevel)
+            updatedUser = updatedUser.copy(coins = updatedUser.coins + coinsEarned)
+        }
+
+        userDao.updateUser(updatedUser)
     }
 
     suspend fun getCurrentLevel(userId: Long): Int {
@@ -57,10 +137,7 @@ class UserRepository(
 
     suspend fun getXpProgress(userId: Long): Float {
         val user = getUserById(userId) ?: return 0f
-        val currentLevel = calculateLevelFromXp(user.xpTotale)
-        val xpInCurrent = getXpInCurrentLevel(user.xpTotale, currentLevel)
-        val xpNeeded = getXpRequiredForLevel(currentLevel)
-        return (xpInCurrent.toFloat() / xpNeeded).coerceIn(0f, 1f)
+        return getXpProgress(user.xpTotale, calculateLevelFromXp(user.xpTotale))
     }
 
     // ===== METODI COINS =====
@@ -96,14 +173,8 @@ class UserRepository(
     }
 
     suspend fun deleteAccount(userId: Long): Boolean {
-
-        // Verifica direttamente se l'utente esiste
         if (getUserById(userId) == null) return false
-
-        // Elimina cosmetici posseduti
         ownedCosmeticDao?.deleteAllForUser(userId)
-
-        // Elimina utente (le missioni e subtask vengono eliminati via CASCADE)
         userDao.deleteUser(userId)
         return true
     }

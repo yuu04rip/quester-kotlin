@@ -7,7 +7,6 @@ import com.example.quester.data.model.VerificationLevel
 import com.example.quester.data.repository.MissionRepository
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
-import com.example.quester.ui.screens.getMissionCoins
 import kotlinx.coroutines.flow.first
 
 class MissionService(
@@ -33,16 +32,6 @@ class MissionService(
         private const val ERROR_MISSION_NOT_FOUND = "❖ Missione non trovata nelle cronache"
     }
 
-    // ===== METODI DI VALIDAZIONE =====
-
-    private fun validateAndNormalizeXp(xpReward: Int, missionType: MissionType): Int {
-        return if (xpReward in missionType.minXp..missionType.maxXp) {
-            xpReward
-        } else {
-            missionType.defaultXp
-        }
-    }
-
     // ===== CREAZIONE MISSIONE =====
 
     suspend fun createMissionFromForm(
@@ -50,7 +39,6 @@ class MissionService(
         description: String?,
         type: String,
         dueDate: String?,
-        xpReward: Int,
         subtasks: List<String>
     ) {
         val userId = sessionManager.loggedUserId.first()
@@ -59,7 +47,7 @@ class MissionService(
         require(title.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
 
         val missionType = MissionType.fromDbValue(type)
-        val validXp = validateAndNormalizeXp(xpReward, missionType)
+        val validXp = missionType.xpReward
 
         val cleanSubtasks = subtasks.map { it.trim() }.filter { it.isNotBlank() }
         require(cleanSubtasks.size <= MAX_SUBTASKS_PER_MISSION) {
@@ -101,18 +89,14 @@ class MissionService(
                 val user = userRepository.getUserById(userId)
                     ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
 
-
-                val finalXp = mission.xpReward
-
-                val finalCoins = getMissionCoins(mission.type)
+                val missionType = MissionType.fromDbValue(mission.type)
+                val finalXp = missionType.xpReward
+                val finalCoins = missionType.coinReward
 
                 missionRepository.markMissionCompleted(mission.id)
-
-                // Aggiungi XP e monete
                 userRepository.addXp(userId, finalXp)
                 userRepository.addCoins(userId, finalCoins)
 
-                // Notifica di sicurezza
                 if (!isTestMode) {
                     securityNotificationService?.sendMissionCompletionNotification(
                         userId = userId,
@@ -155,7 +139,6 @@ class MissionService(
         newTitle: String,
         newDescription: String,
         newType: String,
-        newXpReward: Int,
         newSubtasksText: List<String>
     ) {
         require(newTitle.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
@@ -173,7 +156,7 @@ class MissionService(
         }
 
         val missionType = MissionType.fromDbValue(newType)
-        val validXp = validateAndNormalizeXp(newXpReward, missionType)
+        val validXp = missionType.xpReward
 
         val updatedMission = mission.copy(
             title = newTitle.trim(),
@@ -254,8 +237,6 @@ class MissionService(
     suspend fun restoreMission(mission: Mission, subTasks: List<SubTask>) {
         missionRepository.restoreMission(mission, subTasks)
     }
-
-    // ===== METODI PRIVATI =====
 
     private suspend fun resetMissionSubtasks(missionId: Long) {
         val allSubtasks = missionRepository.getSubTasksByMissionId(missionId).first()

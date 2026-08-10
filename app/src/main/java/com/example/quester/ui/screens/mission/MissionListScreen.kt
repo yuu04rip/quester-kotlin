@@ -122,20 +122,19 @@ fun MissionListScreen(
                 )
             }
 
-            // DIALOG AGGIUNTA
+
             if (showAddDialog) {
                 AddMissionDialog(
                     onDismiss = {
                         showAddDialog = false
                     },
-                    onMissionCreated = { title, description, type, xp, tasks ->
+                    onMissionCreated = { title, description, type, tasks ->
                         scope.launch {
                             missionService.createMissionFromForm(
                                 title = title,
                                 description = description,
                                 type = type.dbValue,
                                 dueDate = null,
-                                xpReward = xp,
                                 subtasks = tasks
                             )
                             showAddDialog = false
@@ -144,19 +143,18 @@ fun MissionListScreen(
                 )
             }
 
-            // DIALOG MODIFICA
+
             missionToEdit?.let { missionWithTasks ->
                 EditMissionDialog(
                     missionWithTasks = missionWithTasks,
                     onDismiss = { missionToEdit = null },
-                    onMissionUpdated = { title, description, type, xp, tasks ->
+                    onMissionUpdated = { title, description, type, tasks ->
                         scope.launch {
                             missionService.updateMissionFromForm(
                                 mission = missionWithTasks.mission,
                                 newTitle = title,
                                 newDescription = description,
                                 newType = type.dbValue,
-                                newXpReward = xp,
                                 newSubtasksText = tasks
                             )
                             missionToEdit = null

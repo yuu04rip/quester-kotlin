@@ -1,13 +1,16 @@
 package com.example.quester.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,10 +34,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.example.quester.R
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
 import com.example.quester.ui.components.AvatarCosmetics
@@ -44,24 +51,12 @@ import com.example.quester.ui.components.EditUsernameDialog
 import com.example.quester.ui.components.FantasyTitle
 import com.example.quester.ui.components.MagicBurstButton
 
-/**
- * Stato della schermata profilo.
- *
- * Raggruppiamo qui i parametri relativi allo stato della UI
- * per evitare di avere una funzione con troppi parametri.
- */
 data class ProfileUiState(
     val showEditUsername: Boolean = false,
     val showDeleteAccount: Boolean = false,
     val usernameError: String? = null
 )
 
-/**
- * Azioni disponibili nella schermata profilo.
- *
- * Raggruppiamo qui i callback della schermata per mantenere
- * ProfileContent sotto il limite di parametri consentito.
- */
 data class ProfileActions(
     val onLogout: () -> Unit,
     val onDeleteAccount: () -> Unit,
@@ -76,6 +71,10 @@ data class ProfileActions(
 fun ProfileContent(
     user: User,
     ownedCosmetics: List<OwnedCosmetic>,
+    xpProgress: Float,
+    xpInCurrentLevel: Int,
+    xpNeededForLevel: Int,
+    levelUpCoins: Int,
     uiState: ProfileUiState,
     actions: ProfileActions
 ) {
@@ -93,6 +92,10 @@ fun ProfileContent(
         item {
             ProfileCard(
                 user = user,
+                xpProgress = xpProgress,
+                xpInCurrentLevel = xpInCurrentLevel,
+                xpNeededForLevel = xpNeededForLevel,
+                levelUpCoins = levelUpCoins,
                 onShowEditUsername = actions.onShowEditUsername,
                 onShowCustomization = actions.onShowCustomization
             )
@@ -101,9 +104,7 @@ fun ProfileContent(
         item {
             OwnedCosmeticsSection(
                 ownedCosmetics = ownedCosmetics,
-                onRefresh = {
-                    // Ricarica i cosmetici, se necessario.
-                },
+                onRefresh = {},
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -124,30 +125,23 @@ fun ProfileContent(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error.copy(
-                        alpha = 0.7f
-                    )
+                    contentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 ),
                 border = BorderStroke(
                     1.dp,
-                    MaterialTheme.colorScheme.error.copy(
-                        alpha = 0.3f
-                    )
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
                 )
             ) {
                 Text(
-                    text = "🗡️ Lascia il Regno",
+                    text = "Lascia il Regno",
                     style = MaterialTheme.typography.bodyMedium,
                     fontFamily = FontFamily.Serif,
-                    color = MaterialTheme.colorScheme.error.copy(
-                        alpha = 0.7f
-                    )
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 )
             }
         }
     }
 
-    // Dialog modifica username
     if (uiState.showEditUsername) {
         EditUsernameDialog(
             currentUsername = user.username,
@@ -160,7 +154,6 @@ fun ProfileContent(
         )
     }
 
-    // Dialog eliminazione account
     if (uiState.showDeleteAccount) {
         DeleteAccountDialog(
             onDismiss = actions.onHideDialogs,
@@ -175,48 +168,39 @@ fun ProfileContent(
 @Composable
 private fun ProfileCard(
     user: User,
+    xpProgress: Float,
+    xpInCurrentLevel: Int,
+    xpNeededForLevel: Int,
+    levelUpCoins: Int,
     onShowEditUsername: () -> Unit,
     onShowCustomization: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 24.dp,
-                shape = RoundedCornerShape(28.dp)
-            )
+            .shadow(elevation = 24.dp, shape = RoundedCornerShape(28.dp))
             .border(
                 width = 2.dp,
-                color = MaterialTheme.colorScheme.primary.copy(
-                    alpha = 0.65f
-                ),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f),
                 shape = RoundedCornerShape(28.dp)
             )
             .padding(2.dp)
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.secondary.copy(
-                    alpha = 0.8f
-                ),
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
                 shape = RoundedCornerShape(26.dp)
             ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(
-                alpha = 0.98f
-            )
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
         ),
         shape = RoundedCornerShape(26.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = 24.dp,
-                    vertical = 28.dp
-                ),
+                .padding(horizontal = 24.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Avatar
             AvatarView(
                 modifier = Modifier,
                 cosmetics = AvatarCosmetics(),
@@ -225,11 +209,8 @@ private fun ProfileCard(
                 onClick = onShowCustomization
             )
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Nome utente con matita cliccabile
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
@@ -240,85 +221,73 @@ private fun ProfileCard(
                     color = MaterialTheme.colorScheme.secondary
                 )
 
-                Spacer(
-                    modifier = Modifier.width(8.dp)
-                )
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Cambia nome",
-                    tint = MaterialTheme.colorScheme.secondary.copy(
-                        alpha = 0.6f
-                    ),
+                    tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
                     modifier = Modifier
                         .size(20.dp)
-                        .clickable {
-                            onShowEditUsername()
-                        }
+                        .clickable { onShowEditUsername() }
                 )
             }
 
             Surface(
-                modifier = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical = 4.dp
-                ),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(
-                    alpha = 0.7f
-                ),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
                 border = BorderStroke(
                     1.dp,
-                    MaterialTheme.colorScheme.secondary.copy(
-                        alpha = 0.5f
-                    )
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
                 )
             ) {
                 Text(
                     text = "Livello ${user.livello}",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(
-                        horizontal = 16.dp,
-                        vertical = 4.dp
-                    )
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.secondary.copy(
-                    alpha = 0.35f
-                )
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)
             )
 
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
             FantasyXpProgress(
-                xpTotale = user.xpTotale
+                xpInCurrentLevel = xpInCurrentLevel,
+                xpNeededForLevel = xpNeededForLevel,
+                livello = user.livello,
+                xpProgress = xpProgress
             )
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Prossimo level-up: +$levelUpCoins monete",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Serif
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                FantasyStatItem(
+                StatItem(
                     icon = Icons.Default.Star,
                     value = "${user.xpTotale}",
                     label = "XP TOTALI",
                     color = MaterialTheme.colorScheme.secondary
                 )
 
-                FantasyCoinStatItem(
+                CoinItem(
                     value = "${user.coins}"
                 )
             }
@@ -326,3 +295,115 @@ private fun ProfileCard(
     }
 }
 
+@Composable
+private fun FantasyXpProgress(
+    xpInCurrentLevel: Int,
+    xpNeededForLevel: Int,
+    livello: Int,
+    xpProgress: Float
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Liv. $livello",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Serif
+            )
+            Text(
+                text = "$xpInCurrentLevel / $xpNeededForLevel XP",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.SansSerif
+            )
+            Text(
+                text = "Liv. ${livello + 1}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Serif
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(xpProgress.coerceIn(0f, 1f))
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xFFFFD700))
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatItem(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    color: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = FontFamily.Serif
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Serif
+        )
+    }
+}
+
+@Composable
+private fun CoinItem(
+    value: String
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            painter = painterResource(id = R.drawable.coin),
+            contentDescription = "Monete",
+            modifier = Modifier.size(28.dp),
+            tint = Color.Unspecified
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+            color = Color(0xFFFFD700),
+            fontFamily = FontFamily.Serif
+        )
+        Text(
+            text = "MONETE",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Serif
+        )
+    }
+}

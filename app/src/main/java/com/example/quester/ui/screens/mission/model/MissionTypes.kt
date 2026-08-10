@@ -3,21 +3,16 @@ package com.example.quester.ui.screens.mission.model
 enum class MissionType(
     val label: String,
     val dbValue: String,
-    val defaultXp: Int,
-    val minXp: Int,
-    val maxXp: Int
+    val xpReward: Int,
+    val coinReward: Int
 ) {
-    GIORNALIERO("Giornaliero", "GIORNALIERO", defaultXp = 20, minXp = 5, maxXp = 50),
-    SETTIMANALE("Settimanale", "SETTIMANALE", defaultXp = 100, minXp = 50, maxXp = 200),
-    SPECIALE("Speciale", "SPECIALE", defaultXp = 250, minXp = 100, maxXp = 1000);
+    GIORNALIERO("Giornaliero", "GIORNALIERO", xpReward = 30, coinReward = 1),
+    SETTIMANALE("Settimanale", "SETTIMANALE", xpReward = 120, coinReward = 5),
+    SPECIALE("Speciale", "SPECIALE", xpReward = 400, coinReward = 15);
 
     companion object {
         fun fromDbValue(value: String): MissionType {
             return entries.find { it.dbValue.equals(value, ignoreCase = true) } ?: GIORNALIERO
-        }
-
-        fun getRangeForType(type: String): IntRange {
-            return fromDbValue(type).minXp..fromDbValue(type).maxXp
         }
     }
 }

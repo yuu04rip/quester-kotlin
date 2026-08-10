@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,9 +57,23 @@ fun ProfileScreen(
         mutableStateOf<String?>(null)
     }
 
-    LaunchedEffect(loggedUserId) {
+    // ===== DATI XP PER IL PROFILO =====
+    var xpProgress by remember { mutableFloatStateOf(0f) }
+    var xpInCurrentLevel by remember { mutableIntStateOf(0) }
+    var xpNeededForLevel by remember { mutableIntStateOf(100) }
+    var levelUpCoins by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(loggedUserId, user) {
         loggedUserId?.let { userId ->
             ownedCosmetics = userRepository.getOwnedCosmetics(userId)
+
+            user?.let { currentUser ->
+                val level = currentUser.livello
+                xpInCurrentLevel = userRepository.getXpInCurrentLevel(currentUser.xpTotale, level)
+                xpNeededForLevel = userRepository.getXpRequiredForLevel(level)
+                xpProgress = userRepository.getXpProgress(currentUser.xpTotale, level)
+                levelUpCoins = userRepository.getLevelUpCoins(level)
+            }
         }
     }
 
@@ -91,39 +107,34 @@ fun ProfileScreen(
             ProfileContent(
                 user = currentUser,
                 ownedCosmetics = ownedCosmetics,
-
+                xpProgress = xpProgress,
+                xpInCurrentLevel = xpInCurrentLevel,
+                xpNeededForLevel = xpNeededForLevel,
+                levelUpCoins = levelUpCoins,
                 uiState = ProfileUiState(
                     showEditUsername = showEditUsername,
                     showDeleteAccount = showDeleteAccount,
                     usernameError = usernameError
                 ),
-
                 actions = ProfileActions(
                     onLogout = onLogout,
-
                     onDeleteAccount = onDeleteAccount,
-
                     onUpdateUsername = onUpdateUsername,
-
                     onShowEditUsername = {
                         usernameError = null
                         showEditUsername = true
                     },
-
                     onShowDeleteAccount = {
                         showDeleteAccount = true
                     },
-
                     onHideDialogs = {
                         showEditUsername = false
                         showDeleteAccount = false
                         usernameError = null
                     },
-
                     onShowCustomization = onShowCustomization
                 )
             )
         }
     }
 }
-

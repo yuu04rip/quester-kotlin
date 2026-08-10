@@ -2,6 +2,7 @@ package com.example.quester.ui.screens.mission.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -10,16 +11,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.quester.R
 import com.example.quester.ui.screens.mission.model.MissionType
 
 data class MissionDialogState(
     val title: String,
     val description: String,
     val selectedType: MissionType,
-    val xpReward: String,
     val subtasks: List<String>
 )
 
@@ -27,7 +29,6 @@ data class MissionDialogCallbacks(
     val onTitleChange: (String) -> Unit,
     val onDescriptionChange: (String) -> Unit,
     val onTypeChange: (MissionType) -> Unit,
-    val onXpRewardChange: (String) -> Unit,
     val onSubtasksChange: (List<String>) -> Unit,
     val onConfirm: () -> Unit,
     val onDismiss: () -> Unit
@@ -38,7 +39,6 @@ fun MissionDialogContent(
     state: MissionDialogState,
     dialogTitle: String,
     confirmButtonText: String,
-    xpError: String? = null,
     titleError: String? = null,
     subtaskError: String? = null,
     callbacks: MissionDialogCallbacks
@@ -55,7 +55,6 @@ fun MissionDialogContent(
         text = {
             DialogContent(
                 state = state,
-                xpError = xpError,
                 titleError = titleError,
                 subtaskError = subtaskError,
                 callbacks = callbacks
@@ -75,12 +74,9 @@ fun MissionDialogContent(
     )
 }
 
-// ===== DIALOG CONTENT =====
-
 @Composable
 private fun DialogContent(
     state: MissionDialogState,
-    xpError: String?,
     titleError: String?,
     subtaskError: String?,
     callbacks: MissionDialogCallbacks
@@ -108,18 +104,63 @@ private fun DialogContent(
             onTypeChange = callbacks.onTypeChange
         )
 
-        XpField(
-            value = state.xpReward,
-            onValueChange = callbacks.onXpRewardChange,
-            selectedType = state.selectedType,
-            error = xpError
-        )
+        RewardsInfo(selectedType = state.selectedType)
 
         SubtasksSection(
             subtasks = state.subtasks,
             onSubtasksChange = callbacks.onSubtasksChange,
             error = subtaskError
         )
+    }
+}
+
+@Composable
+private fun RewardsInfo(selectedType: MissionType) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // XP con icona star.png
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(id = R.drawable.star),
+                    contentDescription = "XP",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Unspecified
+                )
+                Text(
+                    text = "+${selectedType.xpReward}",
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+
+            // Monete con icona coin.png
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(id = R.drawable.coin),
+                    contentDescription = "Monete",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Unspecified
+                )
+                Text(
+                    text = "+${selectedType.coinReward}",
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+        }
     }
 }
 
@@ -147,8 +188,6 @@ private fun TitleField(
     )
 }
 
-// ===== DESCRIPTION FIELD =====
-
 @Composable
 private fun DescriptionField(
     value: String,
@@ -165,8 +204,6 @@ private fun DescriptionField(
     )
 }
 
-// ===== MISSION TYPE SELECTOR =====
-
 @Composable
 private fun MissionTypeSelector(
     selectedType: MissionType,
@@ -177,96 +214,41 @@ private fun MissionTypeSelector(
             text = "Tipo Missione",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 4.dp)
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             MissionType.entries.forEach { type ->
+                val label = when (type) {
+                    MissionType.GIORNALIERO -> "Giornaliero"
+                    MissionType.SETTIMANALE -> "Settimanale"
+                    MissionType.SPECIALE -> "Speciale"
+                }
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { onTypeChange(type) },
-                    label = { Text(type.label, fontSize = 12.sp) },
+                    label = {
+                        Text(
+                            text = label,
+                            fontSize = 10.sp,
+                            fontWeight = if (selectedType == type) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1,
+                            letterSpacing = 0.1.sp
+                        )
+                    },
                     modifier = Modifier.weight(1f),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                         selectedLabelColor = MaterialTheme.colorScheme.secondary,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 )
             }
-        }
-    }
-}
-
-// ===== XP FIELD =====
-
-@Composable
-private fun XpField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    selectedType: MissionType,
-    error: String?
-) {
-    Column {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text("XP") },
-            isError = error != null,
-            supportingText = {
-                if (error != null) {
-                    ErrorText(error)
-                } else {
-                    InfoText("✦ Range: ${selectedType.minXp} - ${selectedType.maxXp} XP")
-                }
-            },
-            placeholder = {
-                Text(
-                    "Default: ${selectedType.defaultXp}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = dialogTextFieldColors(),
-            singleLine = true
-        )
-
-        if (error != null && value.isNotBlank()) {
-            XpWarningBox(error)
-        }
-    }
-}
-
-// ===== XP WARNING BOX =====
-
-@Composable
-private fun XpWarningBox(error: String) {
-    Spacer(modifier = Modifier.height(4.dp))
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "⚠️ $error",
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
         }
     }
 }
@@ -284,7 +266,8 @@ private fun SubtasksSection(
             text = "Sub-tasks",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 4.dp)
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 6.dp)
         )
 
         subtasks.forEachIndexed { index, task ->
@@ -312,8 +295,6 @@ private fun SubtasksSection(
         }
     }
 }
-
-// ===== SUBTASK ROW =====
 
 @Composable
 private fun SubtaskRow(
@@ -344,7 +325,8 @@ private fun SubtaskRow(
             placeholder = {
                 Text(
                     if (index == 0) "Sub-task 1" else "Sub-task ${index + 1}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    fontSize = 12.sp
                 )
             }
         )
@@ -372,9 +354,13 @@ private fun RemoveSubtaskButton(
             newList.removeAt(index)
             onSubtasksChange(newList)
         },
-        modifier = Modifier.size(36.dp)
+        modifier = Modifier.size(32.dp)
     ) {
-        Text("✕", color = MaterialTheme.colorScheme.error)
+        Text(
+            text = "✕",
+            color = MaterialTheme.colorScheme.error,
+            fontSize = 14.sp
+        )
     }
 }
 
@@ -384,12 +370,14 @@ private fun AddSubtaskButton(
     currentSubtasks: List<String>
 ) {
     TextButton(
-        onClick = { onSubtasksChange(currentSubtasks + "") }
+        onClick = { onSubtasksChange(currentSubtasks + "") },
+        modifier = Modifier.height(32.dp)
     ) {
         Text(
-            "+ Aggiungi subtask",
+            text = "+ Aggiungi subtask",
             color = MaterialTheme.colorScheme.secondary,
-            fontSize = 12.sp
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }
@@ -407,9 +395,14 @@ private fun ConfirmButton(
             containerColor = MaterialTheme.colorScheme.secondary,
             contentColor = MaterialTheme.colorScheme.onSecondary
         ),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.height(40.dp)
     ) {
-        Text(text, fontWeight = FontWeight.Bold)
+        Text(
+            text = text,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
     }
 }
 
@@ -417,8 +410,15 @@ private fun ConfirmButton(
 private fun DismissButton(
     onClick: () -> Unit
 ) {
-    TextButton(onClick = onClick) {
-        Text("Annulla", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.height(40.dp)
+    ) {
+        Text(
+            text = "Annulla",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp
+        )
     }
 }
 
@@ -430,16 +430,7 @@ private fun ErrorText(text: String) {
         text = text,
         color = MaterialTheme.colorScheme.error,
         fontSize = 12.sp,
-        modifier = Modifier.padding(start = 4.dp)
-    )
-}
-
-@Composable
-private fun InfoText(text: String) {
-    Text(
-        text = text,
-        fontSize = 12.sp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
     )
 }
 

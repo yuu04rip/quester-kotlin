@@ -20,15 +20,15 @@ data class MissionDialogsConfig(
     val rawMissions: List<MissionWithSubTasks>
 )
 
-// Data class per i callback
+
 data class MissionDialogsCallbacks(
     val onDismissMissionDetail: () -> Unit,
     val onDismissEdit: () -> Unit,
     val onDismissAdd: () -> Unit,
     val onEditClick: (MissionWithSubTasks) -> Unit,
     val onTaskToggle: (SubTask) -> Unit,
-    val onMissionUpdated: (Mission, String, String, MissionType, Int, List<String>) -> Unit,
-    val onMissionCreated: (String, String, MissionType, Int, List<String>) -> Unit
+    val onMissionUpdated: (Mission, String, String, MissionType, List<String>) -> Unit,
+    val onMissionCreated: (String, String, MissionType, List<String>) -> Unit
 )
 
 // Data class per i servizi
@@ -66,18 +66,18 @@ fun MissionDialogs(
         }
     }
 
-    // Dialog modifica missione
+
     config.missionToEdit?.let { targetMissionWithTasks ->
         EditMissionDialog(
             missionWithTasks = targetMissionWithTasks,
             onDismiss = callbacks.onDismissEdit,
-            onMissionUpdated = { title, desc, type, xp, tasks ->
-                callbacks.onMissionUpdated(targetMissionWithTasks.mission, title, desc, type, xp, tasks)
+            onMissionUpdated = { title, desc, type, tasks ->
+                callbacks.onMissionUpdated(targetMissionWithTasks.mission, title, desc, type, tasks)
             }
         )
     }
 
-    // Dialog aggiunta missione
+
     if (config.showAddDialog) {
         AddMissionDialog(
             onDismiss = callbacks.onDismissAdd,
