@@ -8,7 +8,6 @@ import com.example.quester.data.repository.MissionRepository
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
 import com.example.quester.ui.screens.getMissionCoins
-import com.example.quester.ui.screens.getMissionXp
 import kotlinx.coroutines.flow.first
 
 class MissionService(
@@ -26,7 +25,6 @@ class MissionService(
         private const val MIN_TIME_BETWEEN_COMPLETIONS = 30_000L
         private const val MIN_TIME_PER_MISSION = 30_000L
 
-        // Costanti per messaggi di errore
         private const val ERROR_UNAUTHORIZED = "✦ Non sei autorizzato a modificare questa missione ✦"
         private const val ERROR_MISSION_ALREADY_COMPLETED = "✧ Questa missione è già stata completata ✧"
         private const val ERROR_CANNOT_MODIFY_COMPLETED = "✧ Impossibile modificare una missione già completata ✧"
@@ -45,32 +43,6 @@ class MissionService(
         }
     }
 
-    // ===== METODI PER LE RICOMPENSE SCALATE =====
-
-    /**
-     * Calcola le ricompense per una missione in base al livello del giocatore
-     */
-    private suspend fun calculateScaledRewards(
-        missionType: String,
-        userId: Long
-    ): ScaledRewards {
-        // Ottieni il livello del giocatore
-        val user = userRepository.getUserById(userId)
-            ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
-
-        val playerLevel = user.livello
-
-        // Calcola ricompense scalate
-        val coins = getMissionCoins(missionType, playerLevel)
-        val xp = getMissionXp(missionType, playerLevel)
-
-        return ScaledRewards(
-            coins = coins,
-            xp = xp,
-            playerLevel = playerLevel
-        )
-    }
-
     // ===== CREAZIONE MISSIONE =====
 
     suspend fun createMissionFromForm(
@@ -87,8 +59,6 @@ class MissionService(
         require(title.isNotBlank()) { "✦ Il titolo è obbligatorio per l'impresa ✦" }
 
         val missionType = MissionType.fromDbValue(type)
-
-        // Usa il valore base per la creazione (lo scaling avverrà al completamento)
         val validXp = validateAndNormalizeXp(xpReward, missionType)
 
         val cleanSubtasks = subtasks.map { it.trim() }.filter { it.isNotBlank() }
@@ -104,7 +74,7 @@ class MissionService(
             description = description?.trim().orEmpty(),
             type = missionType.dbValue,
             dueDate = dueDate,
-            xpReward = validXp,  // XP base della missione (senza scaling)
+            xpReward = validXp,
             createdAt = System.currentTimeMillis(),
             verificationLevel = verificationLevel.name
         )
@@ -128,20 +98,17 @@ class MissionService(
     private suspend fun completeMission(mission: Mission, userId: Long) {
         if (!mission.completed) {
             try {
-                // Calcola le ricompense scalate in base al livello del giocatore
-                val scaledRewards = calculateScaledRewards(
-                    missionType = mission.type,
-                    userId = userId
-                )
+                val user = userRepository.getUserById(userId)
+                    ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
 
-                // Usa le ricompense scalate invece di quelle base
-                val finalXp = scaledRewards.xp
-                val finalCoins = scaledRewards.coins
 
-                // Aggiorna la missione
+                val finalXp = mission.xpReward
+
+                val finalCoins = getMissionCoins(mission.type)
+
                 missionRepository.markMissionCompleted(mission.id)
 
-                // Aggiungi XP e monete scalati
+                // Aggiungi XP e monete
                 userRepository.addXp(userId, finalXp)
                 userRepository.addCoins(userId, finalCoins)
 
@@ -152,7 +119,7 @@ class MissionService(
                         missionTitle = mission.title,
                         xpGained = finalXp,
                         coinsGained = finalCoins,
-                        playerLevel = scaledRewards.playerLevel
+                        playerLevel = user.livello
                     )
                 }
 
@@ -320,11 +287,3 @@ class MissionService(
         )
     }
 }
-
-// ===== DATA CLASS PER RICOMPENSE SCALATE =====
-
-data class ScaledRewards(
-    val coins: Int,
-    val xp: Int,
-    val playerLevel: Int
-)

@@ -88,7 +88,11 @@ fun ShopScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFF120C1E), FantasyBackground, Color(0xFF0B0813))
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                    )
                 )
             )
     ) {
@@ -179,10 +183,10 @@ private fun ShopHeader(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(16.dp, RoundedCornerShape(20.dp))
-            .border(2.dp, FantasyPurple.copy(alpha = 0.65f), RoundedCornerShape(20.dp))
+            .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f), RoundedCornerShape(20.dp))
             .padding(2.dp)
-            .border(1.dp, FantasyGold.copy(alpha = 0.8f), RoundedCornerShape(18.dp)),
-        colors = CardDefaults.cardColors(containerColor = FantasySurface.copy(alpha = 0.98f)),
+            .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f), RoundedCornerShape(18.dp)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
         shape = RoundedCornerShape(18.dp)
     ) {
         Column(
@@ -195,7 +199,7 @@ private fun ShopHeader(
                 text = "✦ Negozio ✦",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = FantasyGoldLight
+                color = MaterialTheme.colorScheme.secondary
             )
 
             CoinsDisplay(coins = coins)
@@ -203,7 +207,7 @@ private fun ShopHeader(
             Text(
                 text = "Oggetti posseduti: $ownedCount",
                 style = MaterialTheme.typography.bodySmall,
-                color = FantasyTextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -227,7 +231,7 @@ private fun CoinsDisplay(coins: Int) {
         Text(
             text = "$coins",
             style = MaterialTheme.typography.titleMedium,
-            color = FantasyGold
+            color = MaterialTheme.colorScheme.secondary
         )
     }
 }
@@ -249,7 +253,7 @@ private fun ShopGrid(
         ) {
             Text(
                 text = "✦ Nessun oggetto disponibile ✦",
-                color = FantasyTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyLarge
             )
         }
@@ -323,14 +327,18 @@ private fun ShopItemCard(
             .shadow(8.dp, RoundedCornerShape(16.dp))
             .border(
                 width = 1.dp,
-                color = if (isOwned) FantasyPurple.copy(alpha = 0.3f) else FantasyGold.copy(alpha = 0.5f),
+                color = if (isOwned) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+                },
                 shape = RoundedCornerShape(16.dp)
             ),
         colors = CardDefaults.cardColors(
             containerColor = if (isOwned) {
-                FantasySurfaceLight.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             } else {
-                FantasySurfaceLight.copy(alpha = 0.8f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
             }
         ),
         shape = RoundedCornerShape(16.dp)
@@ -363,7 +371,11 @@ private fun ShopItemIcon(isOwned: Boolean) {
         modifier = Modifier
             .size(48.dp)
             .background(
-                if (isOwned) FantasyPurple.copy(alpha = 0.2f) else FantasyPurple.copy(alpha = 0.3f),
+                if (isOwned) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                } else {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                },
                 RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center
@@ -371,7 +383,11 @@ private fun ShopItemIcon(isOwned: Boolean) {
         Icon(
             imageVector = Icons.Default.ShoppingCart,
             contentDescription = null,
-            tint = if (isOwned) FantasyTextSecondary else FantasyGold,
+            tint = if (isOwned) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.secondary
+            },
             modifier = Modifier.size(28.dp)
         )
     }
@@ -383,7 +399,11 @@ private fun ShopItemName(name: String, isOwned: Boolean) {
         text = name,
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
-        color = if (isOwned) FantasyTextSecondary else FantasyText,
+        color = if (isOwned) {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        } else {
+            MaterialTheme.colorScheme.onBackground
+        },
         textAlign = TextAlign.Center,
         maxLines = 2,
         minLines = 2,
@@ -404,14 +424,14 @@ private fun OwnedBadge() {
         Icon(
             imageVector = Icons.Default.Lock,
             contentDescription = "Posseduto",
-            tint = FantasyGold,
+            tint = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(14.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "Posseduto",
             style = MaterialTheme.typography.labelSmall,
-            color = FantasyGold,
+            color = MaterialTheme.colorScheme.secondary,
             fontSize = 10.sp
         )
     }
@@ -434,7 +454,7 @@ private fun ShopItemPrice(price: Int) {
             text = "$price",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = FantasyGold,
+            color = MaterialTheme.colorScheme.secondary,
             fontSize = 14.sp
         )
     }
@@ -449,8 +469,8 @@ private fun BuyButton(onBuy: () -> Unit) {
             .fillMaxWidth()
             .height(30.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = FantasyGold,
-            contentColor = Color(0xFF0D0B14)
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary
         ),
         shape = RoundedCornerShape(6.dp),
         elevation = ButtonDefaults.buttonElevation(2.dp),
@@ -460,7 +480,7 @@ private fun BuyButton(onBuy: () -> Unit) {
             text = "ACQUISTA",
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
-            color = Color(0xFF0D0B14),
+            color = MaterialTheme.colorScheme.onSecondary,
             letterSpacing = 0.5.sp
         )
     }

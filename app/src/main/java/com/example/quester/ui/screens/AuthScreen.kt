@@ -50,6 +50,7 @@ import com.example.quester.data.repository.AuthResult
 import com.example.quester.domain.service.AuthService
 import com.example.quester.ui.components.MagicBurstButton
 import com.example.quester.ui.theme.QuesterTheme
+import com.example.quester.ui.utils.capitalizeFirstLetter
 import kotlinx.coroutines.launch
 
 private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
@@ -83,7 +84,7 @@ private fun toFantasyError(message: String?): String {
 
     return when {
         "username o email obbligatorio" in m -> "✦ L'identità dell'avventuriero è richiesta."
-        "username obbligatorio" in m -> "✦ Il nome dell’avventuriero è richiesto."
+        "username obbligatorio" in m -> "✦ Il nome dell'avventuriero è richiesto."
         "username troppo corto" in m -> "✦ Il nome è troppo breve per entrare nelle cronache del regno."
         "email non valida" in m -> "❖ Il sigillo del corvo (email) non è valido."
         "password obbligatoria" in m -> "✦ Devi forgiare una parola segreta."
@@ -188,9 +189,11 @@ fun AuthScreen(
             scope.launch {
                 try {
                     val result = if (isRegisterMode) {
-                        authService.register(usernameOrEmail, email.ifBlank { null }, password)
+                        // Capitalizza username in registrazione
+                        val capitalizedUsername = capitalizeFirstLetter(usernameOrEmail.trim())
+                        authService.register(capitalizedUsername, email.ifBlank { null }, password)
                     } else {
-                        authService.login(usernameOrEmail, password)
+                        authService.login(usernameOrEmail.trim(), password)
                     }
                     when (result) {
                         is AuthResult.Success -> onAuthSuccess()
@@ -216,7 +219,11 @@ private fun AuthContent(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFF120C1E), FantasyBackground, Color(0xFF0B0813))
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                    )
                 )
             )
             .padding(20.dp),
@@ -226,10 +233,12 @@ private fun AuthContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(24.dp, RoundedCornerShape(28.dp))
-                .border(2.dp, FantasyPurple.copy(alpha = 0.65f), RoundedCornerShape(28.dp))
+                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f), RoundedCornerShape(28.dp))
                 .padding(2.dp)
-                .border(1.dp, FantasyGold.copy(alpha = 0.8f), RoundedCornerShape(26.dp)),
-            colors = CardDefaults.cardColors(containerColor = FantasySurface.copy(alpha = 0.98f)),
+                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f), RoundedCornerShape(26.dp)),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+            ),
             shape = RoundedCornerShape(26.dp)
         ) {
             Column(
@@ -239,7 +248,7 @@ private fun AuthContent(
                 AuthHeader(isRegisterMode = uiState.isRegisterMode)
 
                 Spacer(Modifier.height(16.dp))
-                HorizontalDivider(color = FantasyGold.copy(alpha = 0.35f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f))
                 Spacer(Modifier.height(16.dp))
 
                 AuthFormFields(uiState = uiState, actions = actions)
@@ -267,24 +276,33 @@ private fun AuthHeader(isRegisterMode: Boolean) {
     Box(
         modifier = Modifier
             .size(66.dp)
-            .background(FantasyPurpleDark, CircleShape)
-            .border(1.dp, FantasyGoldLight, CircleShape),
+            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.secondary, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.AutoAwesome, null, tint = FantasyGoldLight, modifier = Modifier.size(34.dp))
+        Icon(
+            Icons.Default.AutoAwesome,
+            null,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(34.dp)
+        )
     }
 
     Spacer(Modifier.height(14.dp))
-    Text("✦ QUESTER ✦", color = FantasyGoldLight, style = MaterialTheme.typography.headlineMedium)
+    Text(
+        "✦ QUESTER ✦",
+        color = MaterialTheme.colorScheme.secondary,
+        style = MaterialTheme.typography.headlineMedium
+    )
     Text(
         if (isRegisterMode) "Crea il tuo personaggio" else "Bentornato, avventuriero",
-        color = FantasyText,
+        color = MaterialTheme.colorScheme.onBackground,
         style = MaterialTheme.typography.titleLarge,
         textAlign = TextAlign.Center
     )
     Text(
         if (isRegisterMode) "Il viaggio inizia adesso" else "Il regno attende il tuo ritorno",
-        color = FantasyTextSecondary,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodyMedium
     )
 }
@@ -340,17 +358,17 @@ private fun ErrorMessageCard(fantasyError: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3A1E24).copy(alpha = 0.9f)
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f)
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = FantasyError.copy(alpha = 0.75f)
+            color = MaterialTheme.colorScheme.error.copy(alpha = 0.75f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(
             text = fantasyError,
-            color = Color(0xFFFFCDD2),
+            color = MaterialTheme.colorScheme.onErrorContainer,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
@@ -376,7 +394,7 @@ private fun AuthActionButtons(
     TextButton(onClick = onRegisterModeToggle) {
         Text(
             if (isRegisterMode) "Hai già un account? Accedi" else "Non hai un account? Registrati",
-            color = FantasyGoldLight
+            color = MaterialTheme.colorScheme.secondary
         )
     }
 }
@@ -404,20 +422,20 @@ private fun FantasyTextField(
 
 @Composable
 private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = FantasySurfaceLight,
-    unfocusedContainerColor = FantasySurfaceLight,
-    focusedBorderColor = FantasyGold,
-    unfocusedBorderColor = FantasyGold.copy(alpha = 0.35f),
-    focusedLabelColor = FantasyGoldLight,
-    unfocusedLabelColor = FantasyTextSecondary,
-    focusedTextColor = FantasyText,
-    unfocusedTextColor = FantasyText,
-    cursorColor = FantasyGold,
-    focusedTrailingIconColor = FantasyGoldLight,
-    unfocusedTrailingIconColor = FantasyTextSecondary,
-    errorBorderColor = FantasyError,
-    errorLabelColor = FantasyError,
-    errorSupportingTextColor = FantasyError
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    focusedBorderColor = MaterialTheme.colorScheme.secondary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f),
+    focusedLabelColor = MaterialTheme.colorScheme.secondary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+    cursorColor = MaterialTheme.colorScheme.secondary,
+    focusedTrailingIconColor = MaterialTheme.colorScheme.secondary,
+    unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    errorBorderColor = MaterialTheme.colorScheme.error,
+    errorLabelColor = MaterialTheme.colorScheme.error,
+    errorSupportingTextColor = MaterialTheme.colorScheme.error
 )
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 800)

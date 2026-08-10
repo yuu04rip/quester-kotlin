@@ -5,14 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -23,8 +17,36 @@ import com.example.quester.data.session.SessionManager
 import com.example.quester.domain.service.AuthService
 import com.example.quester.domain.service.MissionService
 import com.example.quester.domain.service.ShopService
+import com.example.quester.ui.screens.customization.AvatarCustomizationScreen
 import com.example.quester.ui.screens.mission.MissionListScreen
 import kotlinx.coroutines.launch
+
+// ===== DATA CLASS PER I PARAMETRI =====
+
+private data class NavServices(
+    val missionService: MissionService,
+    val missionRepository: MissionRepository,
+    val userRepository: UserRepository,
+    val authService: AuthService,
+    val shopService: ShopService,
+    val shopDao: ShopDao,
+    val sessionManager: SessionManager
+)
+
+private data class NavState(
+    val showCustomization: Boolean,
+    val pagerState: androidx.compose.foundation.pager.PagerState,
+    val screens: List<NavScreens>,
+    val innerPadding: PaddingValues
+)
+
+private data class NavCallbacks(
+    val onCustomizationDismiss: () -> Unit,
+    val onCustomizationSave: () -> Unit,
+    val onShowCustomization: () -> Unit
+)
+
+// ===== NAVBAR PRINCIPALE =====
 
 @Composable
 fun NavBar(
@@ -36,6 +58,16 @@ fun NavBar(
     shopDao: ShopDao,
     sessionManager: SessionManager
 ) {
+    val services = NavServices(
+        missionService = missionService,
+        missionRepository = missionRepository,
+        userRepository = userRepository,
+        authService = authService,
+        shopService = shopService,
+        shopDao = shopDao,
+        sessionManager = sessionManager
+    )
+
     val screens = listOf(
         NavScreens.Profile,
         NavScreens.Home,
@@ -44,14 +76,15 @@ fun NavBar(
 
     val pagerState = rememberPagerState(initialPage = 1) { screens.size }
     val coroutineScope = rememberCoroutineScope()
+    var showCustomization by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = FantasyBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             NavigationBar(
-                containerColor = FantasySurface,
+                containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
-                modifier = Modifier.background(FantasySurface)
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
                 screens.forEachIndexed { index, screen ->
                     NavigationBarItem(
@@ -60,9 +93,9 @@ fun NavBar(
                                 imageVector = screen.icon,
                                 contentDescription = screen.title,
                                 tint = if (pagerState.currentPage == index) {
-                                    FantasyGoldLight
+                                    MaterialTheme.colorScheme.secondary
                                 } else {
-                                    FantasyTextSecondary
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                             )
                         },
@@ -70,9 +103,9 @@ fun NavBar(
                             Text(
                                 text = screen.title,
                                 color = if (pagerState.currentPage == index) {
-                                    FantasyGoldLight
+                                    MaterialTheme.colorScheme.secondary
                                 } else {
-                                    FantasyTextSecondary
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                             )
                         },
@@ -83,47 +116,113 @@ fun NavBar(
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = FantasyGoldLight,
-                            selectedTextColor = FantasyGoldLight,
-                            unselectedIconColor = FantasyTextSecondary,
-                            unselectedTextColor = FantasyTextSecondary,
-                            indicatorColor = FantasyPurple.copy(alpha = 0.3f)
+                            selectedIconColor = MaterialTheme.colorScheme.secondary,
+                            selectedTextColor = MaterialTheme.colorScheme.secondary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                     )
                 }
             }
         },
-        contentColor = FantasyText
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { innerPadding ->
+        val state = NavState(
+            showCustomization = showCustomization,
+            pagerState = pagerState,
+            screens = screens,
+            innerPadding = innerPadding
+        )
+
+        val callbacks = NavCallbacks(
+            onCustomizationDismiss = { showCustomization = false },
+            onCustomizationSave = { showCustomization = false },
+            onShowCustomization = { showCustomization = true }
+        )
+
+        NavContent(
+            services = services,
+            state = state,
+            callbacks = callbacks,
+            coroutineScope = coroutineScope
+        )
+    }
+}
+
+// ===== CONTENUTO NAV =====
+
+@Composable
+private fun NavContent(
+    services: NavServices,
+    state: NavState,
+    callbacks: NavCallbacks,
+    coroutineScope: kotlinx.coroutines.CoroutineScope
+) {
+    if (state.showCustomization) {
+        AvatarCustomizationScreen(
+            onBack = callbacks.onCustomizationDismiss,
+            onSave = { _ ->
+                // TODO: Salva i cosmetici nel repository
+                callbacks.onCustomizationSave()
+            }
+        )
+    } else {
         HorizontalPager(
-            state = pagerState,
+            state = state.pagerState,
             modifier = Modifier
-                .padding(innerPadding)
-                .background(FantasyBackground)
+                .padding(state.innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) { pageIndex ->
-            when (screens[pageIndex]) {
-                is NavScreens.Profile -> ProfileScreen(
-                    userRepository = userRepository,
-                    sessionManager = sessionManager,
-                    onLogout = {
-                        coroutineScope.launch {
-                            authService.logout()
-                        }
-                    }
+            when (state.screens[pageIndex]) {
+                is NavScreens.Profile -> ProfileContent(
+                    services = services,
+                    coroutineScope = coroutineScope,
+                    onShowCustomization = callbacks.onShowCustomization
                 )
                 is NavScreens.Home -> MissionListScreen(
-                    missionService = missionService,
-                    missionRepository = missionRepository,
-                    userRepository = userRepository,
-                    sessionManager = sessionManager
+                    missionService = services.missionService,
+                    missionRepository = services.missionRepository,
+                    userRepository = services.userRepository,
+                    sessionManager = services.sessionManager
                 )
                 is NavScreens.Shop -> ShopScreen(
-                    shopService = shopService,
-                    shopDao = shopDao,
-                    userRepository = userRepository,
-                    sessionManager = sessionManager
+                    shopService = services.shopService,
+                    shopDao = services.shopDao,
+                    userRepository = services.userRepository,
+                    sessionManager = services.sessionManager
                 )
             }
         }
     }
+}
+
+// ===== CONTENUTO PROFILO =====
+
+@Composable
+private fun ProfileContent(
+    services: NavServices,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    onShowCustomization: () -> Unit
+) {
+    ProfileScreen(
+        userRepository = services.userRepository,
+        sessionManager = services.sessionManager,
+        onLogout = {
+            coroutineScope.launch {
+                services.authService.logout()
+            }
+        },
+        onDeleteAccount = {
+            coroutineScope.launch {
+                services.authService.deleteAccount()
+            }
+        },
+        onUpdateUsername = { newUsername ->
+            coroutineScope.launch {
+                services.authService.updateUsername(newUsername)
+            }
+        },
+        onShowCustomization = onShowCustomization
+    )
 }

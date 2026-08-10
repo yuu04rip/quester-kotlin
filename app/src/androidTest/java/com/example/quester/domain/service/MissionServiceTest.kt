@@ -8,8 +8,6 @@ import com.example.quester.data.model.User
 import com.example.quester.data.repository.MissionRepository
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
-import com.example.quester.ui.screens.getMissionCoins
-import com.example.quester.ui.screens.getMissionXp
 import com.example.quester.ui.screens.mission.model.MissionType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -69,13 +67,9 @@ class MissionServiceTest {
         // Arrange
         val missionTitle = "Study"
         val missionDescription = "Do chapters"
-        val missionType = "NORMAL"
+        val missionType = MissionType.GIORNALIERO.dbValue
         val xpReward = 20
         val subtasks = listOf("A", "B")
-
-        // Calcola l'XP e le monete attese con lo scaling (livello 1)
-        val expectedXp = getMissionXp(missionType, 1)  // 100 XP per livello 1
-        val expectedCoins = getMissionCoins(missionType, 1)  // 20 coin per livello 1
 
         // Act - Creazione missione
         missionService.createMissionFromForm(
@@ -106,10 +100,9 @@ class MissionServiceTest {
         val updatedMission = db.missionDao().getMissionByIdOnce(mission.id)!!
         assertTrue("La missione dovrebbe essere completata", updatedMission.completed)
 
-        // Assert - XP e monete assegnati correttamente (con scaling)
+        // Assert - XP assegnati correttamente
         val userAfter = db.userDao().getUserById(testUserId)!!
-        assertEquals("XP dovrebbero essere $expectedXp (scalati)", expectedXp, userAfter.xpTotale)
-        assertEquals("Monete dovrebbero essere $expectedCoins (scalate)", expectedCoins, userAfter.coins)
+        assertEquals("XP dovrebbero essere $xpReward", xpReward, userAfter.xpTotale)
 
         // Act - Tentativo di toggle dello stesso subtask
         try {
@@ -121,7 +114,7 @@ class MissionServiceTest {
 
         // Assert - Nessun doppio XP
         val userAfterSecond = db.userDao().getUserById(testUserId)!!
-        assertEquals("XP non dovrebbero raddoppiare", expectedXp, userAfterSecond.xpTotale)
+        assertEquals("XP non dovrebbero raddoppiare", xpReward, userAfterSecond.xpTotale)
 
         // Verifica che la missione sia ancora completata
         val finalMission = db.missionDao().getMissionByIdOnce(mission.id)!!
@@ -133,7 +126,7 @@ class MissionServiceTest {
         // Arrange
         val missionTitle = "Missione da Eliminare"
         val missionDescription = "Test cancella"
-        val missionType = "NORMAL"
+        val missionType = MissionType.GIORNALIERO.dbValue
         val xpReward = 20
         val subtaskList = listOf("Subtask 1", "Subtask 2")
 
@@ -261,7 +254,7 @@ class MissionServiceTest {
         // Arrange
         val originalTitle = "Original Title"
         val originalDesc = "Original Description"
-        val originalType = "NORMAL"
+        val originalType = MissionType.GIORNALIERO.dbValue
         val originalXp = 20
 
         missionService.createMissionFromForm(
@@ -310,7 +303,7 @@ class MissionServiceTest {
         missionService.createMissionFromForm(
             title = "Original Mission",
             description = "Original Description",
-            type = "NORMAL",
+            type = MissionType.GIORNALIERO.dbValue,
             dueDate = null,
             xpReward = 20,
             subtasks = listOf("Task 1")
@@ -347,7 +340,7 @@ class MissionServiceTest {
         missionService.createMissionFromForm(
             title = missionTitle,
             description = "Test ripristino",
-            type = "NORMAL",
+            type = MissionType.GIORNALIERO.dbValue,
             dueDate = null,
             xpReward = 20,
             subtasks = subtaskList
@@ -387,7 +380,7 @@ class MissionServiceTest {
         missionService.createMissionFromForm(
             title = missionTitle,
             description = "Test senza subtask",
-            type = "NORMAL",
+            type = MissionType.GIORNALIERO.dbValue,
             dueDate = null,
             xpReward = 20,
             subtasks = emptyList()
@@ -410,7 +403,7 @@ class MissionServiceTest {
         missionService.createMissionFromForm(
             title = "Test Whitespace",
             description = "Test filtraggio whitespace",
-            type = "NORMAL",
+            type = MissionType.GIORNALIERO.dbValue,
             dueDate = null,
             xpReward = 20,
             subtasks = subtasksWithWhitespace
@@ -473,7 +466,7 @@ class MissionServiceTest {
         realMissionService.createMissionFromForm(
             title = "Fast Mission",
             description = "Test completamento veloce",
-            type = "NORMAL",
+            type = MissionType.GIORNALIERO.dbValue,
             dueDate = null,
             xpReward = 20,
             subtasks = listOf("A", "B")
@@ -492,43 +485,5 @@ class MissionServiceTest {
 
         val user = db.userDao().getUserById(testUserId)!!
         assertEquals("Nessun XP dovrebbe essere stato assegnato", 0, user.xpTotale)
-    }
-
-    @Test
-    fun scaling_rewards_increase_with_player_level() = runBlocking {
-        // Arrange - Crea un utente di livello più alto
-        val highLevelUserId = db.userDao().insertUser(
-            User(username = "highlevel", passwordHash = "hash", xpTotale = 0, livello = 10, coins = 0)
-        )
-        sessionManager.createSession(highLevelUserId)
-
-        // Act - Crea e completa una missione
-        val missionTitle = "Scaled Mission"
-        missionService.createMissionFromForm(
-            title = missionTitle,
-            description = "Test scaling",
-            type = "NORMAL",
-            dueDate = null,
-            xpReward = 20,
-            subtasks = listOf("A", "B")
-        )
-
-        val mission = db.missionDao().getAllMissionsForUser(highLevelUserId).first().first()
-        val subtasks = db.subTaskDao().getSubTasksByMissionId(mission.id).first()
-
-        // Completa entrambi i subtask
-        missionService.toggleSubTask(subtasks[0], true)
-        missionService.toggleSubTask(subtasks[1], true)
-
-        // Assert - Verifica ricompense scalate per livello 10
-        val userAfter = db.userDao().getUserById(highLevelUserId)!!
-        val expectedXp = getMissionXp("NORMAL", 10)  // 100 + (10-1) * 5 = 145
-        val expectedCoins = getMissionCoins("NORMAL", 10)  // 20 + (10-1) * 1 = 29
-
-        assertEquals("XP dovrebbero essere scalati per livello 10", expectedXp, userAfter.xpTotale)
-        assertEquals("Monete dovrebbero essere scalate per livello 10", expectedCoins, userAfter.coins)
-
-        // Cleanup
-        sessionManager.clearSession()
     }
 }

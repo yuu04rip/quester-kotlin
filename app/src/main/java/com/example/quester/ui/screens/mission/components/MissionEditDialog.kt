@@ -3,6 +3,8 @@ package com.example.quester.ui.screens.mission.components
 import androidx.compose.runtime.*
 import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.ui.screens.mission.model.MissionType
+import com.example.quester.ui.utils.capitalizeWords
+import com.example.quester.ui.utils.capitalizeFirstLetter
 
 @Composable
 fun EditMissionDialog(
@@ -43,14 +45,21 @@ fun EditMissionDialog(
                 if (title.isNotBlank()) {
                     val parsedXp = xpReward.toIntOrNull() ?: selectedType.defaultXp
                     val finalXp = parsedXp.coerceIn(selectedType.minXp, selectedType.maxXp)
+
+                    // Capitalizza prima di passare all'update
+                    val capitalizedTitle = capitalizeWords(title.trim())
+                    val capitalizedDescription = capitalizeFirstLetter(description.trim())
+                    val capitalizedTasks = subtasks
+                        .filter { it.isNotBlank() }
+                        .map { capitalizeWords(it.trim()) }
+
                     onMissionUpdated(
-                        title,
-                        description,
+                        capitalizedTitle,
+                        capitalizedDescription,
                         selectedType,
                         finalXp,
-                        subtasks.filter { it.isNotBlank() }
+                        capitalizedTasks
                     )
-                    // onDismiss() viene chiamato DOPO onMissionUpdated
                     onDismiss()
                 }
             },

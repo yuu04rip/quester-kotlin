@@ -34,24 +34,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.quester.data.model.OwnedCosmetic
+import com.example.quester.ui.components.FantasyTitle
 import kotlin.math.ceil
 
 /*
- * DIMENSIONI
+ * Dimensioni
  */
 private val COSMETIC_SIZE = 100.dp
 private val COSMETIC_SPACING = 10.dp
-
-/*
- * 3 cosmetici per riga
- */
 private const val COSMETICS_PER_ROW = 3
 
 @Composable
 fun OwnedCosmeticsSection(
+    modifier: Modifier = Modifier,
     ownedCosmetics: List<OwnedCosmetic>,
-    onRefresh: () -> Unit,
-    modifier: Modifier = Modifier
+    onRefresh: () -> Unit = {}
 ) {
 
     val rowCount = if (ownedCosmetics.isEmpty()) {
@@ -78,16 +75,16 @@ fun OwnedCosmeticsSection(
             )
             .border(
                 width = 2.dp,
-                color = FantasyPurple.copy(alpha = 0.65f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f),
                 shape = RoundedCornerShape(22.dp)
             )
             .border(
                 width = 1.dp,
-                color = FantasyGold.copy(alpha = 0.35f),
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f),
                 shape = RoundedCornerShape(20.dp)
             ),
         colors = CardDefaults.cardColors(
-            containerColor = FantasySurface.copy(alpha = 0.97f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
         ),
         shape = RoundedCornerShape(20.dp)
     ) {
@@ -98,9 +95,7 @@ fun OwnedCosmeticsSection(
                 .padding(16.dp)
         ) {
 
-            /*
-             * HEADER
-             */
+            // HEADER con FantasyTitle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -109,12 +104,10 @@ fun OwnedCosmeticsSection(
 
                 Column {
 
-                    Text(
+                    FantasyTitle(
                         text = "I Tuoi Cosmetici",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = FantasyGoldLight,
-                        fontFamily = FontFamily.Serif
+                        color = MaterialTheme.colorScheme.secondary
                     )
 
                     Spacer(
@@ -124,7 +117,8 @@ fun OwnedCosmeticsSection(
                     Text(
                         text = "${ownedCosmetics.size} oggetti posseduti",
                         style = MaterialTheme.typography.labelMedium,
-                        color = FantasyTextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.SansSerif
                     )
                 }
 
@@ -136,7 +130,7 @@ fun OwnedCosmeticsSection(
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Aggiorna cosmetici",
-                        tint = FantasyGold,
+                        tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -147,16 +141,14 @@ fun OwnedCosmeticsSection(
             )
 
             HorizontalDivider(
-                color = FantasyGold.copy(alpha = 0.35f)
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)
             )
 
             Spacer(
                 modifier = Modifier.height(14.dp)
             )
 
-            /*
-             * GRIGLIA
-             */
+            // Griglia
             if (ownedCosmetics.isEmpty()) {
 
                 Box(
@@ -173,7 +165,7 @@ fun OwnedCosmeticsSection(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = FantasyGold.copy(alpha = 0.45f),
+                            tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f),
                             modifier = Modifier.size(28.dp)
                         )
 
@@ -184,7 +176,8 @@ fun OwnedCosmeticsSection(
                         Text(
                             text = "Nessun cosmetico acquistato",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = FantasyTextSecondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontFamily = FontFamily.SansSerif,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -214,15 +207,11 @@ fun OwnedCosmeticsSection(
 
                                 rowItems.forEach { cosmetic ->
 
-                                    FantasyCosmeticItem(
+                                    CosmeticItem(
                                         itemId = cosmetic.itemId
                                     )
                                 }
 
-                                /*
-                                 * Mantiene le colonne allineate
-                                 * nell'ultima riga.
-                                 */
                                 repeat(
                                     COSMETICS_PER_ROW - rowItems.size
                                 ) {
@@ -242,31 +231,26 @@ fun OwnedCosmeticsSection(
 }
 
 @Composable
-private fun FantasyCosmeticItem(
+private fun CosmeticItem(
     itemId: String
 ) {
 
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(12.dp)
 
     Card(
         modifier = Modifier
             .size(COSMETIC_SIZE)
             .shadow(
-                elevation = 8.dp,
-                shape = shape
-            )
-            .border(
-                width = 2.dp,
-                color = FantasyPurple.copy(alpha = 0.8f),
+                elevation = 4.dp,
                 shape = shape
             )
             .border(
                 width = 1.dp,
-                color = FantasyGold.copy(alpha = 0.45f),
-                shape = RoundedCornerShape(14.dp)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                shape = shape
             ),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
         ),
         shape = shape
     ) {
@@ -274,99 +258,53 @@ private fun FantasyCosmeticItem(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(COSMETIC_SIZE)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            FantasySurfaceLight,
-                            FantasyPurpleDark.copy(alpha = 0.85f),
-                            Color(0xFF120D1C)
-                        )
-                    )
-                ),
+                .height(COSMETIC_SIZE),
             contentAlignment = Alignment.Center
         ) {
 
-            /*
-             * BAGLIORE CENTRALE
-             */
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .background(
-                        FantasyPurple.copy(alpha = 0.14f),
-                        RoundedCornerShape(50)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = FantasyGold.copy(alpha = 0.25f),
-                        shape = RoundedCornerShape(50)
-                    ),
-                contentAlignment = Alignment.Center
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
 
+                // Icona cosmetico (simbolo generico)
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
-                    tint = FantasyGold.copy(alpha = 0.9f),
+                    tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
                     modifier = Modifier.size(32.dp)
                 )
-            }
 
-            /*
-             * CODICE COSMETICO
-             */
-            Text(
-                text = itemId
-                    .take(3)
-                    .uppercase(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = FantasyText,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier
-                    .align(Alignment.Center)
-            )
+                Spacer(modifier = Modifier.height(8.dp))
 
-            /*
-             * PICCOLA DECORAZIONE SUPERIORE
-             */
-            Text(
-                text = "✦",
-                color = FantasyGoldLight,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 5.dp)
-            )
-
-            /*
-             * ID COMPLETO
-             */
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(
-                        Color.Black.copy(alpha = 0.35f)
-                    )
-                    .padding(
-                        vertical = 4.dp,
-                        horizontal = 5.dp
-                    )
-            ) {
-
+                // Nome cosmetico formattato con font fantasy
                 Text(
-                    text = itemId,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 7.sp,
-                    color = FantasyTextSecondary.copy(alpha = 0.85f),
-                    fontFamily = FontFamily.Monospace,
-                    maxLines = 1,
+                    text = formatCosmeticName(itemId),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontFamily = FontFamily.Serif
+                    ),
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    maxLines = 2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
                 )
             }
         }
     }
+}
+
+/**
+ * Formatta l'ID del cosmetico in un nome leggibile
+ * Es: "frame_mago" → "Frame Mago"
+ *     "skin_slime" → "Skin Slime"
+ */
+private fun formatCosmeticName(itemId: String): String {
+    return itemId
+        .split("_")
+        .joinToString(" ") { word ->
+            word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        }
 }

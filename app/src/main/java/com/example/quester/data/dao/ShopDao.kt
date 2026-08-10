@@ -15,6 +15,9 @@ interface ShopDao {
     @Query("SELECT * FROM shop_items ORDER BY price ASC")
     suspend fun getAllItems(): List<ShopItem>
 
+    @Query("DELETE FROM shop_items")
+    suspend fun deleteAllItems()
+
     @Query("SELECT * FROM shop_items WHERE itemId = :itemId LIMIT 1")
     suspend fun getItemByItemId(itemId: String): ShopItem?
 

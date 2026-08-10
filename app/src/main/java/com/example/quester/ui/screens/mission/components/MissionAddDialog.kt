@@ -5,6 +5,8 @@ import com.example.quester.ui.screens.mission.model.MissionType
 import com.example.quester.ui.screens.isXpValidForMissionType
 import com.example.quester.ui.screens.getXpValidationMessage
 import com.example.quester.ui.screens.normalizeXpForMissionType
+import com.example.quester.ui.utils.capitalizeWords
+import com.example.quester.ui.utils.capitalizeFirstLetter
 
 @Composable
 fun AddMissionDialog(
@@ -37,7 +39,19 @@ fun AddMissionDialog(
             dialogState = dialogState,
             validationState = validationState,
             onDismiss = onDismiss,
-            onMissionCreated = onMissionCreated
+            onMissionCreated = { title, description, type, xp, tasks ->
+                // Capitalizza prima di passare alla creazione
+                val capitalizedTitle = capitalizeWords(title.trim())
+                val capitalizedDescription = capitalizeFirstLetter(description.trim())
+                val capitalizedTasks = tasks.map { capitalizeWords(it.trim()) }
+                onMissionCreated(
+                    capitalizedTitle,
+                    capitalizedDescription,
+                    type,
+                    xp,
+                    capitalizedTasks
+                )
+            }
         )
     )
 }
@@ -65,7 +79,6 @@ class ValidationState {
 @Composable
 private fun rememberDialogState(): DialogState {
     val state = remember { DialogState() }
-    // Inizializza xpReward con il default
     LaunchedEffect(Unit) {
         state.xpReward = state.selectedType.defaultXp.toString()
     }
@@ -117,7 +130,6 @@ private fun validateAllFields(
     val xpValue = xpReward.toIntOrNull()
     val xpError = when {
         xpValue == null -> "✦ Inserisci un valore XP valido"
-        // ✅ FIX: Rimosso il non-null assertion !!
         !isXpValidForMissionType(selectedType.dbValue, xpValue) ->
             getXpValidationMessage(selectedType.dbValue, xpValue)
         else -> null
@@ -142,14 +154,6 @@ private data class ValidationResult(
     val xpError: String?,
     val subtaskError: String?,
     val xpValue: Int?
-)
-
-private data class DialogStateData(
-    val title: String,
-    val description: String,
-    val selectedType: MissionType,
-    val xpReward: String,
-    val subtasks: List<String>
 )
 
 // ===== FACTORY FUNCTIONS =====

@@ -7,12 +7,14 @@ plugins {
 
 android {
     namespace = "com.example.quester"
-    compileSdk = 34
+
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.quester"
         minSdk = 24
-        targetSdk = 34
+
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -50,6 +52,10 @@ ksp {
 dependencies {
     // --- Compose BOM ---
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.runtime.annotation)
+    implementation(libs.androidx.ui.graphics)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
     // --- Core Android ---

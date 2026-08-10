@@ -2,11 +2,11 @@
 agp = "8.13.2"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.25"
-composeBom = "2024.09.00"
-coreKtx = "1.13.1"
-lifecycle = "2.8.4"
-activityCompose = "1.9.2"
-room = "2.6.1"
+composeBom = "2024.12.01"
+coreKtx = "1.15.0"
+lifecycle = "2.9.4"
+activityCompose = "1.10.0"
+room = "2.7.0"
 junit4 = "4.13.2"
 androidxJunit = "1.2.1"
 espresso = "3.6.1"
@@ -16,9 +16,13 @@ androidxTestRules = "1.6.1"
 coroutinesTest = "1.8.1"
 datastore = "1.1.1"
 work = "2.9.1"
-coil = "2.6.0"
+coil = "2.7.0"
 mockito = "5.10.0"
 mockitoKotlin = "5.1.0"
+runtimeAnnotation = "1.11.4"
+foundation = "1.11.4"
+uiGraphics = "1.11.4"
+foundationLayout = "1.11.4"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -55,6 +59,10 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+androidx-compose-runtime-annotation = { group = "androidx.compose.runtime", name = "runtime-annotation", version.ref = "runtimeAnnotation" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

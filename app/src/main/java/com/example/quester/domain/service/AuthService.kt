@@ -2,12 +2,15 @@ package com.example.quester.domain.service
 
 import com.example.quester.data.repository.AuthRepository
 import com.example.quester.data.repository.AuthResult
+import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class AuthService(
     private val authRepository: AuthRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val userRepository: UserRepository
 ) {
     val isAuthenticated: Flow<Boolean> = sessionManager.isLoggedIn
 
@@ -41,6 +44,22 @@ class AuthService(
     }
 
     suspend fun logout() = sessionManager.clearSession()
+
+    // ===== NUOVI METODI =====
+
+    suspend fun updateUsername(newUsername: String): Boolean {
+        val userId = sessionManager.loggedUserId.first() ?: return false
+        return userRepository.updateUsername(userId, newUsername)
+    }
+
+    suspend fun deleteAccount(): Boolean {
+        val userId = sessionManager.loggedUserId.first() ?: return false
+        val result = userRepository.deleteAccount(userId)
+        if (result) {
+            sessionManager.clearSession()
+        }
+        return result
+    }
 
     private fun validateForRegister(username: String, email: String?, password: String): String? {
         if (username.isBlank()) return "Username obbligatorio"

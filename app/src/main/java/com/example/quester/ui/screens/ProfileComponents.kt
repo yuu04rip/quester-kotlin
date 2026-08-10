@@ -46,166 +46,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.quester.R
+import com.example.quester.ui.components.FantasyTitle
 
-@Composable
-fun ProfileAvatar(
-    profileImageUri: String?,
-    onPickImage: () -> Unit,
-    onRemoveImage: () -> Unit
-) {
-
-    var showMenu by remember {
-        mutableStateOf(false)
-    }
-
-    Box(
-        modifier = Modifier.size(120.dp),
-        contentAlignment = Alignment.Center
-    ) {
-
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .border(
-                    2.dp,
-                    FantasyGold.copy(
-                        alpha = 0.8f
-                    ),
-                    CircleShape
-                )
-                .border(
-                    1.dp,
-                    FantasyPurple.copy(
-                        alpha = 0.5f
-                    ),
-                    CircleShape
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(FantasyPurpleDark)
-                .border(
-                    1.dp,
-                    FantasyGoldLight,
-                    CircleShape
-                )
-                .clickable {
-                    showMenu = true
-                },
-
-            contentAlignment = Alignment.Center
-        ) {
-
-            if (!profileImageUri.isNullOrBlank()) {
-
-                AsyncImage(
-                    model = profileImageUri,
-                    contentDescription = "Foto Profilo",
-
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-
-                    contentScale = ContentScale.Crop
-                )
-
-            } else {
-
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Foto Profilo di default",
-                    modifier = Modifier.size(50.dp),
-                    tint = FantasyGoldLight
-                )
-            }
-        }
-
-        FloatingActionButton(
-            onClick = {
-                showMenu = true
-            },
-
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(36.dp),
-
-            containerColor = FantasyGold,
-            contentColor = Color(0xFF0D0B14),
-            shape = CircleShape,
-
-            elevation = FloatingActionButtonDefaults.elevation(
-                4.dp
-            )
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Modifica foto",
-                modifier = Modifier.size(16.dp)
-            )
-        }
-
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = {
-                showMenu = false
-            },
-            containerColor = FantasySurface
-        ) {
-
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        "Seleziona nuova foto",
-                        color = FantasyText
-                    )
-                },
-
-                onClick = {
-                    showMenu = false
-                    onPickImage()
-                }
-            )
-
-            if (!profileImageUri.isNullOrBlank()) {
-
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            "Rimuovi foto",
-                            color = Color(0xFFE57373)
-                        )
-                    },
-
-                    onClick = {
-                        showMenu = false
-                        onRemoveImage()
-                    }
-                )
-            }
-        }
-    }
-}
+// NOTA: ProfileAvatar è DEPRECATO - Usare AvatarView invece
 
 @Composable
 fun FantasyXpProgress(
     xpTotale: Int
-    // Parametro 'livello' rimosso perché non utilizzato
-    // Il livello viene calcolato automaticamente da xpTotale
 ) {
-    // Usa la funzione globale per calcolare il livello effettivo
     val actualLevel = calculateLevelFromXp(xpTotale)
-
-    // Calcola l'XP necessario per il livello effettivo
     val xpForCurrentLevel = getXpRequiredForLevel(actualLevel)
-
-    // Calcola l'XP nel livello corrente usando la funzione globale
     val xpInCurrentLevel = getXpInCurrentLevel(xpTotale, actualLevel)
-
-    // Calcola il progresso usando la funzione globale
     val progress = getXpProgress(xpTotale, actualLevel)
 
     Column(
@@ -221,21 +72,21 @@ fun FantasyXpProgress(
             Text(
                 text = "Liv. $actualLevel",
                 style = MaterialTheme.typography.labelSmall,
-                color = FantasyTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = FontFamily.Serif
             )
 
             Text(
                 text = "$xpInCurrentLevel / $xpForCurrentLevel XP",
                 style = MaterialTheme.typography.labelSmall,
-                color = FantasyTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = FontFamily.Serif
             )
 
             Text(
                 text = "Liv. ${actualLevel + 1}",
                 style = MaterialTheme.typography.labelSmall,
-                color = FantasyTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = FontFamily.Serif
             )
         }
@@ -252,13 +103,13 @@ fun FantasyXpProgress(
                     RoundedCornerShape(6.dp)
                 )
                 .background(
-                    FantasyPurpleDark.copy(
+                    MaterialTheme.colorScheme.primaryContainer.copy(
                         alpha = 0.5f
                     )
                 )
                 .border(
                     1.dp,
-                    FantasyGold.copy(
+                    MaterialTheme.colorScheme.secondary.copy(
                         alpha = 0.3f
                     ),
                     RoundedCornerShape(6.dp)
@@ -275,8 +126,8 @@ fun FantasyXpProgress(
                     .background(
                         Brush.horizontalGradient(
                             listOf(
-                                FantasyPurple,
-                                FantasyGold
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
                             )
                         )
                     )
@@ -304,18 +155,16 @@ fun FantasyStatItem(
             modifier = Modifier.size(28.dp)
         )
 
-        Text(
+        FantasyTitle(
             text = value,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = FantasyText,
-            fontFamily = FontFamily.Serif
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = FantasyTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Serif
         )
     }
@@ -339,18 +188,16 @@ fun FantasyCoinStatItem(
             modifier = Modifier.size(32.dp)
         )
 
-        Text(
+        FantasyTitle(
             text = value,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = FantasyGold,
-            fontFamily = FontFamily.Serif
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Text(
             text = "MONETE",
             style = MaterialTheme.typography.labelMedium,
-            color = FantasyTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Serif
         )
     }

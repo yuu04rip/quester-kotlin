@@ -1,53 +1,128 @@
 package com.example.quester.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+// ============================================================
+//  COLOR SCHEME - TEMA SCURO (FANTASY DARK)
+// ============================================================
+
+private val FantasyDarkColorScheme = darkColorScheme(
+    // Primari
+    primary = FantasyPurple,
+    onPrimary = FantasyText,
+    primaryContainer = FantasyPurpleDark,
+    onPrimaryContainer = FantasyGoldLight,
+
+    // Secondari
+    secondary = FantasyGold,
+    onSecondary = Color(0xFF0D0B14),
+    secondaryContainer = FantasyGoldDark,
+    onSecondaryContainer = FantasyText,
+
+    // Terziari
+    tertiary = FantasyPurpleLight,
+    onTertiary = FantasyText,
+    tertiaryContainer = FantasyPurpleDark,
+    onTertiaryContainer = FantasyGoldLight,
+
+    // Background e Surface
+    background = FantasyBackground,
+    onBackground = FantasyText,
+
+    surface = FantasySurface,
+    onSurface = FantasyText,
+    surfaceVariant = FantasySurfaceLight,
+    onSurfaceVariant = FantasyTextSecondary,
+
+    surfaceTint = FantasyPurple,
+
+    // Errori
+    error = FantasyError,
+    onError = FantasyText,
+    errorContainer = FantasyError.copy(alpha = 0.15f),
+    onErrorContainer = FantasyError,
+
+    // Outline
+    outline = FantasyGold.copy(alpha = 0.35f),
+    outlineVariant = FantasyGold.copy(alpha = 0.15f),
+
+    // Altri
+    scrim = Color.Black.copy(alpha = 0.7f),
+    inverseSurface = FantasySurfaceLight,
+    inverseOnSurface = FantasyText,
+    inversePrimary = FantasyGoldLight
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+// ============================================================
+//  COLOR SCHEME - TEMA CHIARO (FANTASY LIGHT)
+// ============================================================
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val FantasyLightColorScheme = lightColorScheme(
+    // Primari
+    primary = FantasyLightPurple,
+    onPrimary = FantasyLightText,
+    primaryContainer = FantasyLightPurpleLight,
+    onPrimaryContainer = FantasyLightText,
+
+    // Secondari
+    secondary = FantasyLightGold,
+    onSecondary = FantasyLightText,
+    secondaryContainer = FantasyLightGoldLight,
+    onSecondaryContainer = FantasyLightText,
+
+    // Terziari
+    tertiary = FantasyLightPurple,
+    onTertiary = FantasyLightText,
+    tertiaryContainer = FantasyLightPurpleLight,
+    onTertiaryContainer = FantasyLightText,
+
+    // Background e Surface
+    background = FantasyLightBackground,
+    onBackground = FantasyLightText,
+
+    surface = FantasyLightSurface,
+    onSurface = FantasyLightText,
+    surfaceVariant = FantasyLightSurfaceVariant,
+    onSurfaceVariant = FantasyLightTextSecondary,
+
+    surfaceTint = FantasyLightPurple,
+
+    // Errori
+    error = FantasyLightError,
+    onError = FantasyLightSurface,
+    errorContainer = FantasyLightError.copy(alpha = 0.12f),
+    onErrorContainer = FantasyLightError,
+
+    // Outline
+    outline = FantasyLightPurple.copy(alpha = 0.25f),
+    outlineVariant = FantasyLightPurple.copy(alpha = 0.12f),
+
+    // Altri
+    scrim = Color.Black.copy(alpha = 0.5f),
+    inverseSurface = FantasyLightSurfaceVariant,
+    inverseOnSurface = FantasyLightText,
+    inversePrimary = FantasyLightPurple
 )
+
+// ============================================================
+//  FUNZIONE TEMA
+// ============================================================
 
 @Composable
 fun QuesterTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val colorScheme = if (darkTheme) {
+        FantasyDarkColorScheme
+    } else {
+        FantasyLightColorScheme
     }
 
     MaterialTheme(

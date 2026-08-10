@@ -2,7 +2,10 @@ package com.example.quester.ui.screens
 
 import androidx.compose.ui.graphics.Color
 
-// Colori del tema Fantasy
+// ===== COLORI DEL TEMA FANTASY (FALLBACK) =====
+// Usa MaterialTheme.colorScheme per i colori dinamici
+// Questi sono solo come fallback
+
 val FantasyBackground = Color(0xFF0D0B14)
 val FantasySurface = Color(0xFF171321)
 val FantasySurfaceLight = Color(0xFF221B2E)
@@ -17,16 +20,29 @@ val FantasyText = Color(0xFFF3EBD8)
 val FantasyTextSecondary = Color(0xFFC8BDA8)
 val FantasyError = Color(0xFFE57373)
 
-// ===== COSTANTI XP =====
-const val XP_BASE = 100
+// ============================================================
+// 1. SISTEMA XP E LIVELLI
+// ============================================================
 
-// Formula esponenziale per XP per livello
+/**
+ * Formula Lineare per l'XP necessario per salire di livello
+ * XP = 100 + (livello - 1) * 50
+ *
+ * Esempio:
+ * - Livello 1 → 2: 100 XP
+ * - Livello 2 → 3: 150 XP
+ * - Livello 50: 63.750 XP totali
+ */
+const val XP_BASE = 100
+const val XP_INCREMENT = 50
+
 fun getXpRequiredForLevel(level: Int): Int {
-    return (XP_BASE * Math.pow(level.toDouble(), 1.5)).toInt()
+    return XP_BASE + (level - 1) * XP_INCREMENT
 }
 
-// ===== FUNZIONI DI CALCOLO XP =====
-
+/**
+ * Calcola il livello effettivo in base all'XP totale
+ */
 fun calculateLevelFromXp(totalXp: Int): Int {
     var remainingXp = totalXp
     var level = 1
@@ -42,6 +58,9 @@ fun calculateLevelFromXp(totalXp: Int): Int {
     return level
 }
 
+/**
+ * Calcola l'XP nel livello corrente
+ */
 fun getXpInCurrentLevel(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Int {
     var totalXpForPreviousLevels = 0
     for (i in 1 until level) {
@@ -50,12 +69,18 @@ fun getXpInCurrentLevel(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)
     return totalXp - totalXpForPreviousLevels
 }
 
+/**
+ * Calcola il progresso verso il prossimo livello (0.0 - 1.0)
+ */
 fun getXpProgress(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Float {
     val xpInCurrent = getXpInCurrentLevel(totalXp, level)
     val xpNeeded = getXpRequiredForLevel(level)
     return (xpInCurrent.toFloat() / xpNeeded).coerceIn(0f, 1f)
 }
 
+/**
+ * Calcola l'XP totale necessario per raggiungere un certo livello
+ */
 fun getTotalXpRequiredForLevel(level: Int): Int {
     var total = 0
     for (i in 1 until level) {
@@ -64,50 +89,73 @@ fun getTotalXpRequiredForLevel(level: Int): Int {
     return total
 }
 
-// ===== CONFIGURAZIONE RICOMPENSE MISSIONI =====
+// ============================================================
+// 2. RICOMPENSE MISSIONI (VALORI FINALI)
+// ============================================================
 
-// Valori BASE (senza scaling)
-const val MISSION_COINS_NORMAL = 20
-const val MISSION_COINS_SPECIAL = 50
-const val MISSION_COINS_WEEKLY = 80
-const val MISSION_COINS_DAILY = 30
+/**
+ * XP per tipo di missione (FISSO - deciso dall'utente tramite range)
+ * I valori qui sono i BASE per lo scaling (non più usato per XP)
+ */
+const val MISSION_XP_NORMAL = 30
+const val MISSION_XP_SPECIAL = 400
+const val MISSION_XP_WEEKLY = 120
+const val MISSION_XP_DAILY = 30
 
-const val MISSION_XP_NORMAL = 100
-const val MISSION_XP_SPECIAL = 500
-const val MISSION_XP_WEEKLY = 800
-const val MISSION_XP_DAILY = 150
+/**
+ * MONETE per tipo di missione (FISSO - non scalano con il livello)
+ */
+const val MISSION_COINS_NORMAL = 1
+const val MISSION_COINS_SPECIAL = 15
+const val MISSION_COINS_WEEKLY = 5
+const val MISSION_COINS_DAILY = 1
 
-// Fattori di scaling per livello
-const val COIN_SCALING_PER_LEVEL = 1   // +1 coin per livello
-const val XP_SCALING_PER_LEVEL = 5     // +5 XP per livello
+/**
+ * MONETE per Level Up (in base al range di livello)
+ */
+fun getLevelUpCoins(level: Int): Int {
+    return when (level) {
+        in 1..10 -> 3
+        in 11..20 -> 5
+        in 21..30 -> 8
+        in 31..40 -> 12
+        in 41..50 -> 20
+        else -> 0
+    }
+}
 
-// ===== FUNZIONI DI CALCOLO RICOMPENSE =====
+/**
+ * Calcola le monete totali dal level up (dal livello 1 al livello specificato)
+ */
+fun getTotalLevelUpCoins(level: Int): Int {
+    var total = 0
+    for (i in 1..level) {
+        total += getLevelUpCoins(i)
+    }
+    return total
+}
 
-fun getMissionCoins(missionType: String, playerLevel: Int): Int {
-    val baseCoins = when (missionType) {
+// ============================================================
+// 3. FUNZIONI DI CALCOLO RICOMPENSE
+// ============================================================
+
+/**
+ * Calcola le monete per una missione (NON scalate con il livello)
+ */
+
+fun getMissionCoins(missionType: String): Int {
+    return when (missionType) {
         "NORMAL" -> MISSION_COINS_NORMAL
         "SPECIAL" -> MISSION_COINS_SPECIAL
         "WEEKLY" -> MISSION_COINS_WEEKLY
         "DAILY" -> MISSION_COINS_DAILY
         else -> MISSION_COINS_NORMAL
     }
-    val levelBonus = (playerLevel - 1) * COIN_SCALING_PER_LEVEL
-    return baseCoins + levelBonus
 }
 
-fun getMissionXp(missionType: String, playerLevel: Int): Int {
-    val baseXp = when (missionType) {
-        "NORMAL" -> MISSION_XP_NORMAL
-        "SPECIAL" -> MISSION_XP_SPECIAL
-        "WEEKLY" -> MISSION_XP_WEEKLY
-        "DAILY" -> MISSION_XP_DAILY
-        else -> MISSION_XP_NORMAL
-    }
-    val levelBonus = (playerLevel - 1) * XP_SCALING_PER_LEVEL
-    return baseXp + levelBonus
-}
-
-// ===== VALIDAZIONE XP PER MISSIONI =====
+// ============================================================
+// 4. VALIDAZIONE XP PER MISSIONI (RANGE)
+// ============================================================
 
 /**
  * Verifica se l'XP è valido per il tipo di missione
@@ -157,3 +205,85 @@ fun normalizeXpForMissionType(missionType: String, xp: Int): Int {
         missionTypeEnum.defaultXp
     }
 }
+
+// ============================================================
+// 5. UTILITY PER COSMETICI E PREZZI
+// ============================================================
+
+/**
+ * Prezzi dei cosmetici
+ */
+const val PRICE_FRAME = 30
+const val PRICE_COSMETIC = 100
+const val PRICE_THEME = 500
+
+/**
+ * Nomi dei cosmetici disponibili
+ */
+val FRAME_NAMES = listOf(
+    "Cornice del Mago",
+    "Cornice del Cavaliere",
+    "Cornice Sci-Fi"
+)
+
+val COSMETIC_NAMES = listOf(
+    "Cappello del Mago",
+    "Bastone del Mago",
+    "Pistola Spaziale",
+    "Spada del Cavaliere",
+    "Elmo del Cavaliere",
+    "Visore Futuristico"
+)
+
+val THEME_NAMES = listOf(
+    "Arcade",
+    "Bacheca Fantasy"
+)
+
+// ============================================================
+// 6. REWARD FINALE (LIVELLO 50)
+// ============================================================
+
+/**
+ * Reward finale per il raggiungimento del livello 50
+ */
+data class FinalReward(
+    val name: String = "👑 Corona dell'Eroe",
+    val themeName: String = "Tema Regale",
+    val description: String = "Un cosmetico unico per il vero campione!",
+    val valueInCoins: Int = 600 // 500 (tema) + 100 (corona)
+)
+
+fun getFinalReward(): FinalReward = FinalReward()
+
+// ============================================================
+// 7. TABELLA RIASSUNTIVA (per riferimento)
+// ============================================================
+
+/**
+ * Tabella riassuntiva di XP e Monete
+ *
+ * | Range Livelli | Monete Level Up |
+ * |---------------|-----------------|
+ * | 1-10          | 3               |
+ * | 11-20         | 5               |
+ * | 21-30         | 8               |
+ * | 31-40         | 12              |
+ * | 41-50         | 20              |
+ *
+ * | Tipo Missione | Monete | XP (range)    |
+ * |---------------|--------|---------------|
+ * | Giornaliera   | 1      | 5-50          |
+ * | Settimanale   | 5      | 50-200        |
+ * | Speciale      | 15     | 100-1000      |
+ *
+ * | Cosmetico     | Prezzo |
+ * |---------------|--------|
+ * | Cornice       | 30     |
+ * | Cosmetico     | 100    |
+ * | Tema          | 500    |
+ *
+ * | Reward Finale (Livello 50) | Valore |
+ * |----------------------------|--------|
+ * | Corona dell'Eroe + Tema Regale | 600 |
+ */

@@ -64,7 +64,7 @@ fun MissionListScreen(
                 MissionListHeader(
                     username = user?.username ?: "Eroe",
                     onAddClick = {
-                        showAddDialog = true  // Imposta direttamente la variabile
+                        showAddDialog = true
                     }
                 )
 
@@ -122,11 +122,11 @@ fun MissionListScreen(
                 )
             }
 
-            // DIALOG AGGIUNTA - ora funziona correttamente
+            // DIALOG AGGIUNTA
             if (showAddDialog) {
                 AddMissionDialog(
                     onDismiss = {
-                        showAddDialog = false  // Chiude il dialog
+                        showAddDialog = false
                     },
                     onMissionCreated = { title, description, type, xp, tasks ->
                         scope.launch {
@@ -138,7 +138,7 @@ fun MissionListScreen(
                                 xpReward = xp,
                                 subtasks = tasks
                             )
-                            showAddDialog = false  // Chiude il dialog dopo la creazione
+                            showAddDialog = false
                         }
                     }
                 )
@@ -267,14 +267,16 @@ private fun ResetMissionDialog(
         title = {
             Text(
                 "Resettare la missione?",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
             Column {
                 Text(
                     "I task della missione \"${missionWithTasks.mission.title}\" verranno resettati.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -299,14 +301,16 @@ private fun ResetMissionDialog(
                     containerColor = MaterialTheme.colorScheme.tertiary
                 )
             ) {
-                Text("Reset")
+                Text("Reset", color = MaterialTheme.colorScheme.onTertiary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annulla")
+                Text("Annulla", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.large
     )
 }
 

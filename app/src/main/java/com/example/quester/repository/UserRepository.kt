@@ -6,7 +6,7 @@ import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
 import com.example.quester.ui.screens.calculateLevelFromXp
 import com.example.quester.ui.screens.getXpInCurrentLevel
-import com.example.quester.ui.screens.getXpRequiredForLevel  // ← AGGIUNGI QUESTO IMPORT
+import com.example.quester.ui.screens.getXpRequiredForLevel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -15,7 +15,6 @@ class UserRepository(
     private val ownedCosmeticDao: OwnedCosmeticDao? = null
 ) {
     companion object {
-        // Costanti per messaggi di errore
         private const val ERROR_USERNAME_EMPTY = "Username vuoto"
         private const val ERROR_USERNAME_TAKEN = "Username già in uso"
         private const val ERROR_OWNED_DAO_NOT_PROVIDED = "OwnedCosmeticDao non fornito"
@@ -24,29 +23,17 @@ class UserRepository(
     // ===== METODI GET =====
 
     suspend fun getUserById(userId: Long): User? = userDao.getUserById(userId)
-
     suspend fun getUser(): User? = userDao.getUser()
-
     fun getUserFlow(): Flow<User?> = userDao.getUserFlow()
-
     fun getUserByIdFlow(userId: Long): Flow<User?> = userDao.getUserByIdFlow(userId)
 
     // ===== METODI XP =====
 
-    /**
-     * Aggiunge XP all'utente e ricalcola il livello usando la formula esponenziale
-     */
     suspend fun addXp(userId: Long, xpGained: Int) {
         if (xpGained <= 0) return
-
         val current = getUserById(userId) ?: userDao.getUser() ?: return
-
-        // Calcola il nuovo XP totale
         val newXpTotal = current.xpTotale + xpGained
-
-        // Calcola il nuovo livello usando la formula esponenziale
         val newLevel = calculateLevelFromXp(newXpTotal)
-
         userDao.updateUser(
             current.copy(
                 xpTotale = newXpTotal,
@@ -55,17 +42,11 @@ class UserRepository(
         )
     }
 
-    /**
-     * Ottiene il livello attuale dell'utente calcolato dall'XP
-     */
     suspend fun getCurrentLevel(userId: Long): Int {
         val user = getUserById(userId) ?: return 1
         return calculateLevelFromXp(user.xpTotale)
     }
 
-    /**
-     * Ottiene l'XP necessario per il prossimo livello
-     */
     suspend fun getXpNeededForNextLevel(userId: Long): Int {
         val user = getUserById(userId) ?: return 100
         val currentLevel = calculateLevelFromXp(user.xpTotale)
@@ -74,9 +55,6 @@ class UserRepository(
         return xpNeeded - xpInCurrent
     }
 
-    /**
-     * Ottiene il progresso verso il prossimo livello (0.0 - 1.0)
-     */
     suspend fun getXpProgress(userId: Long): Float {
         val user = getUserById(userId) ?: return 0f
         val currentLevel = calculateLevelFromXp(user.xpTotale)
@@ -105,17 +83,29 @@ class UserRepository(
 
     suspend fun updateUser(user: User) = userDao.updateUser(user)
 
-    suspend fun updateUsername(userId: Long, newUsername: String) {
+    suspend fun updateUsername(userId: Long, newUsername: String): Boolean {
         val clean = newUsername.trim().lowercase()
-        require(clean.isNotBlank()) { ERROR_USERNAME_EMPTY }
+        if (clean.isBlank() || clean.length < 3) return false
 
         val existing = userDao.getUserByUsername(clean)
-        require(!(existing != null && existing.id != userId)) {
-            ERROR_USERNAME_TAKEN
-        }
+        if (existing != null && existing.id != userId) return false
 
-        val current = getUserById(userId) ?: userDao.getUser() ?: return
+        val current = getUserById(userId) ?: return false
         userDao.updateUser(current.copy(username = clean))
+        return true
+    }
+
+    suspend fun deleteAccount(userId: Long): Boolean {
+
+        // Verifica direttamente se l'utente esiste
+        if (getUserById(userId) == null) return false
+
+        // Elimina cosmetici posseduti
+        ownedCosmeticDao?.deleteAllForUser(userId)
+
+        // Elimina utente (le missioni e subtask vengono eliminati via CASCADE)
+        userDao.deleteUser(userId)
+        return true
     }
 
     suspend fun updateProfileImage(userId: Long, uri: String?) {

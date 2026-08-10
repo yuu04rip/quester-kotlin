@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.quester.ui.screens.*
 import com.example.quester.ui.screens.mission.model.MissionType
 
 data class MissionDialogState(
@@ -49,7 +48,7 @@ fun MissionDialogContent(
         title = {
             Text(
                 text = dialogTitle,
-                color = FantasyGoldLight,
+                color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -71,7 +70,7 @@ fun MissionDialogContent(
         dismissButton = {
             DismissButton(onClick = callbacks.onDismiss)
         },
-        containerColor = FantasySurface,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.large
     )
 }
@@ -176,7 +175,7 @@ private fun MissionTypeSelector(
     Column {
         Text(
             text = "Tipo Missione",
-            color = FantasyTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -191,10 +190,10 @@ private fun MissionTypeSelector(
                     label = { Text(type.label, fontSize = 12.sp) },
                     modifier = Modifier.weight(1f),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = FantasyGold.copy(alpha = 0.3f),
-                        selectedLabelColor = FantasyGoldLight,
-                        disabledContainerColor = FantasySurfaceLight,
-                        disabledLabelColor = FantasyTextSecondary
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        selectedLabelColor = MaterialTheme.colorScheme.secondary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -227,7 +226,7 @@ private fun XpField(
             placeholder = {
                 Text(
                     "Default: ${selectedType.defaultXp}",
-                    color = FantasyTextSecondary.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -248,7 +247,7 @@ private fun XpWarningBox(error: String) {
     Spacer(modifier = Modifier.height(4.dp))
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFFFF6B6B).copy(alpha = 0.15f),
+        color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
         shape = MaterialTheme.shapes.small
     ) {
         Row(
@@ -258,13 +257,13 @@ private fun XpWarningBox(error: String) {
             Icon(
                 Icons.Default.Info,
                 contentDescription = null,
-                tint = Color(0xFFFF6B6B),
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "⚠️ $error",
-                color = Color(0xFFFF6B6B),
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -283,7 +282,7 @@ private fun SubtasksSection(
     Column {
         Text(
             text = "Sub-tasks",
-            color = FantasyTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -298,7 +297,6 @@ private fun SubtasksSection(
             )
         }
 
-        // FIX: Usa un Row con il modificatore invece di Modifier.align
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -346,7 +344,7 @@ private fun SubtaskRow(
             placeholder = {
                 Text(
                     if (index == 0) "Sub-task 1" else "Sub-task ${index + 1}",
-                    color = FantasyTextSecondary.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
         )
@@ -376,7 +374,7 @@ private fun RemoveSubtaskButton(
         },
         modifier = Modifier.size(36.dp)
     ) {
-        Text("✕", color = Color(0xFFFF6B6B))
+        Text("✕", color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -388,7 +386,11 @@ private fun AddSubtaskButton(
     TextButton(
         onClick = { onSubtasksChange(currentSubtasks + "") }
     ) {
-        Text("+ Aggiungi subtask", color = FantasyGoldLight, fontSize = 12.sp)
+        Text(
+            "+ Aggiungi subtask",
+            color = MaterialTheme.colorScheme.secondary,
+            fontSize = 12.sp
+        )
     }
 }
 
@@ -402,8 +404,8 @@ private fun ConfirmButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = FantasyGold,
-            contentColor = Color(0xFF0D0B14)
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary
         ),
         shape = MaterialTheme.shapes.medium
     ) {
@@ -416,7 +418,7 @@ private fun DismissButton(
     onClick: () -> Unit
 ) {
     TextButton(onClick = onClick) {
-        Text("Annulla", color = FantasyTextSecondary)
+        Text("Annulla", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -426,7 +428,7 @@ private fun DismissButton(
 private fun ErrorText(text: String) {
     Text(
         text = text,
-        color = Color(0xFFFF6B6B),
+        color = MaterialTheme.colorScheme.error,
         fontSize = 12.sp,
         modifier = Modifier.padding(start = 4.dp)
     )
@@ -437,7 +439,7 @@ private fun InfoText(text: String) {
     Text(
         text = text,
         fontSize = 12.sp,
-        color = FantasyTextSecondary.copy(alpha = 0.7f)
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
     )
 }
 
@@ -445,16 +447,16 @@ private fun InfoText(text: String) {
 
 @Composable
 private fun dialogTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = FantasySurfaceLight,
-    unfocusedContainerColor = FantasySurfaceLight,
-    focusedBorderColor = FantasyGold,
-    unfocusedBorderColor = FantasyGold.copy(alpha = 0.35f),
-    focusedLabelColor = FantasyGoldLight,
-    unfocusedLabelColor = FantasyTextSecondary,
-    focusedTextColor = FantasyText,
-    unfocusedTextColor = FantasyText,
-    cursorColor = FantasyGold,
-    errorBorderColor = Color(0xFFFF6B6B),
-    errorLabelColor = Color(0xFFFF6B6B),
-    errorSupportingTextColor = Color(0xFFFF6B6B)
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    focusedBorderColor = MaterialTheme.colorScheme.secondary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f),
+    focusedLabelColor = MaterialTheme.colorScheme.secondary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    cursorColor = MaterialTheme.colorScheme.secondary,
+    errorBorderColor = MaterialTheme.colorScheme.error,
+    errorLabelColor = MaterialTheme.colorScheme.error,
+    errorSupportingTextColor = MaterialTheme.colorScheme.error
 )
