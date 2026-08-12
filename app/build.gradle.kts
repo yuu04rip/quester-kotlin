@@ -8,13 +8,18 @@ plugins {
 android {
     namespace = "com.example.quester"
 
-    compileSdk = 36
+    compileSdk = 37
+
+    packaging {
+        resources.excludes.add("META-INF/LICENSE.md")
+        resources.excludes.add("META-INF/LICENSE-notice.md")
+    }
 
     defaultConfig {
         applicationId = "com.example.quester"
         minSdk = 24
 
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -36,12 +41,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     buildFeatures {
         compose = true
+    }
+}
+
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 
@@ -72,6 +80,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
+
     // --- Coil (Image Loading) ---
     implementation(libs.coil.compose)
 
@@ -97,7 +106,6 @@ dependencies {
 
     // --- Test UI Compose ---
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // --- Mockito per i test ---
     androidTestImplementation(libs.mockito.core)
@@ -105,7 +113,11 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
 
-    // --- Debug ---
+    // --- MockK per i test UI e Coroutine (Gestito via Version Catalog) ---
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent)
+
+    // --- Debug (Rimossi i duplicati di ui-test-manifest) ---
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

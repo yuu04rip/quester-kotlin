@@ -19,6 +19,7 @@ work = "2.9.1"
 coil = "2.7.0"
 mockito = "5.10.0"
 mockitoKotlin = "5.1.0"
+mockk = "1.13.8"
 runtimeAnnotation = "1.11.4"
 foundation = "1.11.4"
 uiGraphics = "1.11.4"
@@ -49,15 +50,19 @@ androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 
+# MockK (Spostato qui per pulizia e conformità al catalogo)
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
+mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockk" }
+
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
 androidx-test-core-ktx = { module = "androidx.test:core-ktx", version.ref = "androidxTestCore" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
-androidx-work-testing = { group = "androidx.work", name = "work-testing", version = "2.9.1" }
 androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidxTestRules" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "work" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 androidx-compose-runtime-annotation = { group = "androidx.compose.runtime", name = "runtime-annotation", version.ref = "runtimeAnnotation" }
