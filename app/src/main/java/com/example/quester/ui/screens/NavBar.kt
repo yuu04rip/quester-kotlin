@@ -1,13 +1,30 @@
 package com.example.quester.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.quester.data.dao.ShopDao
 import com.example.quester.data.repository.MissionRepository
@@ -16,57 +33,31 @@ import com.example.quester.data.session.SessionManager
 import com.example.quester.domain.service.AuthService
 import com.example.quester.domain.service.MissionService
 import com.example.quester.domain.service.ShopService
+import com.example.quester.ui.components.ArcadeBackground
+import com.example.quester.ui.components.AvatarCosmetics
 import com.example.quester.ui.screens.customization.AvatarCustomizationScreen
 import com.example.quester.ui.screens.mission.MissionListScreen
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// ===== DATA CLASS PER I PARAMETRI =====
-
-private data class NavServices(
+data class NavServices(
     val missionService: MissionService,
+    val authService: AuthService,
+    val shopService: ShopService
+)
+
+data class NavRepositories(
     val missionRepository: MissionRepository,
     val userRepository: UserRepository,
-    val authService: AuthService,
-    val shopService: ShopService,
-    val shopDao: ShopDao,
-    val sessionManager: SessionManager
+    val shopDao: ShopDao
 )
-
-private data class NavState(
-    val showCustomization: Boolean,
-    val pagerState: androidx.compose.foundation.pager.PagerState,
-    val screens: List<NavScreens>,
-    val innerPadding: PaddingValues
-)
-
-private data class NavCallbacks(
-    val onCustomizationDismiss: () -> Unit,
-    val onCustomizationSave: () -> Unit,
-    val onShowCustomization: () -> Unit
-)
-
-// ===== NAVBAR PRINCIPALE =====
 
 @Composable
 fun NavBar(
-    missionService: MissionService,
-    missionRepository: MissionRepository,
-    userRepository: UserRepository,
-    authService: AuthService,
-    shopService: ShopService,
-    shopDao: ShopDao,
+    services: NavServices,
+    repositories: NavRepositories,
     sessionManager: SessionManager
 ) {
-    val services = NavServices(
-        missionService = missionService,
-        missionRepository = missionRepository,
-        userRepository = userRepository,
-        authService = authService,
-        shopService = shopService,
-        shopDao = shopDao,
-        sessionManager = sessionManager
-    )
-
     val screens = listOf(
         NavScreens.Profile,
         NavScreens.Home,
@@ -77,151 +68,199 @@ fun NavBar(
     val coroutineScope = rememberCoroutineScope()
     var showCustomization by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-            ) {
-                screens.forEachIndexed { index, screen ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = screen.icon,
-                                contentDescription = screen.title,
-                                tint = if (pagerState.currentPage == index) {
-                                    MaterialTheme.colorScheme.secondary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = screen.title,
-                                color = if (pagerState.currentPage == index) {
-                                    MaterialTheme.colorScheme.secondary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        },
-                        selected = pagerState.currentPage == index,
-                        onClick = {
+    val currentUserId by sessionManager.loggedUserId.collectAsState(initial = null)
+
+    // Contatore per forzare la ri-lettura dal DB dopo ogni salvataggio
+    var refreshTrigger by remember { mutableIntStateOf(0) }
+    val equippedCosmetics by rememberEquippedCosmeticsState(repositories.userRepository, currentUserId, refreshTrigger)
+    val ownedItemIds by rememberOwnedCosmeticsState(repositories.userRepository, currentUserId)
+
+    ArcadeBackground(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                if (!showCustomization) {
+                    NavBarBottomNavigation(
+                        screens = screens,
+                        currentPage = pagerState.currentPage,
+                        onPageSelect = { index ->
                             coroutineScope.launch {
                                 pagerState.animateScrollToPage(index)
                             }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.secondary,
-                            selectedTextColor = MaterialTheme.colorScheme.secondary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
+                        }
                     )
                 }
-            }
-        },
-        contentColor = MaterialTheme.colorScheme.onBackground
-    ) { innerPadding ->
-        val state = NavState(
-            showCustomization = showCustomization,
-            pagerState = pagerState,
-            screens = screens,
-            innerPadding = innerPadding
-        )
-
-        val callbacks = NavCallbacks(
-            onCustomizationDismiss = { showCustomization = false },
-            onCustomizationSave = { showCustomization = false },
-            onShowCustomization = { showCustomization = true }
-        )
-
-        NavContent(
-            services = services,
-            state = state,
-            callbacks = callbacks,
-            coroutineScope = coroutineScope
-        )
-    }
-}
-
-// ===== CONTENUTO NAV =====
-
-@Composable
-private fun NavContent(
-    services: NavServices,
-    state: NavState,
-    callbacks: NavCallbacks,
-    coroutineScope: kotlinx.coroutines.CoroutineScope
-) {
-    if (state.showCustomization) {
-        AvatarCustomizationScreen(
-            onBack = callbacks.onCustomizationDismiss,
-            onSave = { _ ->
-                // TODO: Salva i cosmetici nel repository
-                callbacks.onCustomizationSave()
-            }
-        )
-    } else {
-        HorizontalPager(
-            state = state.pagerState,
-            modifier = Modifier
-                .padding(state.innerPadding)
-                .background(MaterialTheme.colorScheme.background)
-        ) { pageIndex ->
-            when (state.screens[pageIndex]) {
-                is NavScreens.Profile -> ProfileContent(
-                    services = services,
-                    coroutineScope = coroutineScope,
-                    onShowCustomization = callbacks.onShowCustomization
+            },
+            contentColor = MaterialTheme.colorScheme.onBackground
+        ) { innerPadding ->
+            if (showCustomization) {
+                AvatarCustomizationScreen(
+                    initialCosmetics = equippedCosmetics,
+                    ownedItemIds = ownedItemIds,
+                    onBack = { showCustomization = false },
+                    onSave = { updatedCosmetics ->
+                        saveAvatarChanges(
+                            coroutineScope = coroutineScope,
+                            userRepository = repositories.userRepository,
+                            userId = currentUserId,
+                            cosmetics = updatedCosmetics,
+                            onComplete = {
+                                refreshTrigger++ // Incrementa il trigger per forzare l'aggiornamento
+                                showCustomization = false
+                            }
+                        )
+                    }
                 )
-                is NavScreens.Home -> MissionListScreen(
-                    missionService = services.missionService,
-                    missionRepository = services.missionRepository,
-                    userRepository = services.userRepository,
-                    sessionManager = services.sessionManager
-                )
-                is NavScreens.Shop -> ShopScreen(
-                    shopService = services.shopService,
-                    shopDao = services.shopDao,
-                    userRepository = services.userRepository,
-                    sessionManager = services.sessionManager
-                )
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .background(Color.Transparent)
+                ) { pageIndex ->
+                    NavBarPagerContent(
+                        screen = screens[pageIndex],
+                        services = services,
+                        repositories = repositories,
+                        sessionManager = sessionManager,
+                        coroutineScope = coroutineScope,
+                        onShowCustomization = { showCustomization = true }
+                    )
+                }
             }
         }
     }
 }
 
-// ===== CONTENUTO PROFILO =====
+@Composable
+private fun rememberEquippedCosmeticsState(
+    userRepository: UserRepository,
+    userId: Long?,
+    refreshTrigger: Int
+): State<AvatarCosmetics> {
+    return produceState(initialValue = AvatarCosmetics(), key1 = userId, key2 = refreshTrigger) {
+        if (userId != null) {
+            value = userRepository.getEquippedCosmetics(userId)
+        }
+    }
+}
 
 @Composable
-private fun ProfileContent(
+private fun rememberOwnedCosmeticsState(
+    userRepository: UserRepository,
+    userId: Long?
+): State<Set<String>> {
+    val ownedFlow = remember(userId) {
+        userId?.let { userRepository.getOwnedCosmeticsFlow(it) }
+    }
+    val ownedList by (ownedFlow?.collectAsState(initial = emptyList())
+        ?: remember { mutableStateOf(emptyList()) })
+
+    return remember(ownedList) {
+        derivedStateOf { ownedList.map { it.itemId }.toSet() }
+    }
+}
+
+private fun saveAvatarChanges(
+    coroutineScope: CoroutineScope,
+    userRepository: UserRepository,
+    userId: Long?,
+    cosmetics: AvatarCosmetics,
+    onComplete: () -> Unit
+) {
+    coroutineScope.launch {
+        if (userId != null) {
+            userRepository.saveEquippedCosmetics(userId, cosmetics)
+        }
+        onComplete()
+    }
+}
+
+@Composable
+private fun NavBarBottomNavigation(
+    screens: List<NavScreens>,
+    currentPage: Int,
+    onPageSelect: (Int) -> Unit
+) {
+    NavigationBar(
+        containerColor = Color(0xA90D0B14),
+        tonalElevation = 0.dp,
+        modifier = Modifier.background(Color(0xA90D0B14))
+    ) {
+        screens.forEachIndexed { index, screen ->
+            val isSelected = currentPage == index
+            val contentColor = if (isSelected) {
+                MaterialTheme.colorScheme.secondary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            }
+
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = screen.icon,
+                        contentDescription = screen.title,
+                        tint = contentColor
+                    )
+                },
+                label = {
+                    Text(
+                        text = screen.title,
+                        color = contentColor
+                    )
+                },
+                selected = isSelected,
+                onClick = { onPageSelect(index) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.secondary,
+                    selectedTextColor = MaterialTheme.colorScheme.secondary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    indicatorColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavBarPagerContent(
+    screen: NavScreens,
     services: NavServices,
-    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    repositories: NavRepositories,
+    sessionManager: SessionManager,
+    coroutineScope: CoroutineScope,
     onShowCustomization: () -> Unit
 ) {
-    ProfileScreen(
-        userRepository = services.userRepository,
-        sessionManager = services.sessionManager,
-        onLogout = {
-            coroutineScope.launch {
-                services.authService.logout()
-            }
-        },
-        onDeleteAccount = {
-            coroutineScope.launch {
-                services.authService.deleteAccount()
-            }
-        },
-        onUpdateUsername = { newUsername ->
-            coroutineScope.launch {
-                services.authService.updateUsername(newUsername)
-            }
-        },
-        onShowCustomization = onShowCustomization
-    )
+    when (screen) {
+        is NavScreens.Profile -> ProfileScreen(
+            userRepository = repositories.userRepository,
+            sessionManager = sessionManager,
+            onLogout = {
+                coroutineScope.launch { services.authService.logout() }
+            },
+            onDeleteAccount = {
+                coroutineScope.launch { services.authService.deleteAccount() }
+            },
+            onUpdateUsername = { newUsername ->
+                coroutineScope.launch { services.authService.updateUsername(newUsername) }
+            },
+            onShowCustomization = onShowCustomization
+        )
+        is NavScreens.Home -> MissionListScreen(
+            missionService = services.missionService,
+            missionRepository = repositories.missionRepository,
+            userRepository = repositories.userRepository,
+            sessionManager = sessionManager
+        )
+        is NavScreens.Shop -> ShopScreen(
+            shopService = services.shopService,
+            shopDao = repositories.shopDao,
+            userRepository = repositories.userRepository,
+            sessionManager = sessionManager
+        )
+    }
 }

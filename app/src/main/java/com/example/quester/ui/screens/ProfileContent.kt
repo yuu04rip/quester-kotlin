@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -32,6 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +39,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quester.R
 import com.example.quester.data.model.OwnedCosmetic
@@ -49,7 +49,21 @@ import com.example.quester.ui.components.AvatarView
 import com.example.quester.ui.components.DeleteAccountDialog
 import com.example.quester.ui.components.EditUsernameDialog
 import com.example.quester.ui.components.FantasyTitle
+import com.example.quester.ui.components.FrameType
+import com.example.quester.ui.components.HatType
 import com.example.quester.ui.components.MagicBurstButton
+import com.example.quester.ui.components.WeaponType
+import com.example.quester.ui.theme.AppTheme
+import com.example.quester.ui.theme.ThemeManager
+import com.example.quester.ui.theme.getButtonStyle
+
+// Raggruppamento dati XP per ridurre il numero di parametri (max 7)
+data class ProfileXpData(
+    val xpProgress: Float,
+    val xpInCurrentLevel: Int,
+    val xpNeededForLevel: Int,
+    val levelUpCoins: Int
+)
 
 data class ProfileUiState(
     val showEditUsername: Boolean = false,
@@ -64,38 +78,41 @@ data class ProfileActions(
     val onShowEditUsername: () -> Unit,
     val onShowDeleteAccount: () -> Unit,
     val onHideDialogs: () -> Unit,
-    val onShowCustomization: () -> Unit
+    val onShowCustomization: () -> Unit,
+    val onThemeApplied: (AppTheme) -> Unit = {},
+    val onSaveCosmetics: (AvatarCosmetics) -> Unit = {}
 )
 
 @Composable
 fun ProfileContent(
     user: User,
     ownedCosmetics: List<OwnedCosmetic>,
-    xpProgress: Float,
-    xpInCurrentLevel: Int,
-    xpNeededForLevel: Int,
-    levelUpCoins: Int,
+    xpData: ProfileXpData,
     uiState: ProfileUiState,
     actions: ProfileActions
 ) {
+    // Parsing diretto e sicuro per gestire "NONE", stringhe vuote e null in modo affidabile
+    val equippedCosmetics = remember(user.equippedHat, user.equippedWeapon, user.equippedFrame) {
+        AvatarCosmetics(
+            hat = parseHatType(user.equippedHat),
+            weapon = parseWeaponType(user.equippedWeapon),
+            frame = parseFrameType(user.equippedFrame)
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(
-            top = 20.dp,
-            bottom = 20.dp
-        )
+        contentPadding = PaddingValues(top = 20.dp, bottom = 20.dp)
     ) {
         item {
             ProfileCard(
                 user = user,
-                xpProgress = xpProgress,
-                xpInCurrentLevel = xpInCurrentLevel,
-                xpNeededForLevel = xpNeededForLevel,
-                levelUpCoins = levelUpCoins,
+                equippedCosmetics = equippedCosmetics,
+                xpData = xpData,
                 onShowEditUsername = actions.onShowEditUsername,
                 onShowCustomization = actions.onShowCustomization
             )
@@ -105,6 +122,7 @@ fun ProfileContent(
             OwnedCosmeticsSection(
                 ownedCosmetics = ownedCosmetics,
                 onRefresh = {},
+                onThemeApplied = actions.onThemeApplied,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -119,29 +137,38 @@ fun ProfileContent(
         }
 
         item {
+            val buttonStyle = getButtonStyle()
             OutlinedButton(
                 onClick = actions.onShowDeleteAccount,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-                ),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
-                )
+                colors = buttonStyle.getOutlinedButtonColors(),
+                shape = buttonStyle.getButtonShape()
             ) {
                 Text(
                     text = "Lascia il Regno",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Serif,
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                    style = buttonStyle.getTextStyle().copy(
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                    )
                 )
             }
         }
     }
 
+    ProfileDialogs(
+        user = user,
+        uiState = uiState,
+        actions = actions
+    )
+}
+
+@Composable
+private fun ProfileDialogs(
+    user: User,
+    uiState: ProfileUiState,
+    actions: ProfileActions
+) {
     if (uiState.showEditUsername) {
         EditUsernameDialog(
             currentUsername = user.username,
@@ -168,10 +195,8 @@ fun ProfileContent(
 @Composable
 private fun ProfileCard(
     user: User,
-    xpProgress: Float,
-    xpInCurrentLevel: Int,
-    xpNeededForLevel: Int,
-    levelUpCoins: Int,
+    equippedCosmetics: AvatarCosmetics,
+    xpData: ProfileXpData,
     onShowEditUsername: () -> Unit,
     onShowCustomization: () -> Unit
 ) {
@@ -203,7 +228,7 @@ private fun ProfileCard(
         ) {
             AvatarView(
                 modifier = Modifier,
-                cosmetics = AvatarCosmetics(),
+                cosmetics = equippedCosmetics,
                 size = 120,
                 isEditable = true,
                 onClick = onShowCustomization
@@ -211,27 +236,10 @@ private fun ProfileCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                FantasyTitle(
-                    text = "✦ ${user.username} ✦",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Cambia nome",
-                    tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable { onShowEditUsername() }
-                )
-            }
+            ProfileHeader(
+                username = user.username,
+                onShowEditUsername = onShowEditUsername
+            )
 
             Surface(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -259,19 +267,18 @@ private fun ProfileCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             FantasyXpProgress(
-                xpInCurrentLevel = xpInCurrentLevel,
-                xpNeededForLevel = xpNeededForLevel,
+                xpInCurrentLevel = xpData.xpInCurrentLevel,
+                xpNeededForLevel = xpData.xpNeededForLevel,
                 livello = user.livello,
-                xpProgress = xpProgress
+                xpProgress = xpData.xpProgress
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Prossimo level-up: +$levelUpCoins monete",
+                text = "Prossimo level-up: +${xpData.levelUpCoins} monete",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = FontFamily.Serif
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -296,58 +303,145 @@ private fun ProfileCard(
 }
 
 @Composable
+private fun ProfileHeader(
+    username: String,
+    onShowEditUsername: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        FantasyTitle(
+            text = "✦ $username ✦",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = "Cambia nome",
+            tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
+            modifier = Modifier
+                .size(20.dp)
+                .clickable { onShowEditUsername() }
+        )
+    }
+}
+
+@Composable
 private fun FantasyXpProgress(
     xpInCurrentLevel: Int,
     xpNeededForLevel: Int,
     livello: Int,
     xpProgress: Float
 ) {
+    val isArcade = ThemeManager.theme == AppTheme.ARCADE
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Liv. $livello",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = FontFamily.Serif
-            )
-            Text(
-                text = "$xpInCurrentLevel / $xpNeededForLevel XP",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = FontFamily.SansSerif
-            )
-            Text(
-                text = "Liv. ${livello + 1}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontFamily = FontFamily.Serif
-            )
-        }
+        XpHeaderRow(
+            isArcade = isArcade,
+            livello = livello,
+            xpInCurrentLevel = xpInCurrentLevel,
+            xpNeededForLevel = xpNeededForLevel
+        )
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        if (isArcade) {
+            ArcadeXpProgressBar(xpProgress = xpProgress)
+        } else {
+            StandardXpProgressBar(xpProgress = xpProgress)
+        }
+    }
+}
+
+@Composable
+private fun XpHeaderRow(
+    isArcade: Boolean,
+    livello: Int,
+    xpInCurrentLevel: Int,
+    xpNeededForLevel: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = if (isArcade) "LV. $livello" else "Liv. $livello",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "$xpInCurrentLevel / $xpNeededForLevel XP",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (isArcade) "NEXT" else "Liv. ${livello + 1}",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun ArcadeXpProgressBar(xpProgress: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(16.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+    ) {
+        val totalBlocks = 20
+        val filledBlocks = (xpProgress * totalBlocks).toInt().coerceIn(0, totalBlocks)
+
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            repeat(totalBlocks) { index ->
+                val isFilled = index < filledBlocks
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 1.dp)
+                        .background(if (isFilled) Color(0xFF00FF41) else Color.Transparent)
+                        .border(
+                            width = 1.dp,
+                            color = if (isFilled) Color(0xFF00FF41).copy(alpha = 0.5f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StandardXpProgressBar(xpProgress: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(12.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
+                .fillMaxHeight()
+                .fillMaxWidth(xpProgress.coerceIn(0f, 1f))
                 .clip(RoundedCornerShape(6.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(xpProgress.coerceIn(0f, 1f))
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFFFD700))
-            )
-        }
+                .background(Color(0xFFFFD700))
+        )
     }
 }
 
@@ -368,15 +462,13 @@ private fun StatItem(
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = FontFamily.Serif
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontFamily = FontFamily.Serif
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -395,15 +487,13 @@ private fun CoinItem(
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
-            color = Color(0xFFFFD700),
-            fontFamily = FontFamily.Serif
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFFFFD700)
         )
         Text(
             text = "MONETE",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontFamily = FontFamily.Serif
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

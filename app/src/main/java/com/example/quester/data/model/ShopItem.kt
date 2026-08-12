@@ -5,9 +5,10 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "shop_items")
 data class ShopItem(
-    @PrimaryKey  // Rendi itemId la chiave primaria invece di id
+    @PrimaryKey
     val itemId: String,
     val name: String,
     val price: Int,
-    val description: String = ""
+    val description: String = "",
+    val iconName: String = "shopping_cart"
 )

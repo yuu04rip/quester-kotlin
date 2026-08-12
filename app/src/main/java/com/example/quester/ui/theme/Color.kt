@@ -61,3 +61,28 @@ val FantasyLightError = Color(0xFFD32F2F)        // Rosso
 val FantasyLightSuccess = Color(0xFF388E3C)      // Verde
 val FantasyLightWarning = Color(0xFFF9A825)      // Giallo
 val FantasyLightInfo = Color(0xFF1976D2)         // Blu
+
+// ============================================================
+//  COLORI TEMA ARCADE (PIXEL/RETRÒ)
+// ============================================================
+
+// Sfondo e Superfici (Scuro)
+val ArcadeBackground = Color(0xFF0A0A0F)        // Nero profondo
+val ArcadeSurface = Color(0xFF12121A)           // Blu scuro
+val ArcadeSurfaceLight = Color(0xFF1A1A2E)      // Blu più chiaro
+val ArcadeSurfaceVariant = Color(0xFF222244)    // Variante
+
+// Colori Neon
+val ArcadeGreen = Color(0xFF00FF41)             // Verde Matrix
+val ArcadePink = Color(0xFFFF00FF)              // Rosa neon
+val ArcadeCyan = Color(0xFF00FFFF)              // Ciano neon
+val ArcadeYellow = Color(0xFFFFFF00)            // Giallo neon
+val ArcadeOrange = Color(0xFFFF6600)            // Arancione neon
+
+// Testo
+val ArcadeText = Color(0xFF00FF41)              // Testo verde neon
+val ArcadeTextSecondary = Color(0xFF66FF66)     // Testo secondario
+
+// Accenti
+val ArcadeError = Color(0xFFFF0055)             // Rosso neon
+val ArcadeSuccess = Color(0xFF00FF66)           // Verde successo

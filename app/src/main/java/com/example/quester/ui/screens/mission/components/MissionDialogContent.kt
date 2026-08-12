@@ -6,17 +6,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.quester.R
 import com.example.quester.ui.screens.mission.model.MissionType
+import com.example.quester.ui.theme.ThemeManager
+import com.example.quester.ui.theme.AppTheme
+import com.example.quester.ui.theme.QuesterFantasy
+import com.example.quester.ui.theme.QuesterPixel
 
 data class MissionDialogState(
     val title: String,
@@ -43,13 +49,19 @@ fun MissionDialogContent(
     subtaskError: String? = null,
     callbacks: MissionDialogCallbacks
 ) {
+    val isArcade = ThemeManager.theme == AppTheme.ARCADE
+    // ✅ Font per TUTTI i testi: QuesterPixel per Arcade, QuesterFantasy per Fantasy
+    val textFont = if (isArcade) QuesterPixel else QuesterFantasy
+    val numberFont = FontFamily.SansSerif  // Numeri sempre leggibili
+
     AlertDialog(
         onDismissRequest = callbacks.onDismiss,
         title = {
             Text(
                 text = dialogTitle,
                 color = MaterialTheme.colorScheme.secondary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontFamily = textFont  // ✅ Font speciale
             )
         },
         text = {
@@ -57,19 +69,25 @@ fun MissionDialogContent(
                 state = state,
                 titleError = titleError,
                 subtaskError = subtaskError,
-                callbacks = callbacks
+                callbacks = callbacks,
+                textFont = textFont,
+                numberFont = numberFont
             )
         },
         confirmButton = {
             ConfirmButton(
                 onClick = callbacks.onConfirm,
-                text = confirmButtonText
+                text = confirmButtonText,
+                textFont = textFont
             )
         },
         dismissButton = {
-            DismissButton(onClick = callbacks.onDismiss)
+            DismissButton(
+                onClick = callbacks.onDismiss,
+                textFont = textFont
+            )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
         shape = MaterialTheme.shapes.large
     )
 }
@@ -79,7 +97,9 @@ private fun DialogContent(
     state: MissionDialogState,
     titleError: String?,
     subtaskError: String?,
-    callbacks: MissionDialogCallbacks
+    callbacks: MissionDialogCallbacks,
+    textFont: FontFamily,
+    numberFont: FontFamily
 ) {
     Column(
         modifier = Modifier
@@ -91,7 +111,8 @@ private fun DialogContent(
         TitleField(
             value = state.title,
             onValueChange = callbacks.onTitleChange,
-            error = titleError
+            error = titleError,
+            textFont = textFont
         )
 
         DescriptionField(
@@ -101,21 +122,29 @@ private fun DialogContent(
 
         MissionTypeSelector(
             selectedType = state.selectedType,
-            onTypeChange = callbacks.onTypeChange
+            onTypeChange = callbacks.onTypeChange,
+            textFont = textFont
         )
 
-        RewardsInfo(selectedType = state.selectedType)
+        RewardsInfo(
+            selectedType = state.selectedType,
+            numberFont = numberFont
+        )
 
         SubtasksSection(
             subtasks = state.subtasks,
             onSubtasksChange = callbacks.onSubtasksChange,
-            error = subtaskError
+            error = subtaskError,
+            textFont = textFont
         )
     }
 }
 
 @Composable
-private fun RewardsInfo(selectedType: MissionType) {
+private fun RewardsInfo(
+    selectedType: MissionType,
+    numberFont: FontFamily
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -129,19 +158,20 @@ private fun RewardsInfo(selectedType: MissionType) {
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // XP con icona star.png
+            // ✅ XP con icona Star
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    painter = painterResource(id = R.drawable.star),
+                    imageVector = Icons.Default.Star,
                     contentDescription = "XP",
                     modifier = Modifier.size(20.dp),
-                    tint = Color.Unspecified
+                    tint = MaterialTheme.colorScheme.secondary
                 )
                 Text(
                     text = "+${selectedType.xpReward}",
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    fontFamily = numberFont  // ✅ Numeri in SansSerif
                 )
             }
 
@@ -157,7 +187,8 @@ private fun RewardsInfo(selectedType: MissionType) {
                     text = "+${selectedType.coinReward}",
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    fontFamily = numberFont  // ✅ Numeri in SansSerif
                 )
             }
         }
@@ -170,7 +201,8 @@ private fun RewardsInfo(selectedType: MissionType) {
 private fun TitleField(
     value: String,
     onValueChange: (String) -> Unit,
-    error: String?
+    error: String?,
+    textFont: FontFamily
 ) {
     OutlinedTextField(
         value = value,
@@ -179,12 +211,15 @@ private fun TitleField(
         isError = error != null,
         supportingText = {
             if (error != null) {
-                ErrorText(error)
+                ErrorText(error, textFont)
             }
         },
         modifier = Modifier.fillMaxWidth(),
         colors = dialogTextFieldColors(),
-        singleLine = true
+        singleLine = true,
+        textStyle = MaterialTheme.typography.titleMedium.copy(
+            fontFamily = textFont  // ✅ Font speciale
+        )
     )
 }
 
@@ -200,14 +235,18 @@ private fun DescriptionField(
         modifier = Modifier.fillMaxWidth(),
         colors = dialogTextFieldColors(),
         minLines = 2,
-        maxLines = 4
+        maxLines = 4,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            fontFamily = FontFamily.SansSerif  // ✅ Descrizione in SansSerif
+        )
     )
 }
 
 @Composable
 private fun MissionTypeSelector(
     selectedType: MissionType,
-    onTypeChange: (MissionType) -> Unit
+    onTypeChange: (MissionType) -> Unit,
+    textFont: FontFamily
 ) {
     Column {
         Text(
@@ -215,6 +254,7 @@ private fun MissionTypeSelector(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
+            fontFamily = textFont,  // ✅ Font speciale
             modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(
@@ -236,7 +276,8 @@ private fun MissionTypeSelector(
                             fontSize = 10.sp,
                             fontWeight = if (selectedType == type) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1,
-                            letterSpacing = 0.1.sp
+                            letterSpacing = 0.1.sp,
+                            fontFamily = textFont  // ✅ Font speciale
                         )
                     },
                     modifier = Modifier.weight(1f),
@@ -259,7 +300,8 @@ private fun MissionTypeSelector(
 private fun SubtasksSection(
     subtasks: List<String>,
     onSubtasksChange: (List<String>) -> Unit,
-    error: String?
+    error: String?,
+    textFont: FontFamily
 ) {
     Column {
         Text(
@@ -267,6 +309,7 @@ private fun SubtasksSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
+            fontFamily = textFont,  // ✅ Font speciale
             modifier = Modifier.padding(bottom = 6.dp)
         )
 
@@ -276,7 +319,8 @@ private fun SubtasksSection(
                 index = index,
                 subtasks = subtasks,
                 onSubtasksChange = onSubtasksChange,
-                isError = error != null && index == subtasks.lastIndex
+                isError = error != null && index == subtasks.lastIndex,
+                textFont = textFont
             )
         }
 
@@ -286,12 +330,13 @@ private fun SubtasksSection(
         ) {
             AddSubtaskButton(
                 onSubtasksChange = onSubtasksChange,
-                currentSubtasks = subtasks
+                currentSubtasks = subtasks,
+                textFont = textFont
             )
         }
 
         if (error != null) {
-            ErrorText(error)
+            ErrorText(error, textFont)
         }
     }
 }
@@ -302,7 +347,8 @@ private fun SubtaskRow(
     index: Int,
     subtasks: List<String>,
     onSubtasksChange: (List<String>) -> Unit,
-    isError: Boolean
+    isError: Boolean,
+    textFont: FontFamily
 ) {
     Row(
         modifier = Modifier
@@ -326,15 +372,20 @@ private fun SubtaskRow(
                 Text(
                     if (index == 0) "Sub-task 1" else "Sub-task ${index + 1}",
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.SansSerif
                 )
-            }
+            },
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.SansSerif
+            )
         )
         if (subtasks.size > 1) {
             RemoveSubtaskButton(
                 index = index,
                 subtasks = subtasks,
-                onSubtasksChange = onSubtasksChange
+                onSubtasksChange = onSubtasksChange,
+                textFont = textFont
             )
         }
     }
@@ -346,7 +397,8 @@ private fun SubtaskRow(
 private fun RemoveSubtaskButton(
     index: Int,
     subtasks: List<String>,
-    onSubtasksChange: (List<String>) -> Unit
+    onSubtasksChange: (List<String>) -> Unit,
+    textFont: FontFamily
 ) {
     IconButton(
         onClick = {
@@ -359,7 +411,8 @@ private fun RemoveSubtaskButton(
         Text(
             text = "✕",
             color = MaterialTheme.colorScheme.error,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            fontFamily = textFont  // ✅ Font speciale
         )
     }
 }
@@ -367,7 +420,8 @@ private fun RemoveSubtaskButton(
 @Composable
 private fun AddSubtaskButton(
     onSubtasksChange: (List<String>) -> Unit,
-    currentSubtasks: List<String>
+    currentSubtasks: List<String>,
+    textFont: FontFamily
 ) {
     TextButton(
         onClick = { onSubtasksChange(currentSubtasks + "") },
@@ -377,7 +431,8 @@ private fun AddSubtaskButton(
             text = "+ Aggiungi subtask",
             color = MaterialTheme.colorScheme.secondary,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            fontFamily = textFont  // ✅ Font speciale
         )
     }
 }
@@ -387,7 +442,8 @@ private fun AddSubtaskButton(
 @Composable
 private fun ConfirmButton(
     onClick: () -> Unit,
-    text: String
+    text: String,
+    textFont: FontFamily
 ) {
     Button(
         onClick = onClick,
@@ -401,14 +457,16 @@ private fun ConfirmButton(
         Text(
             text = text,
             fontWeight = FontWeight.Bold,
-            fontSize = 13.sp
+            fontSize = 13.sp,
+            fontFamily = textFont  // ✅ Font speciale
         )
     }
 }
 
 @Composable
 private fun DismissButton(
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    textFont: FontFamily
 ) {
     TextButton(
         onClick = onClick,
@@ -417,7 +475,8 @@ private fun DismissButton(
         Text(
             text = "Annulla",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 13.sp
+            fontSize = 13.sp,
+            fontFamily = textFont  // ✅ Font speciale
         )
     }
 }
@@ -425,11 +484,12 @@ private fun DismissButton(
 // ===== TEXT HELPERS =====
 
 @Composable
-private fun ErrorText(text: String) {
+private fun ErrorText(text: String, textFont: FontFamily) {
     Text(
         text = text,
         color = MaterialTheme.colorScheme.error,
         fontSize = 12.sp,
+        fontFamily = textFont,  // ✅ Font speciale
         modifier = Modifier.padding(start = 4.dp, top = 4.dp)
     )
 }

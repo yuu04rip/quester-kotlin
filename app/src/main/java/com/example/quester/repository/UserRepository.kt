@@ -4,6 +4,10 @@ import com.example.quester.data.dao.OwnedCosmeticDao
 import com.example.quester.data.dao.UserDao
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
+import com.example.quester.ui.components.AvatarCosmetics
+import com.example.quester.ui.components.FrameType
+import com.example.quester.ui.components.HatType
+import com.example.quester.ui.components.WeaponType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -11,49 +15,37 @@ class UserRepository(
     private val userDao: UserDao,
     private val ownedCosmeticDao: OwnedCosmeticDao? = null
 ) {
+
     companion object {
-        private const val ERROR_USERNAME_EMPTY = "Username vuoto"
-        private const val ERROR_USERNAME_TAKEN = "Username già in uso"
         private const val ERROR_OWNED_DAO_NOT_PROVIDED = "OwnedCosmeticDao non fornito"
 
-        // ===== COSTANTI XP E LIVELLI =====
         private const val XP_BASE = 100
         private const val XP_INCREMENT = 50
         private const val MAX_LEVEL = 50
-
-        // ===== RICOMPENSE MISSIONI =====
-        const val XP_DAILY = 30
-        const val XP_WEEKLY = 120
-        const val XP_SPECIAL = 400
-        const val COINS_DAILY = 1
-        const val COINS_WEEKLY = 5
-        const val COINS_SPECIAL = 15
     }
 
-    // ===== METODI GET =====
+    // ============================================================
+    // UTENTE
+    // ============================================================
 
-    suspend fun getUserById(userId: Long): User? = userDao.getUserById(userId)
-    suspend fun getUser(): User? = userDao.getUser()
-    fun getUserFlow(): Flow<User?> = userDao.getUserFlow()
-    fun getUserByIdFlow(userId: Long): Flow<User?> = userDao.getUserByIdFlow(userId)
+    suspend fun getUserById(userId: Long): User? =
+        userDao.getUserById(userId)
 
-    // ===== METODI XP E LIVELLI =====
+    fun getUserByIdFlow(userId: Long): Flow<User?> =
+        userDao.getUserByIdFlow(userId)
 
-    /**
-     * Calcola l'XP necessario per raggiungere un determinato livello
-     * Formula: XP_BASE + (level - 1) * XP_INCREMENT
-     * LV1 = 100, LV2 = 150, LV3 = 200, ...
-     */
+    // ============================================================
+    // XP
+    // ============================================================
+
     fun getXpRequiredForLevel(level: Int): Int {
         return XP_BASE + (level - 1) * XP_INCREMENT
     }
 
-    /**
-     * Calcola il livello partendo dall'XP totale
-     */
     fun calculateLevelFromXp(totalXp: Int): Int {
         var remainingXp = totalXp
         var level = 1
+
         while (level < MAX_LEVEL) {
             val xpNeeded = getXpRequiredForLevel(level)
             if (remainingXp >= xpNeeded) {
@@ -63,32 +55,30 @@ class UserRepository(
                 break
             }
         }
+
         return level.coerceAtMost(MAX_LEVEL)
     }
 
-    /**
-     * Calcola l'XP accumulato nel livello corrente
-     */
-    fun getXpInCurrentLevel(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Int {
-        var totalXpForPreviousLevels = 0
+    fun getXpInCurrentLevel(
+        totalXp: Int,
+        level: Int = calculateLevelFromXp(totalXp)
+    ): Int {
+        var xpForPreviousLevels = 0
         for (i in 1 until level) {
-            totalXpForPreviousLevels += getXpRequiredForLevel(i)
+            xpForPreviousLevels += getXpRequiredForLevel(i)
         }
-        return totalXp - totalXpForPreviousLevels
+        return (totalXp - xpForPreviousLevels).coerceAtLeast(0)
     }
 
-    /**
-     * Calcola il progresso verso il prossimo livello (0.0 - 1.0)
-     */
-    fun getXpProgress(totalXp: Int, level: Int = calculateLevelFromXp(totalXp)): Float {
+    fun getXpProgress(
+        totalXp: Int,
+        level: Int = calculateLevelFromXp(totalXp)
+    ): Float {
         val xpInCurrent = getXpInCurrentLevel(totalXp, level)
         val xpNeeded = getXpRequiredForLevel(level)
         return (xpInCurrent.toFloat() / xpNeeded).coerceIn(0f, 1f)
     }
 
-    /**
-     * Calcola le monete ricevute al level-up in base al livello raggiunto
-     */
     fun getLevelUpCoins(level: Int): Int {
         return when (level) {
             in 1..10 -> 3
@@ -100,10 +90,13 @@ class UserRepository(
         }
     }
 
-    suspend fun addXp(userId: Long, xpGained: Int) {
+    suspend fun addXp(
+        userId: Long,
+        xpGained: Int
+    ) {
         if (xpGained <= 0) return
-        val current = getUserById(userId) ?: userDao.getUser() ?: return
 
+        val current = getUserById(userId) ?: return
         val oldLevel = calculateLevelFromXp(current.xpTotale)
         val newXpTotal = current.xpTotale + xpGained
         val newLevel = calculateLevelFromXp(newXpTotal)
@@ -113,54 +106,48 @@ class UserRepository(
             livello = newLevel
         )
 
-        // Se c'è stato un level-up, aggiungi le monete
         if (newLevel > oldLevel) {
             val coinsEarned = getLevelUpCoins(newLevel)
-            updatedUser = updatedUser.copy(coins = updatedUser.coins + coinsEarned)
+            updatedUser = updatedUser.copy(
+                coins = updatedUser.coins + coinsEarned
+            )
         }
 
         userDao.updateUser(updatedUser)
     }
 
-    suspend fun getCurrentLevel(userId: Long): Int {
-        val user = getUserById(userId) ?: return 1
-        return calculateLevelFromXp(user.xpTotale)
-    }
+    // ============================================================
+    // COINS
+    // ============================================================
 
-    suspend fun getXpNeededForNextLevel(userId: Long): Int {
-        val user = getUserById(userId) ?: return 100
-        val currentLevel = calculateLevelFromXp(user.xpTotale)
-        val xpInCurrent = getXpInCurrentLevel(user.xpTotale, currentLevel)
-        val xpNeeded = getXpRequiredForLevel(currentLevel)
-        return xpNeeded - xpInCurrent
-    }
-
-    suspend fun getXpProgress(userId: Long): Float {
-        val user = getUserById(userId) ?: return 0f
-        return getXpProgress(user.xpTotale, calculateLevelFromXp(user.xpTotale))
-    }
-
-    // ===== METODI COINS =====
-
-    suspend fun addCoins(userId: Long, amount: Int) {
+    suspend fun addCoins(
+        userId: Long,
+        amount: Int
+    ) {
         if (amount <= 0) return
-        val current = getUserById(userId) ?: userDao.getUser() ?: return
+        val current = getUserById(userId) ?: return
         userDao.updateUser(current.copy(coins = current.coins + amount))
     }
 
-    suspend fun spendCoins(userId: Long, amount: Int): Boolean {
+    suspend fun spendCoins(
+        userId: Long,
+        amount: Int
+    ): Boolean {
         if (amount <= 0) return false
-        val current = getUserById(userId) ?: userDao.getUser() ?: return false
+        val current = getUserById(userId) ?: return false
         if (current.coins < amount) return false
         userDao.updateUser(current.copy(coins = current.coins - amount))
         return true
     }
 
-    // ===== METODI UTENTE =====
+    // ============================================================
+    // MODIFICA UTENTE
+    // ============================================================
 
-    suspend fun updateUser(user: User) = userDao.updateUser(user)
-
-    suspend fun updateUsername(userId: Long, newUsername: String): Boolean {
+    suspend fun updateUsername(
+        userId: Long,
+        newUsername: String
+    ): Boolean {
         val clean = newUsername.trim().lowercase()
         if (clean.isBlank() || clean.length < 3) return false
 
@@ -172,45 +159,114 @@ class UserRepository(
         return true
     }
 
-    suspend fun deleteAccount(userId: Long): Boolean {
+    suspend fun deleteAccount(
+        userId: Long
+    ): Boolean {
         if (getUserById(userId) == null) return false
         ownedCosmeticDao?.deleteAllForUser(userId)
         userDao.deleteUser(userId)
         return true
     }
 
-    suspend fun updateProfileImage(userId: Long, uri: String?) {
-        val current = getUserById(userId) ?: userDao.getUser() ?: return
+    suspend fun updateProfileImage(
+        userId: Long,
+        uri: String?
+    ) {
+        val current = getUserById(userId) ?: return
         userDao.updateUser(current.copy(profileImageUri = uri))
     }
 
-    suspend fun removeProfileImage(userId: Long) {
-        updateProfileImage(userId, null)
-    }
+    // ============================================================
+    // COSMETICI SHOP
+    // ============================================================
 
-    // ===== METODI COSMETICI =====
-
-    suspend fun unlockCosmetic(userId: Long, itemId: String) {
+    suspend fun unlockCosmetic(
+        userId: Long,
+        itemId: String
+    ) {
         val ownedDao = ownedCosmeticDao ?: return
         ownedDao.insertOwned(OwnedCosmetic(userId = userId, itemId = itemId))
     }
 
-    suspend fun isCosmeticOwned(userId: Long, itemId: String): Boolean {
-        val ownedDao = ownedCosmeticDao ?: return false
-        return ownedDao.isOwned(userId, itemId)
-    }
-
-    suspend fun getOwnedCosmetics(userId: Long): List<OwnedCosmetic> {
+    suspend fun getOwnedCosmetics(
+        userId: Long
+    ): List<OwnedCosmetic> {
         val ownedDao = ownedCosmeticDao ?: return emptyList()
         return ownedDao.getOwnedByUser(userId).first()
     }
 
-    fun getOwnedCosmeticsFlow(userId: Long): Flow<List<OwnedCosmetic>> {
-        val ownedDao = ownedCosmeticDao ?: throw IllegalStateException(ERROR_OWNED_DAO_NOT_PROVIDED)
+    fun getOwnedCosmeticsFlow(
+        userId: Long
+    ): Flow<List<OwnedCosmetic>> {
+        val ownedDao = ownedCosmeticDao
+            ?: throw IllegalStateException(ERROR_OWNED_DAO_NOT_PROVIDED)
         return ownedDao.getOwnedByUser(userId)
     }
+// ============================================================
+    // COSMETICI EQUIPAGGIATI
+    // ============================================================
 
-    // ===== METODI UTILITY =====
+    suspend fun getEquippedCosmetics(userId: Long): AvatarCosmetics {
+        val user = getUserById(userId) ?: return AvatarCosmetics()
+
+        return AvatarCosmetics(
+            hat = parseHat(user.equippedHat),
+            weapon = parseWeapon(user.equippedWeapon),
+            frame = parseFrame(user.equippedFrame)
+        )
+    }
+
+    suspend fun saveEquippedCosmetics(
+        userId: Long,
+        cosmetics: AvatarCosmetics
+    ) {
+        val current = getUserById(userId) ?: return
+
+        userDao.updateUser(
+            current.copy(
+                equippedHat = cosmetics.hat.name,
+                equippedWeapon = cosmetics.weapon.name,
+                equippedFrame = cosmetics.frame.name
+            )
+        )
+    }
+
+    suspend fun updateUserCosmetics(
+        userId: Long,
+        hat: String?,
+        weapon: String?,
+        frame: String?
+    ) {
+        val current = getUserById(userId) ?: return
+
+        userDao.updateUser(
+            current.copy(
+                equippedHat = parseHat(hat).name,
+                equippedWeapon = parseWeapon(weapon).name,
+                equippedFrame = parseFrame(frame).name
+            )
+        )
+    }
+
+    // Parser universali per prevenire mismatch tra "NONE", "HAT_NONE", "", null
+    private fun parseHat(value: String?): HatType {
+        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return HatType.NONE
+        return try { HatType.valueOf(value) } catch (_: Exception) { HatType.NONE }
+    }
+
+    private fun parseWeapon(value: String?): WeaponType {
+        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return WeaponType.NONE
+        return try { WeaponType.valueOf(value) } catch (_: Exception) { WeaponType.NONE }
+    }
+
+    private fun parseFrame(value: String?): FrameType {
+        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return FrameType.NONE
+        return try { FrameType.valueOf(value) } catch (_: Exception) { FrameType.NONE }
+    }
+
+    // ============================================================
+    // UTILITY
+    // ============================================================
 
     suspend fun deleteUserAndProgress() {
         userDao.deleteAllUsers()

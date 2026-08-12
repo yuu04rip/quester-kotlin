@@ -16,7 +16,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.quester.ui.theme.AppTheme
+import com.example.quester.ui.theme.QuesterPixel
+import com.example.quester.ui.theme.ThemeManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -32,69 +38,20 @@ fun MagicBurstButton(
 ) {
     val scope = rememberCoroutineScope()
     var playEffect by remember { mutableStateOf(false) }
-
     val progress = remember { Animatable(0f) }
+    val isArcade = ThemeManager.theme == AppTheme.ARCADE
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (playEffect) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
-            ) {
-                val w = size.width
-                val h = size.height
-                val cx = w / 2f
-                val cy = h / 2f
-
-                // Aura centrale
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x66FFB74D),
-                            Color(0x44FF7043),
-                            Color.Transparent
-                        ),
-                        center = Offset(cx, cy),
-                        radius = 120f + 160f * progress.value
-                    ),
-                    radius = 120f + 160f * progress.value,
-                    center = Offset(cx, cy)
-                )
-
-                // Anelli magici
-                drawCircle(
-                    color = Color(0xFFFFD54F).copy(alpha = 1f - progress.value),
-                    radius = 40f + 120f * progress.value,
-                    center = Offset(cx, cy),
-                    style = Stroke(width = 4f)
-                )
-                drawCircle(
-                    color = Color(0xFFAB47BC).copy(alpha = 1f - progress.value),
-                    radius = 20f + 90f * progress.value,
-                    center = Offset(cx, cy),
-                    style = Stroke(width = 3f)
-                )
-
-                // Particelle (12)
-                repeat(12) { i ->
-                    val angle = (2 * PI * i / 12.0).toFloat()
-                    val dist = 20f + 160f * progress.value
-                    val px = cx + cos(angle) * dist
-                    val py = cy + sin(angle) * dist
-                    drawCircle(
-                        color = if (i % 2 == 0) Color(0xFFFFA726) else Color(0xFFEF5350),
-                        radius = (6f - 3f * progress.value).coerceAtLeast(1.5f),
-                        center = Offset(px, py),
-                        alpha = (1f - progress.value).coerceAtLeast(0f)
-                    )
-                }
-            }
+            BurstEffectCanvas(isArcade = isArcade, progress = progress.value)
         }
 
-        Button(
+        MagicButton(
+            text = text,
+            loading = loading,
+            isArcade = isArcade,
             onClick = {
-                if (loading) return@Button
+                if (loading) return@MagicButton
                 scope.launch {
                     playEffect = true
                     progress.snapTo(0f)
@@ -102,25 +59,244 @@ fun MagicBurstButton(
                         targetValue = 1f,
                         animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
                     )
-                    delay(120)
+                    delay(120L)
                     playEffect = false
                     onClickAfterEffect()
                 }
-            },
-            enabled = !loading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD4A84F),
-                contentColor = Color(0xFF1B1408)
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-        ) {
-            if (loading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color(0xFF1B1408))
-            } else {
-                Text(text = text)
             }
+        )
+    }
+}
+
+// ===== BURST EFFECT CANVAS =====
+
+@Composable
+private fun BurstEffectCanvas(
+    isArcade: Boolean,
+    progress: Float
+) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+    ) {
+        val (auraColors, ringColors, particleColors) = getEffectColors(isArcade)
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+
+        // Aura centrale
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = auraColors,
+                center = Offset(cx, cy),
+                radius = 120f + 160f * progress
+            ),
+            radius = 120f + 160f * progress,
+            center = Offset(cx, cy)
+        )
+
+        // Anelli magici
+        drawCircle(
+            color = ringColors[0].copy(alpha = 1f - progress),
+            radius = 40f + 120f * progress,
+            center = Offset(cx, cy),
+            style = Stroke(width = if (isArcade) 6f else 4f)
+        )
+        drawCircle(
+            color = ringColors[1].copy(alpha = 1f - progress),
+            radius = 20f + 90f * progress,
+            center = Offset(cx, cy),
+            style = Stroke(width = if (isArcade) 5f else 3f)
+        )
+
+        // Particelle
+        drawParticles(isArcade, progress, cx, cy, particleColors)
+
+        // Stelle extra per Arcade
+        if (isArcade) {
+            drawPixelStars(progress, cx, cy)
         }
     }
 }
+
+// ===== GET EFFECT COLORS =====
+
+private fun getEffectColors(isArcade: Boolean): EffectColors {
+    return if (isArcade) {
+        EffectColors(
+            auraColors = listOf(
+                Color(0x6600FF41),
+                Color(0x4400FF41),
+                Color.Transparent
+            ),
+            ringColors = listOf(
+                Color(0xFF00FF41),
+                Color(0xFF00FF41)
+            ),
+            particleColors = listOf(
+                Color(0xFFFF00FF),
+                Color(0xFF00FFFF)
+            )
+        )
+    } else {
+        EffectColors(
+            auraColors = listOf(
+                Color(0x66FFB74D),
+                Color(0x44FF7043),
+                Color.Transparent
+            ),
+            ringColors = listOf(
+                Color(0xFFFFD54F),
+                Color(0xFFAB47BC)
+            ),
+            particleColors = listOf(
+                Color(0xFFFFA726),
+                Color(0xFFEF5350)
+            )
+        )
+    }
+}
+
+// ===== DRAW PARTICLES =====
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawParticles(
+    isArcade: Boolean,
+    progress: Float,
+    cx: Float,
+    cy: Float,
+    particleColors: List<Color>
+) {
+    val particleCount = if (isArcade) 16 else 12
+    repeat(particleCount) { i ->
+        val angle = (2 * PI * i / particleCount).toFloat()
+        val dist = 20f + 160f * progress
+        val px = cx + cos(angle) * dist
+        val py = cy + sin(angle) * dist
+        drawCircle(
+            color = if (i % 2 == 0) particleColors[0] else particleColors[1],
+            radius = if (isArcade) {
+                (8f - 4f * progress).coerceAtLeast(2f)
+            } else {
+                (6f - 3f * progress).coerceAtLeast(1.5f)
+            },
+            center = Offset(px, py),
+            alpha = (1f - progress).coerceAtLeast(0f)
+        )
+    }
+}
+
+// ===== DRAW PIXEL STARS =====
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPixelStars(
+    progress: Float,
+    cx: Float,
+    cy: Float
+) {
+    repeat(8) { j ->
+        val angle = (2 * PI * j / 8 + progress * 0.5).toFloat()
+        val dist = 60f + 100f * progress
+        val px = cx + cos(angle) * dist
+        val py = cy + sin(angle) * dist
+        drawCircle(
+            color = Color(0xCCFFFFFF),
+            radius = (4f - 2f * progress).coerceAtLeast(1f),
+            center = Offset(px, py),
+            alpha = (0.8f - progress * 0.5f).coerceAtLeast(0f)
+        )
+    }
+}
+
+// ===== MAGIC BUTTON COLORS & CONFIG =====
+
+private data class MagicButtonThemeConfig(
+    val colors: androidx.compose.material3.ButtonColors,
+    val shape: androidx.compose.ui.graphics.Shape,
+    val modifier: Modifier,
+    val textFont: FontFamily,
+    val fontSize: androidx.compose.ui.unit.TextUnit,
+    val letterSpacing: androidx.compose.ui.unit.TextUnit,
+    val indicatorColor: Color
+)
+
+@Composable
+private fun rememberMagicButtonConfig(isArcade: Boolean): MagicButtonThemeConfig {
+    return if (isArcade) {
+        MagicButtonThemeConfig(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00FF41),
+                contentColor = Color(0xFF0A0A0F),
+                disabledContainerColor = Color(0xFF00FF41).copy(alpha = 0.3f),
+                disabledContentColor = Color(0xFF0A0A0F).copy(alpha = 0.5f)
+            ),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .padding(bottom = 6.dp),
+            textFont = QuesterPixel,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp,
+            indicatorColor = Color(0xFF0A0A0F)
+        )
+    } else {
+        MagicButtonThemeConfig(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD4A84F),
+                contentColor = Color(0xFF1B1408),
+                disabledContainerColor = Color(0xFFD4A84F).copy(alpha = 0.3f),
+                disabledContentColor = Color(0xFF1B1408).copy(alpha = 0.5f)
+            ),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            textFont = FontFamily.Serif,
+            fontSize = 16.sp,
+            letterSpacing = 0.sp,
+            indicatorColor = Color(0xFF1B1408)
+        )
+    }
+}
+
+// ===== MAGIC BUTTON =====
+
+@Composable
+private fun MagicButton(
+    text: String,
+    loading: Boolean,
+    isArcade: Boolean,
+    onClick: () -> Unit
+) {
+    val config = rememberMagicButtonConfig(isArcade)
+
+    Button(
+        onClick = onClick,
+        enabled = !loading,
+        colors = config.colors,
+        shape = config.shape,
+        modifier = config.modifier
+    ) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = config.indicatorColor
+            )
+        } else {
+            Text(
+                text = text,
+                fontFamily = config.textFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = config.fontSize,
+                letterSpacing = config.letterSpacing
+            )
+        }
+    }
+}
+
+// ===== DATA CLASS =====
+
+private data class EffectColors(
+    val auraColors: List<Color>,
+    val ringColors: List<Color>,
+    val particleColors: List<Color>
+)

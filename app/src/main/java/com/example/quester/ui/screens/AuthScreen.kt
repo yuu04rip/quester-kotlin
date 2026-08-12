@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -48,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.quester.data.repository.AuthResult
 import com.example.quester.domain.service.AuthService
+import com.example.quester.ui.components.ArcadeBackground
 import com.example.quester.ui.components.MagicBurstButton
 import com.example.quester.ui.theme.QuesterTheme
 import com.example.quester.ui.utils.capitalizeFirstLetter
@@ -189,7 +189,6 @@ fun AuthScreen(
             scope.launch {
                 try {
                     val result = if (isRegisterMode) {
-                        // Capitalizza username in registrazione
                         val capitalizedUsername = capitalizeFirstLetter(usernameOrEmail.trim())
                         authService.register(capitalizedUsername, email.ifBlank { null }, password)
                     } else {
@@ -206,7 +205,10 @@ fun AuthScreen(
         }
     )
 
-    AuthContent(uiState = uiState, actions = uiActions)
+    // ✅ APPLICA ARCADEBACKGROUND ALLA SCHERMATA DI AUTH
+    ArcadeBackground {
+        AuthContent(uiState = uiState, actions = uiActions)
+    }
 }
 
 @Composable
@@ -217,15 +219,6 @@ private fun AuthContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-                    )
-                )
-            )
             .padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -237,7 +230,7 @@ private fun AuthContent(
                 .padding(2.dp)
                 .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f), RoundedCornerShape(26.dp)),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)  // ← Più trasparente
             ),
             shape = RoundedCornerShape(26.dp)
         ) {
@@ -422,8 +415,8 @@ private fun FantasyTextField(
 
 @Composable
 private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
     focusedBorderColor = MaterialTheme.colorScheme.secondary,
     unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f),
     focusedLabelColor = MaterialTheme.colorScheme.secondary,

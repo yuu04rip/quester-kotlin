@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.data.repository.MissionRepository
@@ -46,150 +47,144 @@ fun MissionListScreen(
 
     val filteredMissions = filterMissions(rawMissions, searchQuery, selectedFilter)
 
+    // ✅ RIMOSSO Surface con background - ora gestito da ArcadeBackground
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = Color.Transparent  // ✅ TRASPARENTE
     ) { paddingValues ->
-        Surface(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // Header
-                MissionListHeader(
-                    username = user?.username ?: "Eroe",
-                    onAddClick = {
-                        showAddDialog = true
-                    }
-                )
-
-                // Filtri
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it }
-                )
-                FilterChips(
-                    selectedFilter = selectedFilter,
-                    onFilterSelected = { selectedFilter = it }
-                )
-
-                // Lista missioni
-                MissionListContent(
-                    missions = filteredMissions,
-                    callbacks = MissionListCallbacks(
-                        onMissionClick = { selectedMissionId = it.mission.id },
-                        onEditClick = { missionToEdit = it },
-                        onDeleteClick = { missionWithTasks ->
-                            handleMissionDelete(
-                                missionWithTasks = missionWithTasks,
-                                missionService = missionService,
-                                snackbarHostState = snackbarHostState,
-                                scope = scope
-                            )
-                        },
-                        onResetClick = { missionToReset = it }
-                    )
-                )
-            }
-
-            // DIALOG RESET
-            missionToReset?.let { missionWithTasks ->
-                ResetMissionDialog(
-                    missionWithTasks = missionWithTasks,
-                    onDismiss = { missionToReset = null },
-                    onConfirm = { missionId ->
-                        scope.launch {
-                            try {
-                                missionService.resetMission(missionId)
-                                snackbarHostState.showSnackbar(
-                                    message = "Missione resettata con successo!",
-                                    duration = SnackbarDuration.Short
-                                )
-                            } catch (e: Exception) {
-                                snackbarHostState.showSnackbar(
-                                    message = "Errore: ${e.message}",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                            missionToReset = null
-                        }
-                    }
-                )
-            }
-
-
-            if (showAddDialog) {
-                AddMissionDialog(
-                    onDismiss = {
-                        showAddDialog = false
-                    },
-                    onMissionCreated = { title, description, type, tasks ->
-                        scope.launch {
-                            missionService.createMissionFromForm(
-                                title = title,
-                                description = description,
-                                type = type.dbValue,
-                                dueDate = null,
-                                subtasks = tasks
-                            )
-                            showAddDialog = false
-                        }
-                    }
-                )
-            }
-
-
-            missionToEdit?.let { missionWithTasks ->
-                EditMissionDialog(
-                    missionWithTasks = missionWithTasks,
-                    onDismiss = { missionToEdit = null },
-                    onMissionUpdated = { title, description, type, tasks ->
-                        scope.launch {
-                            missionService.updateMissionFromForm(
-                                mission = missionWithTasks.mission,
-                                newTitle = title,
-                                newDescription = description,
-                                newType = type.dbValue,
-                                newSubtasksText = tasks
-                            )
-                            missionToEdit = null
-                        }
-                    }
-                )
-            }
-
-            // DIALOG DETTAGLI
-            selectedMissionId?.let { targetId ->
-                val currentMission = rawMissions.find { it.mission.id == targetId }
-                if (currentMission != null) {
-                    MissionDetailDialog(
-                        missionWithTasks = currentMission,
-                        onDismiss = { selectedMissionId = null },
-                        onTaskToggle = { subTask ->
-                            scope.launch {
-                                missionService.toggleSubTask(subTask, !subTask.done)
-                            }
-                        },
-                        onEditClick = {
-                            selectedMissionId = null
-                            missionToEdit = currentMission
-                        },
-                        onDeleteClick = {
-                            handleMissionDelete(
-                                missionWithTasks = currentMission,
-                                missionService = missionService,
-                                snackbarHostState = snackbarHostState,
-                                scope = scope
-                            )
-                            selectedMissionId = null
-                        }
-                    )
+            // Header
+            MissionListHeader(
+                username = user?.username ?: "Eroe",
+                onAddClick = {
+                    showAddDialog = true
                 }
+            )
+
+            // Filtri
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it }
+            )
+            FilterChips(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { selectedFilter = it }
+            )
+
+            // Lista missioni
+            MissionListContent(
+                missions = filteredMissions,
+                callbacks = MissionListCallbacks(
+                    onMissionClick = { selectedMissionId = it.mission.id },
+                    onEditClick = { missionToEdit = it },
+                    onDeleteClick = { missionWithTasks ->
+                        handleMissionDelete(
+                            missionWithTasks = missionWithTasks,
+                            missionService = missionService,
+                            snackbarHostState = snackbarHostState,
+                            scope = scope
+                        )
+                    },
+                    onResetClick = { missionToReset = it }
+                )
+            )
+        }
+
+        // DIALOG RESET
+        missionToReset?.let { missionWithTasks ->
+            ResetMissionDialog(
+                missionWithTasks = missionWithTasks,
+                onDismiss = { missionToReset = null },
+                onConfirm = { missionId ->
+                    scope.launch {
+                        try {
+                            missionService.resetMission(missionId)
+                            snackbarHostState.showSnackbar(
+                                message = "Missione resettata con successo!",
+                                duration = SnackbarDuration.Short
+                            )
+                        } catch (e: Exception) {
+                            snackbarHostState.showSnackbar(
+                                message = "Errore: ${e.message}",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                        missionToReset = null
+                    }
+                }
+            )
+        }
+
+        if (showAddDialog) {
+            AddMissionDialog(
+                onDismiss = {
+                    showAddDialog = false
+                },
+                onMissionCreated = { title, description, type, tasks ->
+                    scope.launch {
+                        missionService.createMissionFromForm(
+                            title = title,
+                            description = description,
+                            type = type.dbValue,
+                            dueDate = null,
+                            subtasks = tasks
+                        )
+                        showAddDialog = false
+                    }
+                }
+            )
+        }
+
+        missionToEdit?.let { missionWithTasks ->
+            EditMissionDialog(
+                missionWithTasks = missionWithTasks,
+                onDismiss = { missionToEdit = null },
+                onMissionUpdated = { title, description, type, tasks ->
+                    scope.launch {
+                        missionService.updateMissionFromForm(
+                            mission = missionWithTasks.mission,
+                            newTitle = title,
+                            newDescription = description,
+                            newType = type.dbValue,
+                            newSubtasksText = tasks
+                        )
+                        missionToEdit = null
+                    }
+                }
+            )
+        }
+
+        // DIALOG DETTAGLI
+        selectedMissionId?.let { targetId ->
+            val currentMission = rawMissions.find { it.mission.id == targetId }
+            if (currentMission != null) {
+                MissionDetailDialog(
+                    missionWithTasks = currentMission,
+                    onDismiss = { selectedMissionId = null },
+                    onTaskToggle = { subTask ->
+                        scope.launch {
+                            missionService.toggleSubTask(subTask, !subTask.done)
+                        }
+                    },
+                    onEditClick = {
+                        selectedMissionId = null
+                        missionToEdit = currentMission
+                    },
+                    onDeleteClick = {
+                        handleMissionDelete(
+                            missionWithTasks = currentMission,
+                            missionService = missionService,
+                            snackbarHostState = snackbarHostState,
+                            scope = scope
+                        )
+                        selectedMissionId = null
+                    }
+                )
             }
         }
     }

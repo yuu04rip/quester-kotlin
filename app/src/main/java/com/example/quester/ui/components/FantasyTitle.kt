@@ -1,6 +1,5 @@
 package com.example.quester.ui.components
 
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,14 +14,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import com.example.quester.R
+import com.example.quester.ui.theme.ThemeManager
+import com.example.quester.ui.theme.AppTheme
 
-// Carica il font personalizzato
-private val FantasyFont = FontFamily(
+// Font fantasy (default)
+val FantasyFont = FontFamily(
     Font(R.font.northeternal)
 )
 
+// Font pixel (Arcade)
+val PixelFont = FontFamily(
+    Font(R.font.pixelfont)
+)
+
 /**
- * Componente per titoli con font fantasy per il testo e font normale per i numeri
+ * Componente per titoli con font dinamico in base al tema
+ * - Fantasy → Northeternal per lettere, SansSerif per numeri
+ * - Arcade → PixelFont per tutto (lettere e numeri)
  */
 @Composable
 fun FantasyTitle(
@@ -32,15 +40,22 @@ fun FantasyTitle(
     color: Color = MaterialTheme.colorScheme.onSurface,
     fontWeight: FontWeight = FontWeight.Bold
 ) {
+    val isArcade = ThemeManager.theme == AppTheme.ARCADE
+
+    // Font per le lettere in base al tema
+    val letterFont = if (isArcade) PixelFont else FantasyFont
+    // Font per i numeri in base al tema
+    val numberFont = if (isArcade) PixelFont else FontFamily.SansSerif
+
     // Scompone il testo in parti (testo e numeri separati)
     val parts = splitTextAndNumbers(text)
 
     if (parts.size == 1) {
         // Se è tutto testo o tutto numeri
         val fontFamily = if (parts.first().all { it.isDigit() }) {
-            FontFamily.SansSerif
+            numberFont  // ✅ Numeri: SansSerif in Fantasy, PixelFont in Arcade
         } else {
-            FantasyFont
+            letterFont  // ✅ Lettere: Northeternal in Fantasy, PixelFont in Arcade
         }
 
         val finalStyle = style.copy(
@@ -59,9 +74,14 @@ fun FantasyTitle(
         val annotatedString = buildAnnotatedString {
             parts.forEach { part ->
                 val isDigit = part.all { it.isDigit() }
+                val fontFamily = if (isDigit) {
+                    numberFont  // ✅ Numeri: SansSerif in Fantasy, PixelFont in Arcade
+                } else {
+                    letterFont  // ✅ Lettere: Northeternal in Fantasy, PixelFont in Arcade
+                }
                 withStyle(
                     style = SpanStyle(
-                        fontFamily = if (isDigit) FontFamily.SansSerif else FantasyFont,
+                        fontFamily = fontFamily,
                         fontWeight = fontWeight,
                         color = color
                     )
@@ -85,7 +105,6 @@ fun FantasyTitle(
 /**
  * Divide il testo in parti: numeri e non numeri
  * Es: "Missione 5" → ["Missione ", "5"]
- * Es: "Livello 10" → ["Livello ", "10"]
  */
 private fun splitTextAndNumbers(text: String): List<String> {
     if (text.isEmpty()) return emptyList()

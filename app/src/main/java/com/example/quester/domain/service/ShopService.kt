@@ -2,7 +2,6 @@ package com.example.quester.domain.service
 
 import com.example.quester.data.dao.OwnedCosmeticDao
 import com.example.quester.data.dao.ShopDao
-import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.ShopItem
 import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
