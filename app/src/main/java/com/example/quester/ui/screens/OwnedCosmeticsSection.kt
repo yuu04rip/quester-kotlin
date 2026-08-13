@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -241,6 +242,7 @@ private fun CosmeticRow(
             val isCurrentTheme = isTheme && isThemeActive(cosmetic.itemId, currentTheme)
 
             CosmeticItem(
+                modifier = Modifier.weight(1f),
                 itemId = cosmetic.itemId,
                 isTheme = isTheme,
                 isSelected = isCurrentTheme,
@@ -254,7 +256,7 @@ private fun CosmeticRow(
         }
 
         repeat(COSMETICS_PER_ROW - rowItems.size) {
-            Spacer(modifier = Modifier.size(COSMETIC_SIZE))
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -297,6 +299,7 @@ private fun getThemeDisplayName(itemId: String): String {
 
 @Composable
 private fun CosmeticItem(
+    modifier: Modifier = Modifier,
     itemId: String,
     isTheme: Boolean = false,
     isSelected: Boolean = false,
@@ -306,8 +309,8 @@ private fun CosmeticItem(
     val displayName = if (isTheme) getThemeDisplayName(itemId) else formatCosmeticName(itemId)
 
     Card(
-        modifier = Modifier
-            .size(COSMETIC_SIZE)
+        modifier = modifier
+            .height(COSMETIC_SIZE)
             .shadow(
                 elevation = if (isSelected) 8.dp else 4.dp,
                 shape = shape
@@ -332,9 +335,7 @@ private fun CosmeticItem(
         shape = shape
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(COSMETIC_SIZE),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CosmeticCardContent(

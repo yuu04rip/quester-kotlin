@@ -169,22 +169,38 @@ private fun ProfileLoader(
         }
     }
 }
-
 // ============================================================
-// HELPER PARSERS PER PREVENIRE MISMATCH DI STRINGHE SULLE CORNICI
+// HELPER PARSERS CORRETTI
 // ============================================================
 
 fun parseHatType(value: String?): HatType {
     if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return HatType.NONE
-    return try { HatType.valueOf(value) } catch (_: Exception) { HatType.NONE }
+    return try { HatType.valueOf(value.uppercase()) } catch (_: Exception) { HatType.NONE }
 }
 
 fun parseWeaponType(value: String?): WeaponType {
     if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return WeaponType.NONE
-    return try { WeaponType.valueOf(value) } catch (_: Exception) { WeaponType.NONE }
+    return try { WeaponType.valueOf(value.uppercase()) } catch (_: Exception) { WeaponType.NONE }
 }
 
 fun parseFrameType(value: String?): FrameType {
-    if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return FrameType.NONE
-    return try { FrameType.valueOf(value) } catch (_: Exception) { FrameType.NONE }
+    // Se è vuoto, nullo o NONE, adesso restituisce BASIC come predefinito!
+    if (value.isNullOrBlank() || value.equals("NONE", ignoreCase = true)) {
+        return FrameType.BASIC
+    }
+
+    // Mappa gli ID dello shop o i nomi diretti dell'enum
+    return when (value.lowercase()) {
+        "frame_basic", "basic" -> FrameType.BASIC
+        "frame_mago", "mago" -> FrameType.MAGO
+        "frame_cavaliere", "cavaliere" -> FrameType.CAVALIERE
+        "frame_scifi", "sci_fi", "scifi" -> FrameType.SCI_FI
+        else -> {
+            try {
+                FrameType.valueOf(value.uppercase())
+            } catch (_: Exception) {
+                FrameType.BASIC // Fallback sicuro: se fallisce, mette la base
+            }
+        }
+    }
 }

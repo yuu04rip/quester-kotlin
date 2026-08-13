@@ -92,23 +92,39 @@ object DatabaseProvider {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL(
                 """
-            ALTER TABLE users
-            ADD COLUMN equippedHat TEXT NOT NULL DEFAULT 'NONE'
-            """.trimIndent()
+                ALTER TABLE users
+                ADD COLUMN equippedHat TEXT NOT NULL DEFAULT 'NONE'
+                """.trimIndent()
             )
 
             database.execSQL(
                 """
-            ALTER TABLE users
-            ADD COLUMN equippedWeapon TEXT NOT NULL DEFAULT 'NONE'
-            """.trimIndent()
+                ALTER TABLE users
+                ADD COLUMN equippedWeapon TEXT NOT NULL DEFAULT 'NONE'
+                """.trimIndent()
             )
 
             database.execSQL(
                 """
-            ALTER TABLE users
-            ADD COLUMN equippedFrame TEXT NOT NULL DEFAULT 'NONE'
-            """.trimIndent()
+                ALTER TABLE users
+                ADD COLUMN equippedFrame TEXT NOT NULL DEFAULT 'NONE'
+                """.trimIndent()
+            )
+        }
+    }
+
+    // ============================================================
+    // MIGRATION 6 -> 7
+    // Aggiunge iconScale alla tabella shop_items
+    // ============================================================
+
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                """
+                ALTER TABLE shop_items
+                ADD COLUMN iconScale REAL NOT NULL DEFAULT 1.0
+                """.trimIndent()
             )
         }
     }
@@ -128,12 +144,12 @@ object DatabaseProvider {
             )
                 // Migration 3 -> 4
                 .addMigrations(MIGRATION_3_4)
-
                 // Migration 4 -> 5
                 .addMigrations(MIGRATION_4_5)
                 // Migration 5 -> 6
                 .addMigrations(MIGRATION_5_6)
-
+                // Migration 6 -> 7
+                .addMigrations(MIGRATION_6_7)
                 .build()
 
             INSTANCE = instance

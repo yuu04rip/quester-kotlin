@@ -75,7 +75,7 @@ private fun isCosmeticOwned(
     option: Any,
     ownedItemIds: Set<String>
 ): Boolean {
-    if (option == HatType.NONE || option == WeaponType.NONE || option == FrameType.NONE) {
+    if (option == HatType.NONE || option == WeaponType.NONE || option == FrameType.NONE || option == FrameType.BASIC) {
         return true
     }
 
@@ -135,10 +135,11 @@ fun AvatarCustomizationScreen(
         }
     }
 
+    // Oggetto reale da salvare (se l'utente seleziona NONE per il frame, salviamo BASIC o NONE in base alla preferenza, qui gestiamo il salvataggio pulito)
     val currentCosmetics = AvatarCosmetics(
         hat = customizationState.selectedHat,
         weapon = customizationState.selectedWeapon,
-        frame = customizationState.selectedFrame
+        frame = if (customizationState.selectedFrame == FrameType.NONE) FrameType.BASIC else customizationState.selectedFrame
     )
 
     Box(
@@ -168,6 +169,7 @@ fun AvatarCustomizationScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Anteprimo l'avatar con la regola di fallback sul frame (se NONE -> BASIC)
             AvatarPreviewCard(
                 cosmetics = currentCosmetics,
                 isArcade = isArcade
@@ -178,7 +180,7 @@ fun AvatarCustomizationScreen(
             SelectionSummary(
                 hat = customizationState.selectedHat,
                 weapon = customizationState.selectedWeapon,
-                frame = customizationState.selectedFrame,
+                frame = currentCosmetics.frame,
                 isArcade = isArcade
             )
 
@@ -214,18 +216,22 @@ private class CustomizationState(
 ) {
     var selectedHat by mutableStateOf(initialCosmetics.hat)
     var selectedWeapon by mutableStateOf(initialCosmetics.weapon)
-    var selectedFrame by mutableStateOf(initialCosmetics.frame)
+    // Se initial arriva a NONE, lo convertiamo in BASIC per coerenza
+    var selectedFrame by mutableStateOf(
+        if (initialCosmetics.frame == FrameType.NONE) FrameType.BASIC else initialCosmetics.frame
+    )
 
     fun reset(initial: AvatarCosmetics) {
         selectedHat = initial.hat
         selectedWeapon = initial.weapon
-        selectedFrame = initial.frame
+        selectedFrame = if (initial.frame == FrameType.NONE) FrameType.BASIC else initial.frame
     }
 
     fun hasChanges(initial: AvatarCosmetics): Boolean {
+        val normalizedInitialFrame = if (initial.frame == FrameType.NONE) FrameType.BASIC else initial.frame
         return selectedHat != initial.hat ||
                 selectedWeapon != initial.weapon ||
-                selectedFrame != initial.frame
+                selectedFrame != normalizedInitialFrame
     }
 }
 
@@ -235,7 +241,6 @@ private fun rememberCustomizationState(
 ): CustomizationState {
     val state = remember { CustomizationState(initialCosmetics) }
 
-    // Sincronizza SEMPRE lo stato se initialCosmetics cambia quando si apre la schermata
     LaunchedEffect(initialCosmetics) {
         state.reset(initialCosmetics)
     }
@@ -311,7 +316,7 @@ private fun AvatarPreviewCard(
 
     Card(
         modifier = Modifier
-            .size(200.dp)
+            .size(210.dp)
             .shadow(elevation = 16.dp, shape = RoundedCornerShape(26.dp))
             .border(
                 width = 1.5.dp,
@@ -327,22 +332,13 @@ private fun AvatarPreviewCard(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(176.dp)
-                    .border(
-                        width = 1.dp,
-                        color = accentColor.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(22.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                AvatarView(
-                    cosmetics = cosmetics,
-                    size = 160,
-                    isEditable = false
-                )
-            }
+            AvatarView(
+                cosmetics = cosmetics,
+                size = 300.dp,
+                scale = 3f,
+                verticalOffset = 6.dp,
+                isEditable = false
+            )
         }
     }
 }
@@ -456,14 +452,18 @@ private fun CustomizationSections(
 
     Spacer(modifier = Modifier.height(10.dp))
 
+    // Escludiamo NONE dalle opzioni delle cornici in modo che non si possa selezionare "Nessuna",
+    // costringendo l'utente a scegliere tra BASIC e le altre speciali.
     CustomizationSection(
         title = "CORNICE",
-        options = FrameType.entries.map { formatShortName(it.displayName) to it },
+        options = FrameType.entries
+            .filter { it != FrameType.NONE }
+            .map { formatShortName(it.displayName) to it },
         selectedOption = state.selectedFrame,
         ownedItemIds = ownedItemIds,
         onOptionSelected = { option ->
-            // Toggle: se la cornice selezionata è già quella attiva, la rimuoviamo (NONE)
-            state.selectedFrame = if (state.selectedFrame == option) FrameType.NONE else option
+            // Cliccando sulla cornice selezionata non la rimuoviamo, resta BASIC come default
+            state.selectedFrame = option
         },
         isArcade = isArcade
     )

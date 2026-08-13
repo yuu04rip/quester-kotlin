@@ -10,5 +10,6 @@ data class ShopItem(
     val name: String,
     val price: Int,
     val description: String = "",
-    val iconName: String = "shopping_cart"
+    val iconName: String = "shopping_cart",
+    val iconScale: Float = 1.0f
 )

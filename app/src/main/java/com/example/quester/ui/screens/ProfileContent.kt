@@ -49,10 +49,7 @@ import com.example.quester.ui.components.AvatarView
 import com.example.quester.ui.components.DeleteAccountDialog
 import com.example.quester.ui.components.EditUsernameDialog
 import com.example.quester.ui.components.FantasyTitle
-import com.example.quester.ui.components.FrameType
-import com.example.quester.ui.components.HatType
 import com.example.quester.ui.components.MagicBurstButton
-import com.example.quester.ui.components.WeaponType
 import com.example.quester.ui.theme.AppTheme
 import com.example.quester.ui.theme.ThemeManager
 import com.example.quester.ui.theme.getButtonStyle
@@ -91,7 +88,6 @@ fun ProfileContent(
     uiState: ProfileUiState,
     actions: ProfileActions
 ) {
-    // Parsing diretto e sicuro per gestire "NONE", stringhe vuote e null in modo affidabile
     val equippedCosmetics = remember(user.equippedHat, user.equippedWeapon, user.equippedFrame) {
         AvatarCosmetics(
             hat = parseHatType(user.equippedHat),
@@ -229,7 +225,9 @@ private fun ProfileCard(
             AvatarView(
                 modifier = Modifier,
                 cosmetics = equippedCosmetics,
-                size = 120,
+                size = 200.dp,
+                scale = 2f,
+                verticalOffset = 4.dp,
                 isEditable = true,
                 onClick = onShowCustomization
             )

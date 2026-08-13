@@ -21,7 +21,7 @@ import com.example.quester.data.model.User
         ShopItem::class,
         OwnedCosmetic::class
     ],
-    version = 6, // Versione incrementata per la migration
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
