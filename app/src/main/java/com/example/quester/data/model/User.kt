@@ -26,7 +26,6 @@ data class User(
     val xpTotale: Int = 0,
     val livello: Int = 1,
     val coins: Int = 0,
-    val profileImageUri: String? = null,
 
     val equippedHat: String = "NONE",      // NONE, MAGO, SCI_FI
     val equippedWeapon: String = "NONE",   // NONE, STAFF, SWORD, GUN

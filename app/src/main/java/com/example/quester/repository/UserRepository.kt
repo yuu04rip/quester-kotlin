@@ -168,13 +168,6 @@ class UserRepository(
         return true
     }
 
-    suspend fun updateProfileImage(
-        userId: Long,
-        uri: String?
-    ) {
-        val current = getUserById(userId) ?: return
-        userDao.updateUser(current.copy(profileImageUri = uri))
-    }
 
     // ============================================================
     // COSMETICI SHOP

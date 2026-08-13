@@ -15,7 +15,7 @@ object DatabaseProvider {
 
     // ============================================================
     // MIGRATION 3 -> 4
-    // Rimuove reputation, warnings, xpEarnedToday, lastXpResetDate
+    // Rimuove reputation, warnings, xpEarnedToday, lastXpResetDate e profileImageUri
     // ============================================================
 
     private val MIGRATION_3_4 = object : Migration(3, 4) {
@@ -32,13 +32,12 @@ object DatabaseProvider {
                     passwordHash TEXT NOT NULL,
                     xpTotale INTEGER NOT NULL DEFAULT 0,
                     livello INTEGER NOT NULL DEFAULT 1,
-                    coins INTEGER NOT NULL DEFAULT 0,
-                    profileImageUri TEXT
+                    coins INTEGER NOT NULL DEFAULT 0
                 )
                 """.trimIndent()
             )
 
-            // Copia i dati dalla vecchia tabella
+            // CORRETTO: 7 colonne nell'INSERT e 7 colonne nel SELECT
             database.execSQL(
                 """
                 INSERT INTO users_new (
@@ -48,8 +47,7 @@ object DatabaseProvider {
                     passwordHash,
                     xpTotale,
                     livello,
-                    coins,
-                    profileImageUri
+                    coins
                 )
                 SELECT
                     id,
@@ -58,8 +56,7 @@ object DatabaseProvider {
                     passwordHash,
                     xpTotale,
                     livello,
-                    coins,
-                    profileImageUri
+                    coins
                 FROM users
                 """.trimIndent()
             )
@@ -130,6 +127,64 @@ object DatabaseProvider {
     }
 
     // ============================================================
+    // MIGRATION 7 -> 8
+    // Rimuove definitivamente profileImageUri dalla tabella users
+    // ============================================================
+
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                """
+                CREATE TABLE users_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    username TEXT NOT NULL,
+                    email TEXT,
+                    passwordHash TEXT NOT NULL,
+                    xpTotale INTEGER NOT NULL DEFAULT 0,
+                    livello INTEGER NOT NULL DEFAULT 1,
+                    coins INTEGER NOT NULL DEFAULT 0,
+                    equippedHat TEXT NOT NULL DEFAULT 'NONE',
+                    equippedWeapon TEXT NOT NULL DEFAULT 'NONE',
+                    equippedFrame TEXT NOT NULL DEFAULT 'NONE'
+                )
+                """.trimIndent()
+            )
+
+            database.execSQL(
+                """
+                INSERT INTO users_new (
+                    id,
+                    username,
+                    email,
+                    passwordHash,
+                    xpTotale,
+                    livello,
+                    coins,
+                    equippedHat,
+                    equippedWeapon,
+                    equippedFrame
+                )
+                SELECT
+                    id,
+                    username,
+                    email,
+                    passwordHash,
+                    xpTotale,
+                    livello,
+                    coins,
+                    equippedHat,
+                    equippedWeapon,
+                    equippedFrame
+                FROM users
+                """.trimIndent()
+            )
+
+            database.execSQL("DROP TABLE users")
+            database.execSQL("ALTER TABLE users_new RENAME TO users")
+        }
+    }
+
+    // ============================================================
     // DATABASE
     // ============================================================
 
@@ -142,14 +197,12 @@ object DatabaseProvider {
                 AppDatabase::class.java,
                 "quester_db"
             )
-                // Migration 3 -> 4
                 .addMigrations(MIGRATION_3_4)
-                // Migration 4 -> 5
                 .addMigrations(MIGRATION_4_5)
-                // Migration 5 -> 6
                 .addMigrations(MIGRATION_5_6)
-                // Migration 6 -> 7
                 .addMigrations(MIGRATION_6_7)
+                .addMigrations(MIGRATION_7_8)
+                .fallbackToDestructiveMigration() // Utile in fase di sviluppo per evitare crash di migrazione
                 .build()
 
             INSTANCE = instance

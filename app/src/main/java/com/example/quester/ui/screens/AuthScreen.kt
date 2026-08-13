@@ -205,7 +205,6 @@ fun AuthScreen(
         }
     )
 
-    // ✅ APPLICA ARCADEBACKGROUND ALLA SCHERMATA DI AUTH
     ArcadeBackground {
         AuthContent(uiState = uiState, actions = uiActions)
     }
@@ -230,7 +229,7 @@ private fun AuthContent(
                 .padding(2.dp)
                 .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f), RoundedCornerShape(26.dp)),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)  // ← Più trasparente
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             ),
             shape = RoundedCornerShape(26.dp)
         ) {
@@ -348,6 +347,8 @@ private fun AuthFormFields(
 
 @Composable
 private fun ErrorMessageCard(fantasyError: String) {
+    val isCredentialsError = fantasyError.contains("Le chiavi del portale non coincidono")
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -355,13 +356,13 @@ private fun ErrorMessageCard(fantasyError: String) {
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.error.copy(alpha = 0.75f)
+            color = if (isCredentialsError) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.error.copy(alpha = 0.75f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(
             text = fantasyError,
-            color = MaterialTheme.colorScheme.onErrorContainer,
+            color = if (isCredentialsError) Color.White else MaterialTheme.colorScheme.onErrorContainer,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
