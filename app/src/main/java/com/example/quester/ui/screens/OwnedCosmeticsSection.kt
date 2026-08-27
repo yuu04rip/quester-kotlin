@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.example.quester.R
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.preferences.ThemePreferences
-import com.example.quester.ui.components.FantasyTitle
+import com.example.quester.ui.components.DynamicTitle
 import com.example.quester.ui.theme.AppTheme
 import com.example.quester.ui.theme.ThemeManager
 import kotlinx.coroutines.launch
@@ -56,9 +56,11 @@ private val COSMETIC_SIZE = 100.dp
 private val COSMETIC_SPACING = 10.dp
 private const val COSMETICS_PER_ROW = 3
 
+// 🛠️ Tutti i temi supportati nello shop
 private val THEME_IDS = listOf(
     "theme_arcade",
-    "theme_fantasy"
+    "theme_fantasy",
+    "reward_tema_regale"
 )
 
 @Composable
@@ -143,7 +145,7 @@ private fun CosmeticCardHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            FantasyTitle(
+            DynamicTitle(
                 text = "I Tuoi Cosmetici",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.secondary
@@ -274,25 +276,32 @@ private fun isThemeActive(itemId: String, currentTheme: AppTheme): Boolean {
     return when (itemId) {
         "theme_arcade" -> currentTheme == AppTheme.ARCADE
         "theme_fantasy" -> currentTheme == AppTheme.FANTASY
+        "reward_tema_regale" -> currentTheme == AppTheme.REGALE
         else -> false
     }
 }
 
-private fun getDefaultToggledTheme(currentTheme: AppTheme): AppTheme {
-    return if (currentTheme == AppTheme.ARCADE) AppTheme.FANTASY else AppTheme.ARCADE
-}
-
+// 🛠️ Logica di Toggle: se il tema è già attivo, torna a DEFAULT; altrimenti attiva il tema scelto
 private fun getToggledTheme(itemId: String, currentTheme: AppTheme): AppTheme {
-    if (itemId == "theme_arcade" || itemId == "theme_fantasy") {
-        return getDefaultToggledTheme(currentTheme)
+    val targetTheme = when (itemId) {
+        "theme_arcade" -> AppTheme.ARCADE
+        "theme_fantasy" -> AppTheme.FANTASY
+        "reward_tema_regale" -> AppTheme.REGALE
+        else -> AppTheme.DEFAULT
     }
-    return AppTheme.FANTASY
+
+    return if (currentTheme == targetTheme) {
+        AppTheme.DEFAULT
+    } else {
+        targetTheme
+    }
 }
 
 private fun getThemeDisplayName(itemId: String): String {
     return when (itemId) {
         "theme_arcade" -> "Tema Arcade"
         "theme_fantasy" -> "Tema Fantasy"
+        "reward_tema_regale" -> "Tema Regale"
         else -> formatCosmeticName(itemId)
     }
 }
@@ -347,10 +356,6 @@ private fun CosmeticItem(
         }
     }
 }
-
-// ============================================================
-// COSMETIC CONTENT (DINAMICO)
-// ============================================================
 
 @Composable
 private fun CosmeticCardContent(

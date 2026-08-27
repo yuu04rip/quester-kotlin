@@ -35,8 +35,11 @@ import com.example.quester.domain.service.MissionService
 import com.example.quester.domain.service.ShopService
 import com.example.quester.ui.components.ArcadeBackground
 import com.example.quester.ui.components.AvatarCosmetics
+import com.example.quester.ui.components.RoyalBackground // 👑 Importato il background regale
 import com.example.quester.ui.screens.customization.AvatarCustomizationScreen
 import com.example.quester.ui.screens.mission.MissionListScreen
+import com.example.quester.ui.theme.AppTheme
+import com.example.quester.ui.theme.ThemeManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -70,14 +73,37 @@ fun NavBar(
 
     val currentUserId by sessionManager.loggedUserId.collectAsState(initial = null)
 
+    // Leggiamo il tema corrente per decidere quale sfondo mostrare
+    val currentTheme by ThemeManager.currentTheme.collectAsState()
+
     // Contatore per forzare la ri-lettura dal DB dopo ogni salvataggio
     var refreshTrigger by remember { mutableIntStateOf(0) }
     val equippedCosmetics by rememberEquippedCosmeticsState(repositories.userRepository, currentUserId, refreshTrigger)
     val ownedItemIds by rememberOwnedCosmeticsState(repositories.userRepository, currentUserId)
 
-    ArcadeBackground(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    // Gestione dinamica dello sfondo in base al tema attivo
+    val contentWithBackground: @Composable (@Composable () -> Unit) -> Unit = { content ->
+        when (currentTheme) {
+            AppTheme.ARCADE -> {
+                ArcadeBackground(modifier = Modifier.fillMaxSize()) { content() }
+            }
+            AppTheme.REGALE -> {
+                RoyalBackground(modifier = Modifier.fillMaxSize()) { content() }
+            }
+            else -> {
+                // Per i temi Default o Fantasy standard usiamo il colore di sfondo del MaterialTheme
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    content()
+                }
+            }
+        }
+    }
+
+    contentWithBackground {
         Scaffold(
             containerColor = Color.Transparent,
             bottomBar = {

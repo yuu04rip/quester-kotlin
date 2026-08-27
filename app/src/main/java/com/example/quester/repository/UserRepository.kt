@@ -5,9 +5,7 @@ import com.example.quester.data.dao.UserDao
 import com.example.quester.data.model.OwnedCosmetic
 import com.example.quester.data.model.User
 import com.example.quester.ui.components.AvatarCosmetics
-import com.example.quester.ui.components.FrameType
-import com.example.quester.ui.components.HatType
-import com.example.quester.ui.components.WeaponType
+import com.example.quester.utils.CosmeticIdMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -21,7 +19,9 @@ class UserRepository(
 
         private const val XP_BASE = 100
         private const val XP_INCREMENT = 50
-        private const val MAX_LEVEL = 50
+
+        private const val MAX_LEVEL = User.MAX_LEVEL
+        private const val MAX_TOTAL_XP = User.MAX_TOTAL_XP
     }
 
     // ============================================================
@@ -39,30 +39,23 @@ class UserRepository(
     // ============================================================
 
     fun getXpRequiredForLevel(level: Int): Int {
-        return XP_BASE + (level - 1) * XP_INCREMENT
+        val effectiveLevel = level.coerceAtMost(MAX_LEVEL - 1)
+        // Se siamo al livello 49, servono 2550 XP per raggiungere il 50 (soglia 63.750)
+        return if (effectiveLevel == 49) 2550 else XP_BASE + (effectiveLevel - 1) * XP_INCREMENT
     }
 
     fun calculateLevelFromXp(totalXp: Int): Int {
-        var remainingXp = totalXp
-        var level = 1
-
-        while (level < MAX_LEVEL) {
-            val xpNeeded = getXpRequiredForLevel(level)
-            if (remainingXp >= xpNeeded) {
-                remainingXp -= xpNeeded
-                level++
-            } else {
-                break
-            }
-        }
-
-        return level.coerceAtMost(MAX_LEVEL)
+        return User.calculateLevel(totalXp)
     }
 
     fun getXpInCurrentLevel(
         totalXp: Int,
         level: Int = calculateLevelFromXp(totalXp)
     ): Int {
+        if (totalXp >= MAX_TOTAL_XP || level >= MAX_LEVEL) {
+            return getXpRequiredForLevel(MAX_LEVEL - 1)
+        }
+
         var xpForPreviousLevels = 0
         for (i in 1 until level) {
             xpForPreviousLevels += getXpRequiredForLevel(i)
@@ -74,6 +67,8 @@ class UserRepository(
         totalXp: Int,
         level: Int = calculateLevelFromXp(totalXp)
     ): Float {
+        if (level >= MAX_LEVEL) return 1f
+
         val xpInCurrent = getXpInCurrentLevel(totalXp, level)
         val xpNeeded = getXpRequiredForLevel(level)
         return (xpInCurrent.toFloat() / xpNeeded).coerceIn(0f, 1f)
@@ -97,13 +92,19 @@ class UserRepository(
         if (xpGained <= 0) return
 
         val current = getUserById(userId) ?: return
-        val oldLevel = calculateLevelFromXp(current.xpTotale)
-        val newXpTotal = current.xpTotale + xpGained
+
+        // Se l'utente ha già raggiunto il massimo, blocchiamo l'incremento degli XP totali
+        if (current.xpTotale >= MAX_TOTAL_XP) return
+
+        val oldLevel = current.livello
+
+        // Aggiungiamo gli XP bloccando rigorosamente il totale al tetto massimo di 63.750
+        val newXpTotal = (current.xpTotale + xpGained).coerceAtMost(MAX_TOTAL_XP)
         val newLevel = calculateLevelFromXp(newXpTotal)
 
         var updatedUser = current.copy(
             xpTotale = newXpTotal,
-            livello = newLevel
+            livello = newLevel // Aggiorna fisicamente anche il livello salvato nel DB
         )
 
         if (newLevel > oldLevel) {
@@ -114,6 +115,22 @@ class UserRepository(
         }
 
         userDao.updateUser(updatedUser)
+
+        // 👑 SBLOCCO AUTOMATICO TEMA REGALE E CORONA AL RAGGIUNGIMENTO DEL LIVELLO 50
+        if (newLevel >= 50 && ownedCosmeticDao != null) {
+            val rewards = listOf("reward_tema_regale", "reward_corona")
+            rewards.forEach { itemId ->
+                val alreadyOwned = ownedCosmeticDao.isOwned(userId, itemId)
+                if (!alreadyOwned) {
+                    ownedCosmeticDao.insertOwned(
+                        OwnedCosmetic(
+                            userId = userId,
+                            itemId = itemId
+                        )
+                    )
+                }
+            }
+        }
     }
 
     // ============================================================
@@ -195,7 +212,8 @@ class UserRepository(
             ?: throw IllegalStateException(ERROR_OWNED_DAO_NOT_PROVIDED)
         return ownedDao.getOwnedByUser(userId)
     }
-// ============================================================
+
+    // ============================================================
     // COSMETICI EQUIPAGGIATI
     // ============================================================
 
@@ -203,9 +221,9 @@ class UserRepository(
         val user = getUserById(userId) ?: return AvatarCosmetics()
 
         return AvatarCosmetics(
-            hat = parseHat(user.equippedHat),
-            weapon = parseWeapon(user.equippedWeapon),
-            frame = parseFrame(user.equippedFrame)
+            hat = CosmeticIdMapper.parseHatType(user.equippedHat),
+            weapon = CosmeticIdMapper.parseWeaponType(user.equippedWeapon),
+            frame = CosmeticIdMapper.parseFrameType(user.equippedFrame)
         )
     }
 
@@ -234,27 +252,11 @@ class UserRepository(
 
         userDao.updateUser(
             current.copy(
-                equippedHat = parseHat(hat).name,
-                equippedWeapon = parseWeapon(weapon).name,
-                equippedFrame = parseFrame(frame).name
+                equippedHat = CosmeticIdMapper.parseHatType(hat).name,
+                equippedWeapon = CosmeticIdMapper.parseWeaponType(weapon).name,
+                equippedFrame = CosmeticIdMapper.parseFrameType(frame).name
             )
         )
-    }
-
-    // Parser universali per prevenire mismatch tra "NONE", "HAT_NONE", "", null
-    private fun parseHat(value: String?): HatType {
-        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return HatType.NONE
-        return try { HatType.valueOf(value) } catch (_: Exception) { HatType.NONE }
-    }
-
-    private fun parseWeapon(value: String?): WeaponType {
-        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return WeaponType.NONE
-        return try { WeaponType.valueOf(value) } catch (_: Exception) { WeaponType.NONE }
-    }
-
-    private fun parseFrame(value: String?): FrameType {
-        if (value.isNullOrBlank() || value.contains("NONE", ignoreCase = true)) return FrameType.NONE
-        return try { FrameType.valueOf(value) } catch (_: Exception) { FrameType.NONE }
     }
 
     // ============================================================

@@ -39,17 +39,17 @@ fun MagicBurstButton(
     val scope = rememberCoroutineScope()
     var playEffect by remember { mutableStateOf(false) }
     val progress = remember { Animatable(0f) }
-    val isArcade = ThemeManager.theme == AppTheme.ARCADE
+    val currentTheme by ThemeManager.currentTheme.collectAsState()
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         if (playEffect) {
-            BurstEffectCanvas(isArcade = isArcade, progress = progress.value)
+            BurstEffectCanvas(theme = currentTheme, progress = progress.value)
         }
 
         MagicButton(
             text = text,
             loading = loading,
-            isArcade = isArcade,
+            theme = currentTheme,
             onClick = {
                 if (loading) return@MagicButton
                 scope.launch {
@@ -72,7 +72,7 @@ fun MagicBurstButton(
 
 @Composable
 private fun BurstEffectCanvas(
-    isArcade: Boolean,
+    theme: AppTheme,
     progress: Float
 ) {
     Canvas(
@@ -80,7 +80,8 @@ private fun BurstEffectCanvas(
             .fillMaxWidth()
             .height(90.dp)
     ) {
-        val (auraColors, ringColors, particleColors) = getEffectColors(isArcade)
+        val isArcade = theme == AppTheme.ARCADE
+        val (auraColors, ringColors, particleColors) = getEffectColors(theme)
         val cx = size.width / 2f
         val cy = size.height / 2f
 
@@ -121,39 +122,59 @@ private fun BurstEffectCanvas(
 
 // ===== GET EFFECT COLORS =====
 
-private fun getEffectColors(isArcade: Boolean): EffectColors {
-    return if (isArcade) {
-        EffectColors(
-            auraColors = listOf(
-                Color(0x6600FF41),
-                Color(0x4400FF41),
-                Color.Transparent
-            ),
-            ringColors = listOf(
-                Color(0xFF00FF41),
-                Color(0xFF00FF41)
-            ),
-            particleColors = listOf(
-                Color(0xFFFF00FF),
-                Color(0xFF00FFFF)
+private fun getEffectColors(theme: AppTheme): EffectColors {
+    return when (theme) {
+        AppTheme.ARCADE -> {
+            EffectColors(
+                auraColors = listOf(
+                    Color(0x6600FF41),
+                    Color(0x4400FF41),
+                    Color.Transparent
+                ),
+                ringColors = listOf(
+                    Color(0xFF00FF41),
+                    Color(0xFF00FF41)
+                ),
+                particleColors = listOf(
+                    Color(0xFFFF00FF),
+                    Color(0xFF00FFFF)
+                )
             )
-        )
-    } else {
-        EffectColors(
-            auraColors = listOf(
-                Color(0x66FFB74D),
-                Color(0x44FF7043),
-                Color.Transparent
-            ),
-            ringColors = listOf(
-                Color(0xFFFFD54F),
-                Color(0xFFAB47BC)
-            ),
-            particleColors = listOf(
-                Color(0xFFFFA726),
-                Color(0xFFEF5350)
+        }
+        AppTheme.REGALE -> {
+            EffectColors(
+                auraColors = listOf(
+                    Color(0x66F0CC78),
+                    Color(0x44D4A84F),
+                    Color.Transparent
+                ),
+                ringColors = listOf(
+                    Color(0xFFF0CC78),
+                    Color(0xFF9C27B0)
+                ),
+                particleColors = listOf(
+                    Color(0xFFD4A84F),
+                    Color(0xFF9C27B0)
+                )
             )
-        )
+        }
+        else -> {
+            EffectColors(
+                auraColors = listOf(
+                    Color(0x66FFB74D),
+                    Color(0x44FF7043),
+                    Color.Transparent
+                ),
+                ringColors = listOf(
+                    Color(0xFFFFD54F),
+                    Color(0xFFAB47BC)
+                ),
+                particleColors = listOf(
+                    Color(0xFFFFA726),
+                    Color(0xFFEF5350)
+                )
+            )
+        }
     }
 }
 
@@ -219,42 +240,64 @@ private data class MagicButtonThemeConfig(
 )
 
 @Composable
-private fun rememberMagicButtonConfig(isArcade: Boolean): MagicButtonThemeConfig {
-    return if (isArcade) {
-        MagicButtonThemeConfig(
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF00FF41),
-                contentColor = Color(0xFF0A0A0F),
-                disabledContainerColor = Color(0xFF00FF41).copy(alpha = 0.3f),
-                disabledContentColor = Color(0xFF0A0A0F).copy(alpha = 0.5f)
-            ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .padding(bottom = 6.dp),
-            textFont = QuesterPixel,
-            fontSize = 18.sp,
-            letterSpacing = 2.sp,
-            indicatorColor = Color(0xFF0A0A0F)
-        )
-    } else {
-        MagicButtonThemeConfig(
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD4A84F),
-                contentColor = Color(0xFF1B1408),
-                disabledContainerColor = Color(0xFFD4A84F).copy(alpha = 0.3f),
-                disabledContentColor = Color(0xFF1B1408).copy(alpha = 0.5f)
-            ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            textFont = FontFamily.Serif,
-            fontSize = 16.sp,
-            letterSpacing = 0.sp,
-            indicatorColor = Color(0xFF1B1408)
-        )
+private fun rememberMagicButtonConfig(theme: AppTheme): MagicButtonThemeConfig {
+    return when (theme) {
+        AppTheme.ARCADE -> {
+            MagicButtonThemeConfig(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FF41),
+                    contentColor = Color(0xFF0A0A0F),
+                    disabledContainerColor = Color(0xFF00FF41).copy(alpha = 0.3f),
+                    disabledContentColor = Color(0xFF0A0A0F).copy(alpha = 0.5f)
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .padding(bottom = 6.dp),
+                textFont = QuesterPixel,
+                fontSize = 18.sp,
+                letterSpacing = 2.sp,
+                indicatorColor = Color(0xFF0A0A0F)
+            )
+        }
+        AppTheme.REGALE -> {
+            MagicButtonThemeConfig(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF0CC78),
+                    contentColor = Color(0xFF1A1208),
+                    disabledContainerColor = Color(0xFFF0CC78).copy(alpha = 0.3f),
+                    disabledContentColor = Color(0xFF1A1208).copy(alpha = 0.5f)
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp)
+                    .padding(bottom = 2.dp),
+                textFont = FontFamily.Serif,
+                fontSize = 17.sp,
+                letterSpacing = 1.sp,
+                indicatorColor = Color(0xFF1A1208)
+            )
+        }
+        else -> {
+            MagicButtonThemeConfig(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD4A84F),
+                    contentColor = Color(0xFF1B1408),
+                    disabledContainerColor = Color(0xFFD4A84F).copy(alpha = 0.3f),
+                    disabledContentColor = Color(0xFF1B1408).copy(alpha = 0.5f)
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                textFont = FontFamily.Serif,
+                fontSize = 16.sp,
+                letterSpacing = 0.sp,
+                indicatorColor = Color(0xFF1B1408)
+            )
+        }
     }
 }
 
@@ -264,10 +307,10 @@ private fun rememberMagicButtonConfig(isArcade: Boolean): MagicButtonThemeConfig
 private fun MagicButton(
     text: String,
     loading: Boolean,
-    isArcade: Boolean,
+    theme: AppTheme,
     onClick: () -> Unit
 ) {
-    val config = rememberMagicButtonConfig(isArcade)
+    val config = rememberMagicButtonConfig(theme)
 
     Button(
         onClick = onClick,

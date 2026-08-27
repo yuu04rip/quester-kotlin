@@ -37,7 +37,6 @@ object DatabaseProvider {
                 """.trimIndent()
             )
 
-            // CORRETTO: 7 colonne nell'INSERT e 7 colonne nel SELECT
             database.execSQL(
                 """
                 INSERT INTO users_new (
@@ -185,6 +184,66 @@ object DatabaseProvider {
     }
 
     // ============================================================
+    // MIGRATION 8 -> 9
+    // Aggiunge supporto per la versione 9 del database (aggiornamento User entity)
+    // ============================================================
+
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Se in futuro aggiungi colonne o modifichi la struttura senza voler perdere i dati,
+            // puoi gestirlo qui. Per adesso esegue una migrazione sicura preservando tutti i campi esistenti.
+            database.execSQL(
+                """
+                CREATE TABLE users_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    username TEXT NOT NULL,
+                    email TEXT,
+                    passwordHash TEXT NOT NULL,
+                    xpTotale INTEGER NOT NULL DEFAULT 0,
+                    livello INTEGER NOT NULL DEFAULT 1,
+                    coins INTEGER NOT NULL DEFAULT 0,
+                    equippedHat TEXT NOT NULL DEFAULT 'NONE',
+                    equippedWeapon TEXT NOT NULL DEFAULT 'NONE',
+                    equippedFrame TEXT NOT NULL DEFAULT 'NONE'
+                )
+                """.trimIndent()
+            )
+
+            database.execSQL(
+                """
+                INSERT INTO users_new (
+                    id,
+                    username,
+                    email,
+                    passwordHash,
+                    xpTotale,
+                    livello,
+                    coins,
+                    equippedHat,
+                    equippedWeapon,
+                    equippedFrame
+                )
+                SELECT
+                    id,
+                    username,
+                    email,
+                    passwordHash,
+                    xpTotale,
+                    livello,
+                    coins,
+                    equippedHat,
+                    equippedWeapon,
+                    equippedFrame
+                FROM users
+                """.trimIndent()
+            )
+
+            database.execSQL("DROP TABLE users")
+            database.execSQL("ALTER TABLE users_new RENAME TO users")
+        }
+    }
+
+    // ============================================================
     // DATABASE
     // ============================================================
 
@@ -202,6 +261,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_5_6)
                 .addMigrations(MIGRATION_6_7)
                 .addMigrations(MIGRATION_7_8)
+                .addMigrations(MIGRATION_8_9) // 🛠️ Registrata la nuova migrazione
                 .fallbackToDestructiveMigration() // Utile in fase di sviluppo per evitare crash di migrazione
                 .build()
 

@@ -36,10 +36,12 @@ fun MissionDetailDialog(
         },
         dismissButton = {
             Row {
-                TextButton(onClick = onEditClick) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Modifica")
+                if (!mission.completed) {
+                    TextButton(onClick = onEditClick) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Modifica")
+                    }
                 }
                 TextButton(
                     onClick = onDeleteClick,
@@ -114,13 +116,14 @@ fun MissionDetailDialog(
                             ) {
                                 Checkbox(
                                     checked = task.done,
-                                    onCheckedChange = { onTaskToggle(task) }
+                                    onCheckedChange = { onTaskToggle(task) },
+                                    enabled = !mission.completed
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = task.text,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (task.done)
+                                    color = if (task.done || mission.completed)
                                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                     else
                                         MaterialTheme.colorScheme.onSurface

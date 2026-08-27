@@ -97,10 +97,12 @@ private fun ProfileLoader(
 
         user?.let { currentUser ->
             val level = currentUser.livello
+
+            // 🛠️ USIAMO SEMPRE IL REPOSITORY: calcola correttamente i resti e i progressi basandosi sui 63700 XP
             xpInCurrentLevel = userRepository.getXpInCurrentLevel(currentUser.xpTotale, level)
             xpNeededForLevel = userRepository.getXpRequiredForLevel(level)
             xpProgress = userRepository.getXpProgress(currentUser.xpTotale, level)
-            levelUpCoins = userRepository.getLevelUpCoins(level)
+            levelUpCoins = userRepository.getLevelUpCoins(level + 1)
         }
     }
 
@@ -114,7 +116,6 @@ private fun ProfileLoader(
                     weapon = newCosmetics.weapon.name,
                     frame = newCosmetics.frame.name
                 )
-                // Aggiornamento esplicito per sincronizzare l'interfaccia utente
                 ownedCosmetics = userRepository.getOwnedCosmetics(userId)
             }
         }
@@ -169,6 +170,7 @@ private fun ProfileLoader(
         }
     }
 }
+
 // ============================================================
 // HELPER PARSERS CORRETTI
 // ============================================================
@@ -184,12 +186,10 @@ fun parseWeaponType(value: String?): WeaponType {
 }
 
 fun parseFrameType(value: String?): FrameType {
-    // Se è vuoto, nullo o NONE, adesso restituisce BASIC come predefinito!
     if (value.isNullOrBlank() || value.equals("NONE", ignoreCase = true)) {
         return FrameType.BASIC
     }
 
-    // Mappa gli ID dello shop o i nomi diretti dell'enum
     return when (value.lowercase()) {
         "frame_basic", "basic" -> FrameType.BASIC
         "frame_mago", "mago" -> FrameType.MAGO
@@ -199,7 +199,7 @@ fun parseFrameType(value: String?): FrameType {
             try {
                 FrameType.valueOf(value.uppercase())
             } catch (_: Exception) {
-                FrameType.BASIC // Fallback sicuro: se fallisce, mette la base
+                FrameType.BASIC
             }
         }
     }

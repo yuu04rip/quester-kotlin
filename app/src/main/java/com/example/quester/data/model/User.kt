@@ -23,11 +23,39 @@ data class User(
     val email: String? = null,
 
     val passwordHash: String,
+
+    // XP Totale (se supera 63750, lo blocchiamo subito alla fonte)
     val xpTotale: Int = 0,
+
+    // 👑 LIVELLO PERSISTENTE NEL DB
     val livello: Int = 1,
+
     val coins: Int = 0,
 
-    val equippedHat: String = "NONE",      // NONE, MAGO, SCI_FI
-    val equippedWeapon: String = "NONE",   // NONE, STAFF, SWORD, GUN
-    val equippedFrame: String = "NONE"     // NONE, MAGO, CAVALIERE, SCI_FI
-)
+    val equippedHat: String = "NONE",
+    val equippedWeapon: String = "NONE",
+    val equippedFrame: String = "NONE"
+) {
+    companion object {
+        const val MAX_LEVEL = 50
+        const val MAX_TOTAL_XP = 63750
+
+        fun calculateLevel(xpTotale: Int): Int {
+            if (xpTotale >= MAX_TOTAL_XP) return MAX_LEVEL
+
+            var remainingXp = xpTotale
+            var currentLevel = 1
+
+            while (currentLevel < MAX_LEVEL) {
+                val xpNeeded = if (currentLevel == 49) 2550 else 100 + (currentLevel - 1) * 50
+                if (remainingXp >= xpNeeded) {
+                    remainingXp -= xpNeeded
+                    currentLevel++
+                } else {
+                    break
+                }
+            }
+            return currentLevel
+        }
+    }
+}

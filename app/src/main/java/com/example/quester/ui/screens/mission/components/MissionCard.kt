@@ -8,7 +8,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.data.model.SubTask
-import com.example.quester.ui.components.FantasyTitle
+import com.example.quester.ui.components.DynamicTitle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun MissionCard(
@@ -31,8 +33,24 @@ fun MissionCard(
     val mission = missionWithTasks.mission
     val percentage = (missionWithTasks.progress * 100).toInt()
 
+    // Stato locale per evitare doppi click rapidi (debounce)
+    var isClickLocked by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val safeClick: (() -> Unit) -> Unit = { action ->
+        if (!isClickLocked) {
+            isClickLocked = true
+            action()
+            scope.launch {
+                delay(400) // Blocca i tocchi multipli per 400 millisecondi
+                isClickLocked = false
+            }
+        }
+    }
+
     Card(
-        onClick = onClick,
+        onClick = if (!mission.completed) { { safeClick(onClick) } } else { {} },
+        enabled = !mission.completed,
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
@@ -45,9 +63,9 @@ fun MissionCard(
             MissionCardHeader(
                 title = mission.title,
                 showReset = shouldShowReset(missionWithTasks),
-                onResetClick = onResetClick,
-                onEditClick = onEditClick,
-                onDeleteClick = onDeleteClick
+                onResetClick = if (onResetClick != null) { { safeClick(onResetClick) } } else null,
+                onEditClick = if (!mission.completed) { { safeClick(onEditClick) } } else null,
+                onDeleteClick = { safeClick(onDeleteClick) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -68,7 +86,7 @@ private fun MissionCardHeader(
     title: String,
     showReset: Boolean,
     onResetClick: (() -> Unit)?,
-    onEditClick: () -> Unit,
+    onEditClick: (() -> Unit)?,
     onDeleteClick: () -> Unit
 ) {
     Row(
@@ -76,7 +94,7 @@ private fun MissionCardHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FantasyTitle(
+        DynamicTitle(
             text = title,
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleLarge,
@@ -98,16 +116,18 @@ private fun MissionCardHeader(
                 }
             }
 
-            IconButton(
-                onClick = onEditClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Modifica missione",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
+            if (onEditClick != null) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Modifica missione",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             IconButton(

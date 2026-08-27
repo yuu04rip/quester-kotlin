@@ -67,10 +67,11 @@ class MissionService(
             verificationLevel = verificationLevel.name
         )
 
-        missionRepository.createMission(mission, cleanSubtasks)
+        // 🛠️ FIX: Catturiamo l'ID reale generato dal database
+        val generatedMissionId = missionRepository.createMission(mission, cleanSubtasks)
 
         if (!isTestMode && reminderService != null) {
-            scheduleReminderForMission(missionType, mission.id, mission.title)
+            scheduleReminderForMission(missionType, generatedMissionId, mission.title)
         }
 
         if (!isTestMode) {
@@ -90,12 +91,19 @@ class MissionService(
                     ?: throw IllegalStateException(ERROR_USER_NOT_FOUND)
 
                 val missionType = MissionType.fromDbValue(mission.type)
-                val finalXp = missionType.xpReward
-                val finalCoins = missionType.coinReward
+
+                // 🛡️ BLOCCO XP/MONETE AL RAGGIUNGIMENTO DEL LIVELLO 50
+                val finalXp = if (user.livello >= 50) 0 else missionType.xpReward
+                val finalCoins = if (user.livello >= 50) 0 else missionType.coinReward
 
                 missionRepository.markMissionCompleted(mission.id)
-                userRepository.addXp(userId, finalXp)
-                userRepository.addCoins(userId, finalCoins)
+
+                if (finalXp > 0) {
+                    userRepository.addXp(userId, finalXp)
+                }
+                if (finalCoins > 0) {
+                    userRepository.addCoins(userId, finalCoins)
+                }
 
                 if (!isTestMode) {
                     securityNotificationService?.sendMissionCompletionNotification(
@@ -180,7 +188,9 @@ class MissionService(
             ?: throw IllegalStateException(ERROR_MISSION_NOT_FOUND)
 
         check(mission.userId == userId) { ERROR_UNAUTHORIZED }
-        check(!mission.completed) { ERROR_MISSION_ALREADY_COMPLETED }
+        
+        // Se la missione è già completata, non permettiamo modifiche e usciamo silenziosamente
+        if (mission.completed) return
 
         missionRepository.updateSubTask(subTask.copy(done = done))
 

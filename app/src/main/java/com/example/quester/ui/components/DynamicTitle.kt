@@ -7,13 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.example.quester.ui.theme.ThemeManager
 import com.example.quester.ui.theme.AppTheme
+import com.example.quester.ui.theme.FantasyFont
+import com.example.quester.ui.theme.PixelFont
+import com.example.quester.ui.theme.ThemeManager
 
 /**
- * Componente per titoli che segue il tema corrente
- * - Fantasy → font Northeternal
- * - Arcade → font Pixel
+ * Componente unico e centralizzato per i titoli dinamici in base al tema corrente.
  */
 @Composable
 fun DynamicTitle(
@@ -23,10 +23,9 @@ fun DynamicTitle(
     color: Color = MaterialTheme.colorScheme.onSurface,
     fontWeight: FontWeight = FontWeight.Bold
 ) {
-    // Usa il font del tema corrente
     val fontFamily = when (ThemeManager.theme) {
-        AppTheme.FANTASY -> FantasyFont
         AppTheme.ARCADE -> PixelFont
+        else -> FantasyFont // Copre FANTASY, REGALE, DEFAULT, ecc.
     }
 
     Text(

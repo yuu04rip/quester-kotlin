@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 @Composable
 fun getButtonStyle(): ButtonStyle {
     return when (ThemeManager.theme) {
-        AppTheme.FANTASY -> DefaultButtonStyle()
+        AppTheme.DEFAULT, AppTheme.FANTASY, AppTheme.REGALE -> DefaultButtonStyle()
         AppTheme.ARCADE -> ArcadeButtonStyle()
     }
 }

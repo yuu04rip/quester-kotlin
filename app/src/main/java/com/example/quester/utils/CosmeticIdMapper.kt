@@ -5,7 +5,7 @@ import com.example.quester.ui.components.HatType
 import com.example.quester.ui.components.WeaponType
 
 /**
- * Mappa gli ID dei cosmetici tra Shop e Avatar.
+ * Mappa gli ID dei cosmetici tra Shop e Avatar. Unico punto di verità per il parsing.
  */
 object CosmeticIdMapper {
 
@@ -31,12 +31,8 @@ object CosmeticIdMapper {
 
     fun parseHatType(value: String?): HatType {
         if (value.isNullOrBlank() || value.equals("NONE", ignoreCase = true)) return HatType.NONE
-
         shopIdToHat(value)?.let { if (it != HatType.NONE) return it }
-
-        return HatType.entries.find {
-            it.name.equals(value, ignoreCase = true)
-        } ?: HatType.NONE
+        return HatType.entries.find { it.name.equals(value, ignoreCase = true) } ?: HatType.NONE
     }
 
     // ===== WEAPON / ARMA =====
@@ -61,18 +57,14 @@ object CosmeticIdMapper {
 
     fun parseWeaponType(value: String?): WeaponType {
         if (value.isNullOrBlank() || value.equals("NONE", ignoreCase = true)) return WeaponType.NONE
-
         shopIdToWeapon(value)?.let { if (it != WeaponType.NONE) return it }
-
-        return WeaponType.entries.find {
-            it.name.equals(value, ignoreCase = true)
-        } ?: WeaponType.NONE
+        return WeaponType.entries.find { it.name.equals(value, ignoreCase = true) } ?: WeaponType.NONE
     }
 
     // ===== FRAME / CORNICE =====
     fun frameToShopId(frame: FrameType): String? {
         return when (frame) {
-            FrameType.NONE, FrameType.BASIC -> null // La base è di default, non si compra nello shop
+            FrameType.NONE, FrameType.BASIC -> null
             FrameType.MAGO -> "frame_mago"
             FrameType.CAVALIERE -> "frame_cavaliere"
             FrameType.SCI_FI -> "frame_scifi"
@@ -91,15 +83,8 @@ object CosmeticIdMapper {
     }
 
     fun parseFrameType(value: String?): FrameType {
-        // Se è vuoto, nullo o NONE, adesso restituisce di default BASIC invece di NONE!
         if (value.isNullOrBlank() || value.equals("NONE", ignoreCase = true)) return FrameType.BASIC
-
-        // 1. Prova da ID dello Shop (include "frame_basic")
         shopIdToFrame(value)?.let { return it }
-
-        // 2. Prova da nome Enum
-        return FrameType.entries.find {
-            it.name.equals(value, ignoreCase = true)
-        } ?: FrameType.BASIC
+        return FrameType.entries.find { it.name.equals(value, ignoreCase = true) } ?: FrameType.BASIC
     }
 }

@@ -258,7 +258,7 @@ app/src/main/java/com/example/quester/
 
 L'app utilizza un tema **Fantasy** con:
 - Colori dinamici tramite `MaterialTheme.colorScheme`
-- Font personalizzato (`northeternal.ttf`) per titoli
+- Font personalizzato (`mediaval.ttf`) per titoli
 - Icone personalizzate (monete, stelle animate)
 - Supporto temi scuro/chiaro
 

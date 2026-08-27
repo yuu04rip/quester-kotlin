@@ -31,6 +31,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,13 +61,6 @@ import com.example.quester.ui.components.AvatarView
 import com.example.quester.ui.components.FrameType
 import com.example.quester.ui.components.HatType
 import com.example.quester.ui.components.WeaponType
-import com.example.quester.ui.screens.FantasyBackground
-import com.example.quester.ui.screens.FantasyGold
-import com.example.quester.ui.screens.FantasyGoldLight
-import com.example.quester.ui.screens.FantasySurface
-import com.example.quester.ui.screens.FantasyTextSecondary
-import com.example.quester.ui.theme.AppTheme
-import com.example.quester.ui.theme.ThemeManager
 import com.example.quester.utils.CosmeticIdMapper
 
 private const val CORN_PREFIX = "Corn. "
@@ -113,7 +107,6 @@ fun AvatarCustomizationScreen(
     onSave: (AvatarCosmetics) -> Unit
 ) {
     val customizationState = rememberCustomizationState(initialCosmetics)
-    val isArcade = ThemeManager.theme == AppTheme.ARCADE
     val scrollState = rememberScrollState()
 
     val view = LocalView.current
@@ -135,7 +128,6 @@ fun AvatarCustomizationScreen(
         }
     }
 
-    // Oggetto reale da salvare (se l'utente seleziona NONE per il frame, salviamo BASIC o NONE in base alla preferenza, qui gestiamo il salvataggio pulito)
     val currentCosmetics = AvatarCosmetics(
         hat = customizationState.selectedHat,
         weapon = customizationState.selectedWeapon,
@@ -148,9 +140,9 @@ fun AvatarCustomizationScreen(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        if (isArcade) Color(0xFF08080D) else Color(0xFF100A1A),
-                        FantasyBackground,
-                        if (isArcade) Color(0xFF09090E) else Color(0xFF0A0710)
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.background
                     )
                 )
             )
@@ -162,46 +154,32 @@ fun AvatarCustomizationScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CustomizationHeader(
-                onBack = onBack,
-                isArcade = isArcade
-            )
+            CustomizationHeader(onBack = onBack)
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Anteprimo l'avatar con la regola di fallback sul frame (se NONE -> BASIC)
-            AvatarPreviewCard(
-                cosmetics = currentCosmetics,
-                isArcade = isArcade
-            )
+            AvatarPreviewCard(cosmetics = currentCosmetics)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             SelectionSummary(
                 hat = customizationState.selectedHat,
                 weapon = customizationState.selectedWeapon,
-                frame = currentCosmetics.frame,
-                isArcade = isArcade
+                frame = currentCosmetics.frame
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomizationSections(
                 state = customizationState,
-                ownedItemIds = ownedItemIds,
-                isArcade = isArcade
+                ownedItemIds = ownedItemIds
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             CustomizationActions(
-                onReset = {
-                    customizationState.reset(initialCosmetics)
-                },
-                onSave = {
-                    onSave(currentCosmetics)
-                },
-                isArcade = isArcade,
+                onReset = { customizationState.reset(initialCosmetics) },
+                onSave = { onSave(currentCosmetics) },
                 hasChanges = customizationState.hasChanges(initialCosmetics)
             )
 
@@ -216,7 +194,6 @@ private class CustomizationState(
 ) {
     var selectedHat by mutableStateOf(initialCosmetics.hat)
     var selectedWeapon by mutableStateOf(initialCosmetics.weapon)
-    // Se initial arriva a NONE, lo convertiamo in BASIC per coerenza
     var selectedFrame by mutableStateOf(
         if (initialCosmetics.frame == FrameType.NONE) FrameType.BASIC else initialCosmetics.frame
     )
@@ -249,11 +226,8 @@ private fun rememberCustomizationState(
 }
 
 @Composable
-private fun CustomizationHeader(
-    onBack: () -> Unit,
-    isArcade: Boolean
-) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGoldLight
+private fun CustomizationHeader(onBack: () -> Unit) {
+    val accentColor = MaterialTheme.colorScheme.secondary
 
     Row(
         modifier = Modifier
@@ -267,7 +241,7 @@ private fun CustomizationHeader(
             modifier = Modifier
                 .size(42.dp)
                 .background(
-                    color = if (isArcade) Color(0xFF00FF41).copy(alpha = 0.08f) else FantasyGold.copy(alpha = 0.08f),
+                    color = accentColor.copy(alpha = 0.08f),
                     shape = RoundedCornerShape(12.dp)
                 )
                 .border(
@@ -297,7 +271,7 @@ private fun CustomizationHeader(
 
             Text(
                 text = "Avatar",
-                color = if (isArcade) Color(0xFF66FF66) else FantasyTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -308,11 +282,8 @@ private fun CustomizationHeader(
 }
 
 @Composable
-private fun AvatarPreviewCard(
-    cosmetics: AvatarCosmetics,
-    isArcade: Boolean
-) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGold
+private fun AvatarPreviewCard(cosmetics: AvatarCosmetics) {
+    val accentColor = MaterialTheme.colorScheme.secondary
 
     Card(
         modifier = Modifier
@@ -324,7 +295,7 @@ private fun AvatarPreviewCard(
                 shape = RoundedCornerShape(26.dp)
             ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isArcade) Color(0xFF111119).copy(alpha = 0.94f) else FantasySurface.copy(alpha = 0.94f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
         ),
         shape = RoundedCornerShape(26.dp)
     ) {
@@ -347,18 +318,17 @@ private fun AvatarPreviewCard(
 private fun SelectionSummary(
     hat: HatType,
     weapon: WeaponType,
-    frame: FrameType,
-    isArcade: Boolean
+    frame: FrameType
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isArcade) Color(0xFF15151F).copy(alpha = 0.82f) else FantasySurface.copy(alpha = 0.82f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
         ),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = if (isArcade) Color(0xFF00FF41).copy(alpha = 0.18f) else FantasyGold.copy(alpha = 0.18f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
         )
     ) {
         Row(
@@ -368,33 +338,30 @@ private fun SelectionSummary(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SelectionBadge(label = "Copricapo", value = formatShortName(hat.displayName), isArcade = isArcade)
-            SelectionDivider(isArcade)
-            SelectionBadge(label = "Arma", value = formatShortName(weapon.displayName), isArcade = isArcade)
-            SelectionDivider(isArcade)
-            SelectionBadge(label = "Cornice", value = formatShortName(frame.displayName), isArcade = isArcade)
+            SelectionBadge(label = "Copricapo", value = formatShortName(hat.displayName))
+            SelectionDivider()
+            SelectionBadge(label = "Arma", value = formatShortName(weapon.displayName))
+            SelectionDivider()
+            SelectionBadge(label = "Cornice", value = formatShortName(frame.displayName))
         }
     }
 }
 
 @Composable
-private fun SelectionDivider(isArcade: Boolean) {
+private fun SelectionDivider() {
     Box(
         modifier = Modifier
             .width(1.dp)
             .height(28.dp)
-            .background(if (isArcade) Color(0xFF00FF41).copy(alpha = 0.15f) else FantasyGold.copy(alpha = 0.15f))
+            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f))
     )
 }
 
 @Composable
 private fun SelectionBadge(
     label: String,
-    value: String,
-    isArcade: Boolean
+    value: String
 ) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGoldLight
-
     Column(
         modifier = Modifier.width(90.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -404,7 +371,7 @@ private fun SelectionBadge(
             fontSize = 9.sp,
             fontWeight = FontWeight.Medium,
             letterSpacing = 0.7.sp,
-            color = if (isArcade) Color(0xFF66FF66) else FantasyTextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(3.dp))
@@ -413,7 +380,7 @@ private fun SelectionBadge(
             text = value,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = accentColor,
+            color = MaterialTheme.colorScheme.secondary,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
@@ -423,8 +390,7 @@ private fun SelectionBadge(
 @Composable
 private fun CustomizationSections(
     state: CustomizationState,
-    ownedItemIds: Set<String>,
-    isArcade: Boolean
+    ownedItemIds: Set<String>
 ) {
     CustomizationSection(
         title = "COPRICAPO",
@@ -433,8 +399,7 @@ private fun CustomizationSections(
         ownedItemIds = ownedItemIds,
         onOptionSelected = { option ->
             state.selectedHat = if (state.selectedHat == option) HatType.NONE else option
-        },
-        isArcade = isArcade
+        }
     )
 
     Spacer(modifier = Modifier.height(10.dp))
@@ -446,14 +411,11 @@ private fun CustomizationSections(
         ownedItemIds = ownedItemIds,
         onOptionSelected = { option ->
             state.selectedWeapon = if (state.selectedWeapon == option) WeaponType.NONE else option
-        },
-        isArcade = isArcade
+        }
     )
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    // Escludiamo NONE dalle opzioni delle cornici in modo che non si possa selezionare "Nessuna",
-    // costringendo l'utente a scegliere tra BASIC e le altre speciali.
     CustomizationSection(
         title = "CORNICE",
         options = FrameType.entries
@@ -462,10 +424,8 @@ private fun CustomizationSections(
         selectedOption = state.selectedFrame,
         ownedItemIds = ownedItemIds,
         onOptionSelected = { option ->
-            // Cliccando sulla cornice selezionata non la rimuoviamo, resta BASIC come default
             state.selectedFrame = option
-        },
-        isArcade = isArcade
+        }
     )
 }
 
@@ -475,15 +435,14 @@ private fun <T> CustomizationSection(
     options: List<Pair<String, T>>,
     selectedOption: T,
     ownedItemIds: Set<String>,
-    onOptionSelected: (T) -> Unit,
-    isArcade: Boolean
+    onOptionSelected: (T) -> Unit
 ) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGoldLight
+    val accentColor = MaterialTheme.colorScheme.secondary
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isArcade) Color(0xFF15151F).copy(alpha = 0.82f) else FantasySurface.copy(alpha = 0.82f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
         ),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
@@ -520,8 +479,7 @@ private fun <T> CustomizationSection(
                             if (isOwned) {
                                 onOptionSelected(option)
                             }
-                        },
-                        isArcade = isArcade
+                        }
                     )
                 }
             }
@@ -534,22 +492,20 @@ private fun CustomizationOptionChip(
     displayName: String,
     isSelected: Boolean,
     isLocked: Boolean,
-    onClick: () -> Unit,
-    isArcade: Boolean
+    onClick: () -> Unit
 ) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGold
-    val accentLight = if (isArcade) Color(0xFF66FF66) else FantasyGoldLight
+    val accentColor = MaterialTheme.colorScheme.secondary
 
     val borderColor = when {
         isSelected -> accentColor
-        isLocked -> Color.White.copy(alpha = 0.08f)
-        else -> Color.White.copy(alpha = 0.15f)
+        isLocked -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
     }
 
     val bgColor = when {
         isSelected -> accentColor.copy(alpha = 0.16f)
-        isLocked -> Color.Black.copy(alpha = 0.25f)
-        else -> Color.White.copy(alpha = 0.03f)
+        isLocked -> MaterialTheme.colorScheme.surface.copy(alpha = 0.25f)
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
     }
 
     Box(
@@ -575,7 +531,7 @@ private fun CustomizationOptionChip(
     ) {
         Text(
             text = displayName,
-            color = if (isSelected) accentLight else if (isArcade) Color(0xFF66FF66) else FantasyTextSecondary,
+            color = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurface,
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
@@ -589,11 +545,10 @@ private fun CustomizationOptionChip(
 private fun CustomizationActions(
     onReset: () -> Unit,
     onSave: () -> Unit,
-    isArcade: Boolean,
     hasChanges: Boolean
 ) {
-    val accentColor = if (isArcade) Color(0xFF00FF41) else FantasyGold
-    val buttonTextColor = if (isArcade) Color(0xFF071007) else Color(0xFF0D0B14)
+    val accentColor = MaterialTheme.colorScheme.secondary
+    val buttonTextColor = MaterialTheme.colorScheme.onSecondary
 
     Row(
         modifier = Modifier.fillMaxWidth(),

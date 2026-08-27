@@ -1,6 +1,5 @@
 package com.example.quester.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // ============================================================
-//  COLOR SCHEME - TEMA SCURO (FANTASY DARK)
+//  COLOR SCHEME - TEMA SCURO (FANTASY DARK - DEFAULT)
 // ============================================================
 
 private val FantasyDarkColorScheme = darkColorScheme(
@@ -42,6 +41,78 @@ private val FantasyDarkColorScheme = darkColorScheme(
     inverseSurface = FantasySurfaceLight,
     inverseOnSurface = FantasyText,
     inversePrimary = FantasyGoldLight
+)
+
+// ============================================================
+//  COLOR SCHEME - TEMA FANTASY SPECIALE (PIÙ ORO / AMBRA)
+// ============================================================
+
+private val FantasySpecialDarkColorScheme = darkColorScheme(
+    primary = FantasyGold,
+    onPrimary = Color(0xFF0D0B14),
+    primaryContainer = FantasyGoldDark,
+    onPrimaryContainer = FantasyText,
+    secondary = FantasyPurpleLight,
+    onSecondary = FantasyText,
+    secondaryContainer = FantasyPurpleDark,
+    onSecondaryContainer = FantasyGoldLight,
+    tertiary = FantasyGoldLight,
+    onTertiary = Color(0xFF0D0B14),
+    tertiaryContainer = FantasyGoldDark,
+    onTertiaryContainer = FantasyText,
+    background = Color(0xFF110D18),
+    onBackground = FantasyText,
+    surface = Color(0xFF1B1528),
+    onSurface = FantasyText,
+    surfaceVariant = Color(0xFF261E38),
+    onSurfaceVariant = FantasyTextSecondary,
+    surfaceTint = FantasyGold,
+    error = FantasyError,
+    onError = FantasyText,
+    errorContainer = FantasyError.copy(alpha = 0.15f),
+    onErrorContainer = FantasyError,
+    outline = FantasyGold.copy(alpha = 0.6f),
+    outlineVariant = FantasyGold.copy(alpha = 0.25f),
+    scrim = Color.Black.copy(alpha = 0.7f),
+    inverseSurface = FantasySurfaceLight,
+    inverseOnSurface = FantasyText,
+    inversePrimary = FantasyGold
+)
+
+// ============================================================
+//  COLOR SCHEME - TEMA REGALE (LUSSO IMPERIALE / ORO E PORPORA)
+// ============================================================
+
+private val RegaleDarkColorScheme = darkColorScheme(
+    primary = FantasyGoldLight,
+    onPrimary = Color(0xFF1A1208),
+    primaryContainer = FantasyGold,
+    onPrimaryContainer = Color(0xFF1A1208),
+    secondary = Color(0xFF9C27B0),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFF4A148C),
+    onSecondaryContainer = FantasyGoldLight,
+    tertiary = FantasyGold,
+    onTertiary = Color(0xFF1A1208),
+    tertiaryContainer = FantasyGoldDark,
+    onTertiaryContainer = FantasyText,
+    background = Color(0xFF0F0B14),
+    onBackground = FantasyText,
+    surface = Color(0xFF181022),
+    onSurface = FantasyText,
+    surfaceVariant = Color(0xFF241833),
+    onSurfaceVariant = FantasyTextSecondary,
+    surfaceTint = FantasyGoldLight,
+    error = FantasyError,
+    onError = FantasyText,
+    errorContainer = FantasyError.copy(alpha = 0.15f),
+    onErrorContainer = FantasyError,
+    outline = FantasyGold.copy(alpha = 0.8f),
+    outlineVariant = FantasyGold.copy(alpha = 0.35f),
+    scrim = Color.Black.copy(alpha = 0.8f),
+    inverseSurface = FantasySurfaceLight,
+    inverseOnSurface = FantasyText,
+    inversePrimary = FantasyGold
 )
 
 // ============================================================
@@ -123,18 +194,19 @@ private val ArcadeColorScheme = darkColorScheme(
 @Composable
 fun QuesterTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    themeType: AppTheme = AppTheme.FANTASY,
+    themeType: AppTheme = AppTheme.DEFAULT,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeType) {
-        AppTheme.FANTASY -> if (darkTheme) FantasyDarkColorScheme else FantasyLightColorScheme
+        AppTheme.DEFAULT -> if (darkTheme) FantasyDarkColorScheme else FantasyLightColorScheme
+        AppTheme.FANTASY -> if (darkTheme) FantasySpecialDarkColorScheme else FantasyLightColorScheme
+        AppTheme.REGALE -> if (darkTheme) RegaleDarkColorScheme else FantasyLightColorScheme
         AppTheme.ARCADE -> ArcadeColorScheme
     }
 
-    // ✅ Usa typography dinamica in base al tema
     val typography = when (themeType) {
-        AppTheme.FANTASY -> FantasyTypography
         AppTheme.ARCADE -> ArcadeTypography
+        else -> FantasyTypography
     }
 
     MaterialTheme(

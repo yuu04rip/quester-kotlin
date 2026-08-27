@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.quester.ui.components.FantasyTitle
+import com.example.quester.ui.components.DynamicTitle
 
 @Composable
 fun MissionListHeader(
@@ -29,7 +29,7 @@ fun MissionListHeader(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            FantasyTitle(
+            DynamicTitle(
                 text = "Bacheca Missioni",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
