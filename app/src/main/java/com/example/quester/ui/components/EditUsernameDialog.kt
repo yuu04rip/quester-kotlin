@@ -35,7 +35,7 @@ fun EditUsernameDialog(
 
     val displayError = error ?: localError
     val isArcade = ThemeManager.theme == AppTheme.ARCADE
-    // ✅ Font per tutti i testi: QuesterPixel per Arcade, QuesterFantasy per Fantasy
+    // Font per tutti i testi: QuesterPixel per Arcade, QuesterFantasy per Fantasy
     val textFont = if (isArcade) QuesterPixel else QuesterFantasy
 
     AlertDialog(
@@ -45,7 +45,7 @@ fun EditUsernameDialog(
                 text = "✦ Cambia Nome",
                 color = FantasyGoldLight,
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = textFont  // ✅ Font speciale
+                    fontFamily = textFont  // Font speciale
                 )
             )
         },
@@ -55,7 +55,7 @@ fun EditUsernameDialog(
                     text = "Scegli un nuovo nome per il tuo avventuriero:",
                     color = FantasyTextSecondary,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -121,7 +121,7 @@ fun EditUsernameDialog(
                     Text(
                         text = "Salva",
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 }
             }
@@ -131,7 +131,7 @@ fun EditUsernameDialog(
                 Text(
                     text = "Annulla",
                     color = FantasyTextSecondary,
-                    fontFamily = textFont  // ✅ Font speciale
+                    fontFamily = textFont  // Font speciale
                 )
             }
         },

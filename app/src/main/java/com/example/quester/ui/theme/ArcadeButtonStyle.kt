@@ -58,7 +58,7 @@ class ArcadeButtonStyle : DefaultButtonStyle() {
     @Composable
     override fun getTextStyle(): TextStyle {
         return TextStyle(
-            // ✅ USA IL VERO FONT PIXELATO
+            // USA IL VERO FONT PIXELATO
             fontFamily = QuesterPixel,  // ← Invece di FontFamily.Monospace
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,

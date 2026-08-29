@@ -116,7 +116,7 @@ class UserRepository(
 
         userDao.updateUser(updatedUser)
 
-        // 👑 SBLOCCO AUTOMATICO TEMA REGALE E CORONA AL RAGGIUNGIMENTO DEL LIVELLO 50
+        // SBLOCCO AUTOMATICO TEMA REGALE E CORONA AL RAGGIUNGIMENTO DEL LIVELLO 50
         if (newLevel >= 50 && ownedCosmeticDao != null) {
             val rewards = listOf("reward_tema_regale", "reward_corona")
             rewards.forEach { itemId ->

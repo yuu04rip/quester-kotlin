@@ -50,7 +50,7 @@ fun MissionDialogContent(
     callbacks: MissionDialogCallbacks
 ) {
     val isArcade = ThemeManager.theme == AppTheme.ARCADE
-    // ✅ Font per TUTTI i testi: QuesterPixel per Arcade, QuesterFantasy per Fantasy
+    // Font per TUTTI i testi: QuesterPixel per Arcade, QuesterFantasy per Fantasy
     val textFont = if (isArcade) QuesterPixel else QuesterFantasy
     val numberFont = FontFamily.SansSerif  // Numeri sempre leggibili
 
@@ -61,7 +61,7 @@ fun MissionDialogContent(
                 text = dialogTitle,
                 color = MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.Bold,
-                fontFamily = textFont  // ✅ Font speciale
+                fontFamily = textFont  // Font speciale
             )
         },
         text = {
@@ -158,7 +158,7 @@ private fun RewardsInfo(
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // ✅ XP con icona Star
+            // XP con icona Star
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     imageVector = Icons.Default.Star,
@@ -171,7 +171,7 @@ private fun RewardsInfo(
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    fontFamily = numberFont  // ✅ Numeri in SansSerif
+                    fontFamily = numberFont  // Numeri in SansSerif
                 )
             }
 
@@ -188,7 +188,7 @@ private fun RewardsInfo(
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    fontFamily = numberFont  // ✅ Numeri in SansSerif
+                    fontFamily = numberFont  // Numeri in SansSerif
                 )
             }
         }
@@ -218,7 +218,7 @@ private fun TitleField(
         colors = dialogTextFieldColors(),
         singleLine = true,
         textStyle = MaterialTheme.typography.titleMedium.copy(
-            fontFamily = textFont  // ✅ Font speciale
+            fontFamily = textFont  // Font speciale
         )
     )
 }
@@ -237,7 +237,7 @@ private fun DescriptionField(
         minLines = 2,
         maxLines = 4,
         textStyle = MaterialTheme.typography.bodyMedium.copy(
-            fontFamily = FontFamily.SansSerif  // ✅ Descrizione in SansSerif
+            fontFamily = FontFamily.SansSerif  // Descrizione in SansSerif
         )
     )
 }
@@ -254,7 +254,7 @@ private fun MissionTypeSelector(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = textFont,  // ✅ Font speciale
+            fontFamily = textFont,  // Font speciale
             modifier = Modifier.padding(bottom = 6.dp)
         )
         Row(
@@ -277,7 +277,7 @@ private fun MissionTypeSelector(
                             fontWeight = if (selectedType == type) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1,
                             letterSpacing = 0.1.sp,
-                            fontFamily = textFont  // ✅ Font speciale
+                            fontFamily = textFont  // Font speciale
                         )
                     },
                     modifier = Modifier.weight(1f),
@@ -309,7 +309,7 @@ private fun SubtasksSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = textFont,  // ✅ Font speciale
+            fontFamily = textFont,  // Font speciale
             modifier = Modifier.padding(bottom = 6.dp)
         )
 
@@ -412,7 +412,7 @@ private fun RemoveSubtaskButton(
             text = "✕",
             color = MaterialTheme.colorScheme.error,
             fontSize = 14.sp,
-            fontFamily = textFont  // ✅ Font speciale
+            fontFamily = textFont  // Font speciale
         )
     }
 }
@@ -432,7 +432,7 @@ private fun AddSubtaskButton(
             color = MaterialTheme.colorScheme.secondary,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            fontFamily = textFont  // ✅ Font speciale
+            fontFamily = textFont  // Font speciale
         )
     }
 }
@@ -458,7 +458,7 @@ private fun ConfirmButton(
             text = text,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
-            fontFamily = textFont  // ✅ Font speciale
+            fontFamily = textFont  // Font speciale
         )
     }
 }
@@ -476,7 +476,7 @@ private fun DismissButton(
             text = "Annulla",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
-            fontFamily = textFont  // ✅ Font speciale
+            fontFamily = textFont  // Font speciale
         )
     }
 }
@@ -489,7 +489,7 @@ private fun ErrorText(text: String, textFont: FontFamily) {
         text = text,
         color = MaterialTheme.colorScheme.error,
         fontSize = 12.sp,
-        fontFamily = textFont,  // ✅ Font speciale
+        fontFamily = textFont,  // Font speciale
         modifier = Modifier.padding(start = 4.dp, top = 4.dp)
     )
 }

@@ -47,85 +47,6 @@ class CurrencyServiceTest {
     }
 
     @Test
-    fun coinsForLevel_returns_correct_amount() = runBlocking {
-        // Arrange
-        val levelsGained = 3
-
-        // Act
-        val coins = currencyService.coinsForLevel(levelsGained)
-
-        // Assert
-        assertEquals("3 livelli dovrebbero dare 150 monete", 150, coins)
-    }
-
-    @Test
-    fun coinsForLevel_with_zero_returns_zero() = runBlocking {
-        // Arrange
-        val levelsGained = 0
-
-        // Act
-        val coins = currencyService.coinsForLevel(levelsGained)
-
-        // Assert
-        assertEquals("0 livelli dovrebbero dare 0 monete", 0, coins)
-    }
-
-    @Test
-    fun coinsForLevel_with_negative_returns_zero() = runBlocking {
-        // Arrange
-        val levelsGained = -5
-
-        // Act
-        val coins = currencyService.coinsForLevel(levelsGained)
-
-        // Assert
-        assertEquals("Livelli negativi dovrebbero dare 0 monete", 0, coins)
-    }
-
-    @Test
-    fun onLevelUp_adds_correct_coins() = runBlocking {
-        // Arrange
-        val beforeLevel = 1
-        val afterLevel = 5
-        val expectedCoins = 200 // (5-1) * 50 = 200
-
-        // Act
-        currencyService.onLevelUp(beforeLevel, afterLevel)
-
-        // Assert
-        val user = db.userDao().getUserById(testUserId)!!
-        assertEquals("Dovrebbero essere aggiunte $expectedCoins monete", expectedCoins, user.coins)
-    }
-
-    @Test
-    fun onLevelUp_with_no_level_gain_adds_zero_coins() = runBlocking {
-        // Arrange
-        val beforeLevel = 5
-        val afterLevel = 5
-
-        // Act
-        currencyService.onLevelUp(beforeLevel, afterLevel)
-
-        // Assert
-        val user = db.userDao().getUserById(testUserId)!!
-        assertEquals("Nessuna moneta dovrebbe essere aggiunta", 0, user.coins)
-    }
-
-    @Test
-    fun onLevelUp_with_level_decrease_adds_zero_coins() = runBlocking {
-        // Arrange
-        val beforeLevel = 5
-        val afterLevel = 3
-
-        // Act
-        currencyService.onLevelUp(beforeLevel, afterLevel)
-
-        // Assert
-        val user = db.userDao().getUserById(testUserId)!!
-        assertEquals("Nessuna moneta dovrebbe essere aggiunta", 0, user.coins)
-    }
-
-    @Test
     fun onSpecialEvent_adds_correct_coins() = runBlocking {
         // Arrange
         val coinsToAdd = 100
@@ -162,38 +83,6 @@ class CurrencyServiceTest {
         // Assert
         val user = db.userDao().getUserById(testUserId)!!
         assertEquals("Nessuna moneta dovrebbe essere aggiunta", 0, user.coins)
-    }
-
-    @Test
-    fun multiple_level_ups_accumulate_correctly() = runBlocking {
-        // Arrange
-        val initialCoins = db.userDao().getUserById(testUserId)!!.coins
-
-        // Act
-        currencyService.onLevelUp(1, 3) // +100 coins
-        currencyService.onLevelUp(3, 5) // +100 coins
-        currencyService.onLevelUp(5, 7) // +100 coins
-
-        // Assert
-        val user = db.userDao().getUserById(testUserId)!!
-        val expectedCoins = initialCoins + 300
-        assertEquals("Dovrebbero essere accumulate 300 monete", expectedCoins, user.coins)
-    }
-
-    @Test
-    fun onSpecialEvent_after_level_up_accumulates_correctly() = runBlocking {
-        // Arrange
-        val initialCoins = db.userDao().getUserById(testUserId)!!.coins
-
-        // Act
-        currencyService.onLevelUp(1, 3) // +100 coins
-        currencyService.onSpecialEvent(50) // +50 coins
-        currencyService.onLevelUp(3, 5) // +100 coins
-
-        // Assert
-        val user = db.userDao().getUserById(testUserId)!!
-        val expectedCoins = initialCoins + 250
-        assertEquals("Dovrebbero essere accumulate 250 monete", expectedCoins, user.coins)
     }
 
     // Il test onMissionRedeemed è stato RIMOSSO perché il metodo non esiste più

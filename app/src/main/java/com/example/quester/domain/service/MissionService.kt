@@ -67,7 +67,7 @@ class MissionService(
             verificationLevel = verificationLevel.name
         )
 
-        // 🛠️ FIX: Catturiamo l'ID reale generato dal database
+        // FIX: Catturiamo l'ID reale generato dal database
         val generatedMissionId = missionRepository.createMission(mission, cleanSubtasks)
 
         if (!isTestMode && reminderService != null) {
@@ -92,7 +92,7 @@ class MissionService(
 
                 val missionType = MissionType.fromDbValue(mission.type)
 
-                // 🛡️ BLOCCO XP/MONETE AL RAGGIUNGIMENTO DEL LIVELLO 50
+                // BLOCCO XP/MONETE AL RAGGIUNGIMENTO DEL LIVELLO 50
                 val finalXp = if (user.livello >= 50) 0 else missionType.xpReward
                 val finalCoins = if (user.livello >= 50) 0 else missionType.coinReward
 

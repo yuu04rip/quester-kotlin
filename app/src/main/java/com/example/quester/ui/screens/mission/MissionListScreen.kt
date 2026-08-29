@@ -47,10 +47,10 @@ fun MissionListScreen(
 
     val filteredMissions = filterMissions(rawMissions, searchQuery, selectedFilter)
 
-    // ✅ RIMOSSO Surface con background - ora gestito da ArcadeBackground
+    // RIMOSSO Surface con background - ora gestito da ArcadeBackground
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = Color.Transparent  // ✅ TRASPARENTE
+        containerColor = Color.Transparent  // TRASPARENTE
     ) { paddingValues ->
         Column(
             modifier = Modifier

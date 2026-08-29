@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 
-// ✅ RIMUOVI "private" per renderlo accessibile
+// RIMUOVI "private" per renderlo accessibile
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "theme_preferences")
 
 class ThemePreferences(private val context: Context) {
