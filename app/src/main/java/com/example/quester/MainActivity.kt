@@ -49,9 +49,13 @@ class MainActivity : ComponentActivity() {
 
         val themePreferences = ThemePreferences(this)
 
+        // Inizializziamo il gestore delle preferenze nel ThemeManager per abilitare il salvataggio automatico
+        ThemeManager.initPreferences(this)
+
+        // Sincronizziamo il tema salvato prima di mostrare la UI (senza riscrivere su disco inutilmente all'avvio)
         lifecycleScope.launch {
             val savedTheme = themePreferences.getTheme()
-            ThemeManager.setTheme(savedTheme)
+            ThemeManager.setTheme(savedTheme, saveToPrefs = false)
         }
 
         setContent {
@@ -162,14 +166,13 @@ class MainActivity : ComponentActivity() {
 
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {}
-                else -> {
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+            val isGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!isGranted) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

@@ -1,21 +1,42 @@
 package com.example.quester.ui.theme
 
+import android.content.Context
+import com.example.quester.data.preferences.ThemePreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object ThemeManager {
     // 1. Stato reattivo per le Coroutine e StateFlow
     private val _currentTheme = MutableStateFlow(AppTheme.DEFAULT)
     val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
 
+    // Riferimento opzionale per il salvataggio automatico
+    private var themePreferences: ThemePreferences? = null
+
+    fun initPreferences(context: Context) {
+        if (themePreferences == null) {
+            themePreferences = ThemePreferences(context)
+        }
+    }
+
     // 2. Proprietà diretta per il vecchio codice
     val theme: AppTheme
         get() = _currentTheme.value
 
-    // 3. Funzione unica per aggiornare il tema ovunque
-    fun setTheme(theme: AppTheme) {
+    // 3. Funzione unica per aggiornare il tema ovunque e salvarlo su disco
+    fun setTheme(theme: AppTheme, saveToPrefs: Boolean = true) {
         _currentTheme.value = theme
+        if (saveToPrefs) {
+            themePreferences?.let { prefs ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    prefs.saveTheme(theme)
+                }
+            }
+        }
     }
 
     fun isThemeOwned(theme: AppTheme, ownedItems: List<String>): Boolean {
