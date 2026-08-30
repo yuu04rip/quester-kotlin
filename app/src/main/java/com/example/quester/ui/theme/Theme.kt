@@ -235,8 +235,8 @@ fun QuesterTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeType) {
-        AppTheme.DEFAULT -> if (darkTheme) FantasyLightColorScheme else FantasyDarkColorScheme
-        AppTheme.FANTASY -> if (darkTheme) FantasyBoardColorScheme else FantasyLightColorScheme
+        AppTheme.DEFAULT -> if (darkTheme) FantasyDarkColorScheme else FantasyLightColorScheme
+        AppTheme.FANTASY -> if (darkTheme) FantasyBoardColorScheme else FantasyLightColorScheme // Idem qui se vuoi che segua il sistema, oppure lascialo così se è voluto
         AppTheme.REGALE -> if (darkTheme) RegaleDarkColorScheme else FantasyLightColorScheme
         AppTheme.ARCADE -> ArcadeColorScheme
     }
