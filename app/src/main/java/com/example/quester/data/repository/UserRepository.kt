@@ -24,23 +24,14 @@ class UserRepository(
         private const val MAX_TOTAL_XP = User.MAX_TOTAL_XP
     }
 
-    // ============================================================
-    // UTENTE
-    // ============================================================
-
     suspend fun getUserById(userId: Long): User? =
         userDao.getUserById(userId)
 
     fun getUserByIdFlow(userId: Long): Flow<User?> =
         userDao.getUserByIdFlow(userId)
 
-    // ============================================================
-    // XP
-    // ============================================================
-
     fun getXpRequiredForLevel(level: Int): Int {
         val effectiveLevel = level.coerceAtMost(MAX_LEVEL - 1)
-        // Se siamo al livello 49, servono 2550 XP per raggiungere il 50 (soglia 63.750)
         return if (effectiveLevel == 49) 2550 else XP_BASE + (effectiveLevel - 1) * XP_INCREMENT
     }
 
@@ -93,18 +84,16 @@ class UserRepository(
 
         val current = getUserById(userId) ?: return
 
-        // Se l'utente ha già raggiunto il massimo, blocchiamo l'incremento degli XP totali
         if (current.xpTotale >= MAX_TOTAL_XP) return
 
         val oldLevel = current.livello
 
-        // Aggiungiamo gli XP bloccando rigorosamente il totale al tetto massimo di 63.750
         val newXpTotal = (current.xpTotale + xpGained).coerceAtMost(MAX_TOTAL_XP)
         val newLevel = calculateLevelFromXp(newXpTotal)
 
         var updatedUser = current.copy(
             xpTotale = newXpTotal,
-            livello = newLevel // Aggiorna fisicamente anche il livello salvato nel DB
+            livello = newLevel
         )
 
         if (newLevel > oldLevel) {
@@ -116,7 +105,6 @@ class UserRepository(
 
         userDao.updateUser(updatedUser)
 
-        // SBLOCCO AUTOMATICO TEMA REGALE E CORONA AL RAGGIUNGIMENTO DEL LIVELLO 50
         if (newLevel >= 50 && ownedCosmeticDao != null) {
             val rewards = listOf("reward_tema_regale", "reward_corona")
             rewards.forEach { itemId ->
@@ -132,10 +120,6 @@ class UserRepository(
             }
         }
     }
-
-    // ============================================================
-    // COINS
-    // ============================================================
 
     suspend fun addCoins(
         userId: Long,
@@ -156,10 +140,6 @@ class UserRepository(
         userDao.updateUser(current.copy(coins = current.coins - amount))
         return true
     }
-
-    // ============================================================
-    // MODIFICA UTENTE
-    // ============================================================
 
     suspend fun updateUsername(
         userId: Long,
@@ -185,11 +165,6 @@ class UserRepository(
         return true
     }
 
-
-    // ============================================================
-    // COSMETICI SHOP
-    // ============================================================
-
     suspend fun unlockCosmetic(
         userId: Long,
         itemId: String
@@ -213,9 +188,22 @@ class UserRepository(
         return ownedDao.getOwnedByUser(userId)
     }
 
-    // ============================================================
-    // COSMETICI EQUIPAGGIATI
-    // ============================================================
+    suspend fun updateUserCosmetics(
+        userId: Long,
+        hat: String?,
+        weapon: String?,
+        frame: String?
+    ) {
+        val current = getUserById(userId) ?: return
+
+        userDao.updateUser(
+            current.copy(
+                equippedHat = CosmeticIdMapper.parseHatType(hat).name,
+                equippedWeapon = CosmeticIdMapper.parseWeaponType(weapon).name,
+                equippedFrame = CosmeticIdMapper.parseFrameType(frame).name
+            )
+        )
+    }
 
     suspend fun getEquippedCosmetics(userId: Long): AvatarCosmetics {
         val user = getUserById(userId) ?: return AvatarCosmetics()
@@ -241,27 +229,6 @@ class UserRepository(
             )
         )
     }
-
-    suspend fun updateUserCosmetics(
-        userId: Long,
-        hat: String?,
-        weapon: String?,
-        frame: String?
-    ) {
-        val current = getUserById(userId) ?: return
-
-        userDao.updateUser(
-            current.copy(
-                equippedHat = CosmeticIdMapper.parseHatType(hat).name,
-                equippedWeapon = CosmeticIdMapper.parseWeaponType(weapon).name,
-                equippedFrame = CosmeticIdMapper.parseFrameType(frame).name
-            )
-        )
-    }
-
-    // ============================================================
-    // UTILITY
-    // ============================================================
 
     suspend fun deleteUserAndProgress() {
         userDao.deleteAllUsers()

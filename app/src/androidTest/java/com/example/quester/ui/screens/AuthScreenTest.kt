@@ -1,7 +1,7 @@
 package com.example.quester.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -36,6 +36,7 @@ class AuthScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("✦ QUESTER ✦").assertIsDisplayed()
         composeTestRule.onNodeWithText("Bentornato, avventuriero").assertIsDisplayed()
         composeTestRule.onNodeWithText("Username o Email").assertIsDisplayed()
@@ -54,6 +55,7 @@ class AuthScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Non hai un account? Registrati").performClick()
 
         composeTestRule.onNodeWithText("Crea il tuo personaggio").assertIsDisplayed()
@@ -79,6 +81,7 @@ class AuthScreenTest {
             }
         }
 
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Username o Email").performTextInput("EroeTest")
         composeTestRule.onNodeWithText("Password").performTextInput("Password123")
         composeTestRule.onNodeWithText("ENTRA NEL REGNO").performClick()

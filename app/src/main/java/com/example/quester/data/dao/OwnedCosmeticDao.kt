@@ -20,7 +20,4 @@ interface OwnedCosmeticDao {
 
     @Query("DELETE FROM owned_cosmetics WHERE userId = :userId")
     suspend fun deleteAllForUser(userId: Long)
-
-    @Query("DELETE FROM owned_cosmetics WHERE userId = :userId AND itemId = :itemId")
-    suspend fun deleteOwned(userId: Long, itemId: String)
 }

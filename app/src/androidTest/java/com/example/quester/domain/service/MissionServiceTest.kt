@@ -24,7 +24,6 @@ class MissionServiceTest {
     private lateinit var missionRepository: MissionRepository
     private lateinit var userRepository: UserRepository
     private lateinit var sessionManager: SessionManager
-    private lateinit var currencyService: CurrencyService
     private lateinit var missionService: MissionService
     private var testUserId: Long = 0L
 
@@ -38,12 +37,10 @@ class MissionServiceTest {
         sessionManager = SessionManager(ctx)
         missionRepository = MissionRepository(db.missionDao(), db.subTaskDao())
         userRepository = UserRepository(db.userDao(), db.ownedCosmeticDao())
-        currencyService = CurrencyService(userRepository, sessionManager)
 
         missionService = MissionService(
             missionRepository = missionRepository,
             userRepository = userRepository,
-            currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
             reminderService = null,
@@ -320,7 +317,6 @@ class MissionServiceTest {
         val realMissionService = MissionService(
             missionRepository = missionRepository,
             userRepository = userRepository,
-            currencyService = currencyService,
             sessionManager = sessionManager,
             securityNotificationService = null,
             reminderService = null,

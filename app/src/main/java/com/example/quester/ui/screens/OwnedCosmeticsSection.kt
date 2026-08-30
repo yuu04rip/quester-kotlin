@@ -56,7 +56,7 @@ private val COSMETIC_SIZE = 100.dp
 private val COSMETIC_SPACING = 10.dp
 private const val COSMETICS_PER_ROW = 3
 
-// Tutti i temi supportati nello shop
+// Temi supportati sincronizzati con il negozio nel MainActivity
 private val THEME_IDS = listOf(
     "theme_arcade",
     "theme_fantasy",
@@ -72,7 +72,7 @@ fun OwnedCosmeticsSection(
 ) {
     val currentTheme by ThemeManager.currentTheme.collectAsState()
     val context = LocalContext.current
-    val themePreferences = ThemePreferences(context)
+    val themePreferences = remember { ThemePreferences(context) }
     val scope = rememberCoroutineScope()
 
     Card(
@@ -281,7 +281,6 @@ private fun isThemeActive(itemId: String, currentTheme: AppTheme): Boolean {
     }
 }
 
-// Logica di Toggle: se il tema è già attivo, torna a DEFAULT; altrimenti attiva il tema scelto
 private fun getToggledTheme(itemId: String, currentTheme: AppTheme): AppTheme {
     val targetTheme = when (itemId) {
         "theme_arcade" -> AppTheme.ARCADE
@@ -297,10 +296,20 @@ private fun getToggledTheme(itemId: String, currentTheme: AppTheme): AppTheme {
     }
 }
 
-private fun getThemeDisplayName(itemId: String): String {
+private fun getCosmeticDisplayName(itemId: String): String {
     return when (itemId) {
+        "frame_mago" -> "Cornice Mago"
+        "frame_cavaliere" -> "Cornice Cavaliere"
+        "frame_scifi" -> "Cornice Sci-Fi"
+        "hat_mago" -> "Cappello Mago"
+        "staff_mago" -> "Bastone Mago"
+        "gun_spaziale" -> "Space Pistol"
+        "sword_cavaliere" -> "Spada Cavaliere"
+        "elmo_cavaliere" -> "Elmo Cavaliere"
+        "visor_futuristico" -> "Visore Futuristico"
         "theme_arcade" -> "Tema Arcade"
         "theme_fantasy" -> "Tema Fantasy"
+        "reward_corona" -> "Corona Eroe"
         "reward_tema_regale" -> "Tema Regale"
         else -> formatCosmeticName(itemId)
     }
@@ -315,7 +324,7 @@ private fun CosmeticItem(
     onClick: () -> Unit = {}
 ) {
     val shape = RoundedCornerShape(12.dp)
-    val displayName = if (isTheme) getThemeDisplayName(itemId) else formatCosmeticName(itemId)
+    val displayName = getCosmeticDisplayName(itemId)
 
     Card(
         modifier = modifier
@@ -367,9 +376,24 @@ private fun CosmeticCardContent(
     val context = LocalContext.current
 
     val drawableResId = remember(itemId) {
-        val resourceName = "ic_$itemId"
-        val resId = context.resources.getIdentifier(resourceName, "drawable", context.packageName)
+        val mappedIconName = when (itemId) {
+            "frame_mago" -> "ic_frame_wizard"
+            "frame_cavaliere" -> "ic_frame_knight"
+            "frame_scifi" -> "ic_frame_scifi"
+            "hat_mago" -> "ic_char_wizard"
+            "staff_mago" -> "ic_char_weapon_staff"
+            "gun_spaziale" -> "ic_gun_spaziale"
+            "sword_cavaliere" -> "ic_char_weapon_blade"
+            "elmo_cavaliere" -> "ic_char_helm"
+            "visor_futuristico" -> "ic_visor_futuristico"
+            "theme_arcade" -> "ic_theme_arcade"
+            "theme_fantasy" -> "ic_dragon"
+            "reward_corona" -> "ic_crown"
+            "reward_tema_regale" -> "ic_throne"
+            else -> "ic_$itemId"
+        }
 
+        val resId = context.resources.getIdentifier(mappedIconName, "drawable", context.packageName)
         if (resId != 0) resId else context.resources.getIdentifier(itemId, "drawable", context.packageName)
     }
 

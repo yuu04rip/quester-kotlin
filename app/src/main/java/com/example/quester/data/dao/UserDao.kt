@@ -10,15 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
-
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertUser(user: User): Long
-
-    @Query("SELECT * FROM users LIMIT 1")
-    suspend fun getUser(): User?
-
-    @Query("SELECT * FROM users LIMIT 1")
-    fun getUserFlow(): Flow<User?>
 
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserById(userId: Long): User?
@@ -37,7 +30,6 @@ interface UserDao {
 
     @Update
     suspend fun updateUser(user: User)
-
 
     @Query("DELETE FROM users WHERE id = :userId")
     suspend fun deleteUser(userId: Long)

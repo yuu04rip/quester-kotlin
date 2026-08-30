@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.first
 class MissionService(
     private val missionRepository: MissionRepository,
     private val userRepository: UserRepository,
-    private val currencyService: CurrencyService,
     private val sessionManager: SessionManager,
     private val securityNotificationService: SecurityNotificationService? = null,
     private val reminderService: ReminderService? = null,
@@ -25,7 +24,6 @@ class MissionService(
         private const val MIN_TIME_PER_MISSION = 30_000L
 
         private const val ERROR_UNAUTHORIZED = "✦ Non sei autorizzato a modificare questa missione ✦"
-        private const val ERROR_MISSION_ALREADY_COMPLETED = "✧ Questa missione è già stata completata ✧"
         private const val ERROR_CANNOT_MODIFY_COMPLETED = "✧ Impossibile modificare una missione già completata ✧"
         private const val ERROR_USER_NOT_FOUND = "❖ Utente non trovato nel reame"
         private const val ERROR_USER_NOT_AUTHENTICATED = "❖ Utente non autenticato"

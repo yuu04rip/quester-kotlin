@@ -14,10 +14,9 @@ data class Mission(
     val xpReward: Int = 0,
     val completed: Boolean = false,
     val xpAwarded: Boolean = false,
-    val redeemed: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),  // NUOVO: timestamp creazione
-    val completedAt: Long? = null,                    // NUOVO: timestamp completamento
-    val verificationLevel: String = VerificationLevel.AUTO.name // NUOVO: livello verifica
+    val createdAt: Long = System.currentTimeMillis(),
+    val completedAt: Long? = null,
+    val verificationLevel: String = VerificationLevel.AUTO.name
 )
 
 enum class VerificationLevel {

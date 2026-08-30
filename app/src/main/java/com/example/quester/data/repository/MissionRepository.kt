@@ -6,13 +6,11 @@ import com.example.quester.data.model.Mission
 import com.example.quester.data.model.MissionWithSubTasks
 import com.example.quester.data.model.SubTask
 import kotlinx.coroutines.flow.Flow
-import java.util.Calendar
 
 class MissionRepository(
     private val missionDao: MissionDao,
     private val subTaskDao: SubTaskDao
 ) {
-    // --- Query filtrate per Utente Loggato ---
     fun getAllMissionsForUser(userId: Long): Flow<List<Mission>> =
         missionDao.getAllMissionsForUser(userId)
 
@@ -49,10 +47,6 @@ class MissionRepository(
         subTaskDao.updateSubTask(subTask)
     }
 
-    suspend fun setMissionCompleted(mission: Mission, completed: Boolean) {
-        missionDao.updateMission(mission.copy(completed = completed))
-    }
-
     suspend fun isMissionFullyCompleted(missionId: Long): Boolean {
         val done = subTaskDao.countCompletedSubTasks(missionId)
         val total = subTaskDao.countAllSubTasks(missionId)
@@ -75,23 +69,8 @@ class MissionRepository(
         }
     }
 
-    suspend fun markMissionXpAwarded(missionId: Long) {
-        val m = getMissionByIdOnce(missionId) ?: return
-        if (!m.xpAwarded) missionDao.updateMission(m.copy(xpAwarded = true))
-    }
-
-    suspend fun redeemMission(missionId: Long) {
-        val m = getMissionByIdOnce(missionId) ?: return
-        if (!m.redeemed) missionDao.updateMission(m.copy(redeemed = true))
-    }
-
-    // --- ELIMINAZIONE E RIPRISTINO ---
     suspend fun deleteMission(mission: Mission) {
         missionDao.deleteMission(mission)
-    }
-
-    suspend fun deleteMissionById(missionId: Long) {
-        missionDao.deleteMissionById(missionId)
     }
 
     suspend fun restoreMission(mission: Mission, subTasks: List<SubTask>) {
@@ -101,31 +80,7 @@ class MissionRepository(
         }
     }
 
-    // --- NUOVI METODI PER SICUREZZA ---
-
-    suspend fun countMissionsCreatedToday(userId: Long): Int {
-        val startOfDay = getStartOfDay()
-        return missionDao.countMissionsCreatedToday(userId, startOfDay)
-    }
-
     suspend fun getLastCompletionTime(userId: Long): Long? {
         return missionDao.getLastCompletionTime(userId)
-    }
-
-    suspend fun countRecentCompletions(userId: Long, timeThreshold: Long): Int {
-        return missionDao.countRecentCompletions(userId, timeThreshold)
-    }
-
-    suspend fun getCompletionsInTimeRange(userId: Long, startTime: Long, endTime: Long): List<Mission> {
-        return missionDao.getCompletionsInTimeRange(userId, startTime, endTime)
-    }
-
-    private fun getStartOfDay(): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
     }
 }

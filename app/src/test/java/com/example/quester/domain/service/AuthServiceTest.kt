@@ -7,7 +7,6 @@ import com.example.quester.data.repository.UserRepository
 import com.example.quester.data.session.SessionManager
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.confirmVerified
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*

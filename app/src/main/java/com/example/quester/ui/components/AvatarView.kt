@@ -45,23 +45,21 @@ import kotlin.random.Random
 // ============================================================
 
 enum class HatType(
-    val displayName: String,
-    val iconResource: Int? = null
+    val displayName: String
 ) {
-    NONE("Nessuno", null),
-    MAGO("Cappello del Mago", null),
-    ELMO_CAVALIERE("Elmo del Cavaliere", null),
-    VISOR_FUTURISTICO("Visore Futuristico", null)
+    NONE("Nessuno"),
+    MAGO("Cappello del Mago"),
+    ELMO_CAVALIERE("Elmo del Cavaliere"),
+    VISOR_FUTURISTICO("Visore Futuristico")
 }
 
 enum class WeaponType(
-    val displayName: String,
-    val iconResource: Int? = null
+    val displayName: String
 ) {
-    NONE("Nessuna", null),
-    STAFF("Bastone del Mago", null),
-    SWORD("Spada del Cavaliere", null),
-    GUN("Pistola Spaziale", null)
+    NONE("Nessuna"),
+    STAFF("Bastone del Mago"),
+    SWORD("Spada del Cavaliere"),
+    GUN("Pistola Spaziale")
 }
 
 
@@ -121,10 +119,6 @@ data class AvatarCosmetics(
 // ============================================================
 
 private object AvatarFixedColors {
-    val ContainerBackground = Color(0xFF1E1B2E)
-    val AvatarSurface = Color(0xFF2B283A)
-    val AvatarBorder = Color(0xFF44405A)
-    val AvatarIconTint = Color(0xFFA5A1B8)
     val NeonGreenGlow = Color(0xFF00FF66)
     val NeonGreenCore = Color(0xFFE0FFEC)
 }
@@ -219,7 +213,7 @@ fun AvatarView(
                 else -> {
                     if (cosmetics.frame.iconResource != null) {
                         Image(
-                            painter = painterResource(id = cosmetics.frame.iconResource!!),
+                            painter = painterResource(id = cosmetics.frame.iconResource),
                             contentDescription = cosmetics.frame.displayName,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
@@ -443,24 +437,3 @@ private fun SciFiNeonParticles(
 }
 
 
-// ============================================================
-// PREVIEW AVATAR
-// ============================================================
-
-@Composable
-fun AvatarPreview(
-    cosmetics: AvatarCosmetics = AvatarCosmetics(),
-    size: Dp = 200.dp,
-    scale: Float = 1.0f,
-    verticalOffset: Dp = 0.dp,
-    modifier: Modifier = Modifier
-) {
-    AvatarView(
-        modifier = modifier,
-        cosmetics = cosmetics,
-        size = size,
-        scale = scale,
-        verticalOffset = verticalOffset,
-        isEditable = false
-    )
-}

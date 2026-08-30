@@ -1,7 +1,7 @@
 package com.example.quester.ui.screens.mission
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.quester.data.model.Mission
@@ -20,7 +20,7 @@ import org.junit.Test
 class MissionListScreenTest {
 
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    val composeTestRule = createComposeRule()
 
     private val missionService = mockk<MissionService>(relaxed = true)
     private val missionRepository = mockk<MissionRepository>(relaxed = true)
