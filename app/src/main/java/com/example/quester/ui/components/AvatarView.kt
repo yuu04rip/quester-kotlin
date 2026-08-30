@@ -89,13 +89,13 @@ enum class FrameType(
     MAGO(
         "Cornice del Mago",
         Color(0xFF6B4C9A),
-        null // Oppure R.drawable.frame_mago se hai l'SVG
+        R.drawable.ic_frame_wizard // <- Risorsa aggiornata
     ),
 
     CAVALIERE(
         "Cornice del Cavaliere",
         Color(0xFFD4AF37),
-        null // Oppure R.drawable.frame_cavaliere se hai l'SVG
+        R.drawable.ic_frame_knight // <- Risorsa aggiornata
     ),
 
     SCI_FI(
@@ -154,7 +154,7 @@ fun AvatarView(
     cosmetics: AvatarCosmetics = AvatarCosmetics(),
     size: Dp = 200.dp,
     scale: Float = 1.0f,
-    verticalOffset: Dp = 0.dp, // <--- Nuovo parametro per spostare in alto/basso
+    verticalOffset: Dp = 0.dp,
     onClick: () -> Unit = {},
     isEditable: Boolean = false
 ) {
@@ -217,7 +217,7 @@ fun AvatarView(
                 }
                 FrameType.NONE -> {}
                 else -> {
-                    // Se la cornice ha un'icona risorsa associata (come BASIC), la disegniamo
+                    // Se la cornice ha una risorsa drawable associata (BASIC, MAGO, CAVALIERE), la disegniamo
                     if (cosmetics.frame.iconResource != null) {
                         Image(
                             painter = painterResource(id = cosmetics.frame.iconResource!!),
@@ -274,16 +274,16 @@ private fun SciFiFrameContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .scale(frameScale), // <--- Usa la scala ridotta con l'animazione pulse inclusa
+            .scale(frameScale),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_frame_scifi),
-         contentDescription = "Cornice Sci-Fi Animata",
+            contentDescription = "Cornice Sci-Fi Animata",
             tint = Color.Unspecified,
             modifier = Modifier
                 .fillMaxSize()
-            .rotate(rotationAngle)
+                .rotate(rotationAngle)
         )
     }
 
@@ -329,18 +329,22 @@ private fun AvatarBaseContent(
             .offset(y = verticalOffset),
         contentAlignment = Alignment.Center
     ) {
-        // LAYER 1 - ARMA (Usa quella di default se è NONE, altrimenti la pistola laser)
+        // LAYER 1 - ARMA
         val weaponRes = when (cosmetics.weapon) {
+            WeaponType.STAFF -> R.drawable.char_weapon_staff
+            WeaponType.SWORD -> R.drawable.char_weapon_blade
             WeaponType.GUN -> R.drawable.char_weapon_laser
-            else -> R.drawable.char_weapon_wood // Default (per NONE, SWORD, STAFF)
+            WeaponType.NONE -> null
         }
 
-        Image(
-            painter = painterResource(id = weaponRes),
-            contentDescription = "Arma",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
+        if (weaponRes != null) {
+            Image(
+                painter = painterResource(id = weaponRes),
+                contentDescription = "Arma",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
+        }
 
         // LAYER 2 - CORPO BASE (Sempre presente)
         Image(
@@ -358,18 +362,22 @@ private fun AvatarBaseContent(
             contentScale = ContentScale.FillBounds
         )
 
-        // LAYER 4 - CAPPELLO (Usa quello di default se è NONE, altrimenti il visore)
+        // LAYER 4 - CAPPELLO / ELMO
         val hatRes = when (cosmetics.hat) {
+            HatType.MAGO -> R.drawable.char_wizard
+            HatType.ELMO_CAVALIERE -> R.drawable.char_helm
             HatType.VISOR_FUTURISTICO -> R.drawable.char_visor
-            else -> R.drawable.char_hat // Default (per NONE, MAGO, ELMO_CAVALIERE)
+            HatType.NONE -> null
         }
 
-        Image(
-            painter = painterResource(id = hatRes),
-            contentDescription = "Copricapo",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
+        if (hatRes != null) {
+            Image(
+                painter = painterResource(id = hatRes),
+                contentDescription = "Copricapo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
+        }
     }
 }
 

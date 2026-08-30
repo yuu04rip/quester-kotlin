@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="400dp"
+    android:viewportWidth="400"
+    android:viewportHeight="400">
+
+    <!-- Bordo esterno viola scuro -->
+    <path
+        android:pathData="M 200 20 A 180 180 0 1 0 200 380 A 180 180 0 1 0 200 20 Z"
+        android:strokeColor="#4B0082"
+        android:strokeWidth="24"
+        android:fillColor="#00000000"/>
+
+    <!-- Bordo interno dorato -->
+    <path
+        android:pathData="M 200 36 A 164 164 0 1 0 200 364 A 164 164 0 1 0 200 36 Z"
+        android:strokeColor="#FFD700"
+        android:strokeWidth="8"
+        android:fillColor="#00000000"/>
+</vector>

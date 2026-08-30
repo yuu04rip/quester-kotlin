@@ -86,3 +86,18 @@ val ArcadeTextSecondary = Color(0xFF66FF66)     // Testo secondario
 // Accenti
 val ArcadeError = Color(0xFFFF0055)             // Rosso neon
 val ArcadeSuccess = Color(0xFF00FF66)           // Verde successo
+
+// ============================================================
+//  COLORI BACHECA FANTASY (LEGNO E PERGAMENA)
+// ============================================================
+
+val FantasyBoardWoodDark = Color(0xFF2C1A0E)     // Legno scuro (Sfondo)
+val FantasyBoardWood = Color(0xFF4A2E1B)         // Legno medio (Superfici)
+val FantasyBoardWoodLight = Color(0xFF6B4226)    // Legno chiaro (Bordi)
+
+val FantasyBoardParchment = Color(0xFFE8D5A0)    // Pergamena (Testo primario)
+val FantasyBoardParchmentDark = Color(0xFFC0A060) // Pergamena scura (Testo secondario)
+
+val FantasyBoardRedWax = Color(0xFF9E1B1B)       // Cera lacca rossa (Error/Accenti)
+val FantasyBoardInk = Color(0xFF1A1A1A)          // Inchiostro nero
+val FantasyBoardGoldLeaf = Color(0xFFD4AF37)     // Foglia d'oro (Accenti principali)

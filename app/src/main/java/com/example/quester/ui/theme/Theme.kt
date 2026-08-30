@@ -152,6 +152,43 @@ private val FantasyLightColorScheme = lightColorScheme(
 )
 
 // ============================================================
+//  COLOR SCHEME - BACHECA FANTASY (LEGNO E PERGAMENA)
+// ============================================================
+
+private val FantasyBoardColorScheme = darkColorScheme(
+    primary = FantasyBoardGoldLeaf,
+    onPrimary = FantasyBoardInk,
+    primaryContainer = FantasyBoardWoodLight,
+    onPrimaryContainer = FantasyBoardParchment,
+    secondary = FantasyBoardRedWax,
+    onSecondary = FantasyBoardParchment,
+    secondaryContainer = FantasyBoardWoodDark,
+    onSecondaryContainer = FantasyBoardGoldLeaf,
+    tertiary = FantasyBoardParchment,
+    onTertiary = FantasyBoardInk,
+    tertiaryContainer = FantasyBoardWood,
+    onTertiaryContainer = FantasyBoardParchment,
+    background = FantasyBoardWoodDark,
+    onBackground = FantasyBoardParchment,
+    surface = FantasyBoardWood,
+    onSurface = FantasyBoardParchment,
+    surfaceVariant = FantasyBoardWoodLight,
+    onSurfaceVariant = FantasyBoardParchmentDark,
+    surfaceTint = FantasyBoardGoldLeaf,
+    error = FantasyBoardRedWax,
+    onError = FantasyBoardParchment,
+    errorContainer = FantasyBoardRedWax.copy(alpha = 0.15f),
+    onErrorContainer = FantasyBoardRedWax,
+    outline = FantasyBoardWoodLight,
+    outlineVariant = FantasyBoardWoodDark,
+    scrim = Color.Black.copy(alpha = 0.8f),
+    inverseSurface = FantasyBoardParchment,
+    inverseOnSurface = FantasyBoardInk,
+    inversePrimary = FantasyBoardWood
+)
+
+
+// ============================================================
 //  COLOR SCHEME - TEMA ARCADE (PIXEL/RETRÒ)
 // ============================================================
 
@@ -198,8 +235,8 @@ fun QuesterTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeType) {
-        AppTheme.DEFAULT -> if (darkTheme) FantasyDarkColorScheme else FantasyLightColorScheme
-        AppTheme.FANTASY -> if (darkTheme) FantasySpecialDarkColorScheme else FantasyLightColorScheme
+        AppTheme.DEFAULT -> if (darkTheme) FantasyLightColorScheme else FantasyDarkColorScheme
+        AppTheme.FANTASY -> if (darkTheme) FantasyBoardColorScheme else FantasyLightColorScheme
         AppTheme.REGALE -> if (darkTheme) RegaleDarkColorScheme else FantasyLightColorScheme
         AppTheme.ARCADE -> ArcadeColorScheme
     }

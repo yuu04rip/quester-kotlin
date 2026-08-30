@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="400dp"
+    android:viewportWidth="400"
+    android:viewportHeight="400">
+
+    <!-- Questo è il cerchio argentato della cornice -->
+    <path
+        android:pathData="M 200 20 A 180 180 0 1 0 200 380 A 180 180 0 1 0 200 20 Z"
+        android:strokeColor="#C0C0C0"
+        android:strokeWidth="20"
+        android:fillColor="#00000000"/> <!-- Sfondo trasparente al centro -->
+</vector>
