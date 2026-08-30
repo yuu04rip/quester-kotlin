@@ -89,13 +89,13 @@ enum class FrameType(
     MAGO(
         "Cornice del Mago",
         Color(0xFF6B4C9A),
-        R.drawable.ic_frame_wizard // <- Risorsa aggiornata
+        R.drawable.ic_frame_wizard
     ),
 
     CAVALIERE(
         "Cornice del Cavaliere",
         Color(0xFFD4AF37),
-        R.drawable.ic_frame_knight // <- Risorsa aggiornata
+        R.drawable.ic_frame_knight
     ),
 
     SCI_FI(
@@ -217,7 +217,6 @@ fun AvatarView(
                 }
                 FrameType.NONE -> {}
                 else -> {
-                    // Se la cornice ha una risorsa drawable associata (BASIC, MAGO, CAVALIERE), la disegniamo
                     if (cosmetics.frame.iconResource != null) {
                         Image(
                             painter = painterResource(id = cosmetics.frame.iconResource!!),
@@ -329,22 +328,20 @@ private fun AvatarBaseContent(
             .offset(y = verticalOffset),
         contentAlignment = Alignment.Center
     ) {
-        // LAYER 1 - ARMA
+        // LAYER 1 - ARMA (Usa la spada di legno se è impostato su NONE)
         val weaponRes = when (cosmetics.weapon) {
             WeaponType.STAFF -> R.drawable.char_weapon_staff
             WeaponType.SWORD -> R.drawable.char_weapon_blade
             WeaponType.GUN -> R.drawable.char_weapon_laser
-            WeaponType.NONE -> null
+            WeaponType.NONE -> R.drawable.char_weapon_wood
         }
 
-        if (weaponRes != null) {
-            Image(
-                painter = painterResource(id = weaponRes),
-                contentDescription = "Arma",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
-        }
+        Image(
+            painter = painterResource(id = weaponRes),
+            contentDescription = "Arma",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
 
         // LAYER 2 - CORPO BASE (Sempre presente)
         Image(
@@ -362,22 +359,20 @@ private fun AvatarBaseContent(
             contentScale = ContentScale.FillBounds
         )
 
-        // LAYER 4 - CAPPELLO / ELMO
+        // LAYER 4 - CAPPELLO / ELMO (Usa il cappello base se è impostato su NONE)
         val hatRes = when (cosmetics.hat) {
             HatType.MAGO -> R.drawable.char_wizard
             HatType.ELMO_CAVALIERE -> R.drawable.char_helm
             HatType.VISOR_FUTURISTICO -> R.drawable.char_visor
-            HatType.NONE -> null
+            HatType.NONE -> R.drawable.char_hat
         }
 
-        if (hatRes != null) {
-            Image(
-                painter = painterResource(id = hatRes),
-                contentDescription = "Copricapo",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
-        }
+        Image(
+            painter = painterResource(id = hatRes),
+            contentDescription = "Copricapo",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
     }
 }
 
