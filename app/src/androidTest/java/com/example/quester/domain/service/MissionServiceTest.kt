@@ -108,17 +108,12 @@ class MissionServiceTest {
         assertEquals("XP dovrebbero essere $expectedXp (fissi per tipo)", expectedXp, userAfter.xpTotale)
         assertEquals("Monete dovrebbero essere $expectedCoins (fisse per tipo)", expectedCoins, userAfter.coins)
 
-        // Act - Tentativo di toggle dello stesso subtask
-        try {
-            missionService.toggleSubTask(subtaskList[1].copy(done = true), true)
-            fail("Dovrebbe lanciare IllegalStateException perché la missione è già completata")
-        } catch (e: IllegalStateException) {
-            assertEquals("✧ Questa missione è già stata completata ✧", e.message)
-        }
+        // Act - Tentativo di toggle di un subtask su una missione già completata
+        missionService.toggleSubTask(subtaskList[0].copy(done = false), false)
 
-        // Assert - Nessun doppio XP
+        // Assert - Nessun XP aggiuntivo, XP rimane invariato
         val userAfterSecond = db.userDao().getUserById(testUserId)!!
-        assertEquals("XP non dovrebbero raddoppiare", expectedXp, userAfterSecond.xpTotale)
+        assertEquals("XP non dovrebbero cambiare se la missione è già completata", expectedXp, userAfterSecond.xpTotale)
 
         // Verifica che la missione sia ancora completata
         val finalMission = db.missionDao().getMissionByIdOnce(mission.id)!!

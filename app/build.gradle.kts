@@ -107,13 +107,8 @@ dependencies {
     // --- Test UI Compose ---
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
-    // --- Mockito per i test ---
-    androidTestImplementation(libs.mockito.core)
-    androidTestImplementation(libs.mockito.kotlin)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.kotlin)
-
     // --- MockK per i test UI e Coroutine (Gestito via Version Catalog) ---
+    testImplementation(libs.mockk)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockk.agent)
 

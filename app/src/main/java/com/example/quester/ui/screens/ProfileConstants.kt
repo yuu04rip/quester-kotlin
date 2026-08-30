@@ -62,7 +62,7 @@ val THEME_NAMES = listOf(
 // ============================================================
 
 data class FinalReward(
-    val name: String = "👑 Corona dell'Eroe",
+    val name: String = "Corona dell'Eroe",
     val themeName: String = "Tema Regale",
     val description: String = "Un cosmetico unico per il vero campione!",
     val valueInCoins: Int = 600

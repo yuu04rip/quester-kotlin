@@ -29,7 +29,7 @@ fun DeleteAccountDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     val isArcade = ThemeManager.theme == AppTheme.ARCADE
-    // ✅ Font per i testi: QuesterFantasy per Fantasy, QuesterPixel per Arcade
+    // Font per i testi: QuesterFantasy per Fantasy, QuesterPixel per Arcade
     val textFont = if (isArcade) QuesterPixel else QuesterFantasy
 
     AlertDialog(
@@ -39,7 +39,7 @@ fun DeleteAccountDialog(
                 text = "Lascia il Regno",
                 color = FantasyError,
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = textFont  // ✅ Font speciale per il titolo
+                    fontFamily = textFont  // Font speciale per il titolo
                 )
             )
         },
@@ -51,21 +51,21 @@ fun DeleteAccountDialog(
                     text = "Questa scelta è PERMANENTE e non può essere annullata.",
                     color = FantasyText,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 )
                 Text(
                     text = "Il tuo eroe verrà dimenticato...",
                     color = FantasyTextSecondary,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 )
                 Text(
                     text = "Tutto ciò che possiedi andrà perduto:",
                     color = FantasyTextSecondary,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 )
                 Column(
@@ -76,21 +76,21 @@ fun DeleteAccountDialog(
                         text = "Le tue imprese e missioni",
                         color = FantasyTextSecondary,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = textFont  // ✅ Font speciale
+                            fontFamily = textFont  // Font speciale
                         )
                     )
                     Text(
                         text = "I tuoi cosmetici e tesori",
                         color = FantasyTextSecondary,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = textFont  // ✅ Font speciale
+                            fontFamily = textFont  // Font speciale
                         )
                     )
                     Text(
                         text = "Il tuo nome e la tua storia",
                         color = FantasyTextSecondary,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = textFont  // ✅ Font speciale
+                            fontFamily = textFont  // Font speciale
                         )
                     )
                 }
@@ -99,7 +99,7 @@ fun DeleteAccountDialog(
                     text = "Per confermare, digita il tuo nome:",
                     color = FantasyTextSecondary,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 )
                 OutlinedTextField(
@@ -155,7 +155,7 @@ fun DeleteAccountDialog(
                     Text(
                         text = "Abbandona il Regno",
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        fontFamily = textFont  // ✅ Font speciale
+                        fontFamily = textFont  // Font speciale
                     )
                 }
             }
@@ -165,7 +165,7 @@ fun DeleteAccountDialog(
                 Text(
                     text = "Torna indietro",
                     color = FantasyGoldLight,
-                    fontFamily = textFont  // ✅ Font speciale
+                    fontFamily = textFont  // Font speciale
                 )
             }
         },

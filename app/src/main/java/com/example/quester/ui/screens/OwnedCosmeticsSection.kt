@@ -56,7 +56,7 @@ private val COSMETIC_SIZE = 100.dp
 private val COSMETIC_SPACING = 10.dp
 private const val COSMETICS_PER_ROW = 3
 
-// 🛠️ Tutti i temi supportati nello shop
+// Tutti i temi supportati nello shop
 private val THEME_IDS = listOf(
     "theme_arcade",
     "theme_fantasy",
@@ -281,7 +281,7 @@ private fun isThemeActive(itemId: String, currentTheme: AppTheme): Boolean {
     }
 }
 
-// 🛠️ Logica di Toggle: se il tema è già attivo, torna a DEFAULT; altrimenti attiva il tema scelto
+// Logica di Toggle: se il tema è già attivo, torna a DEFAULT; altrimenti attiva il tema scelto
 private fun getToggledTheme(itemId: String, currentTheme: AppTheme): AppTheme {
     val targetTheme = when (itemId) {
         "theme_arcade" -> AppTheme.ARCADE

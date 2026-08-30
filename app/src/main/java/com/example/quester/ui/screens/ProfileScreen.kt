@@ -98,7 +98,7 @@ private fun ProfileLoader(
         user?.let { currentUser ->
             val level = currentUser.livello
 
-            // 🛠️ USIAMO SEMPRE IL REPOSITORY: calcola correttamente i resti e i progressi basandosi sui 63700 XP
+            // USIAMO SEMPRE IL REPOSITORY: calcola correttamente i resti e i progressi basandosi sui 63700 XP
             xpInCurrentLevel = userRepository.getXpInCurrentLevel(currentUser.xpTotale, level)
             xpNeededForLevel = userRepository.getXpRequiredForLevel(level)
             xpProgress = userRepository.getXpProgress(currentUser.xpTotale, level)

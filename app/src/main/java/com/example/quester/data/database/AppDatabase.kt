@@ -21,7 +21,7 @@ import com.example.quester.data.model.User
         ShopItem::class,
         OwnedCosmetic::class
     ],
-    version = 9, // 🛠️ AGGIORNATO A 9 per recepire le modifiche alla entity User
+    version = 9, // AGGIORNATO A 9 per recepire le modifiche alla entity User
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

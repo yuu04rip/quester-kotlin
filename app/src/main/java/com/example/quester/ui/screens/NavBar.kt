@@ -35,7 +35,7 @@ import com.example.quester.domain.service.MissionService
 import com.example.quester.domain.service.ShopService
 import com.example.quester.ui.components.ArcadeBackground
 import com.example.quester.ui.components.AvatarCosmetics
-import com.example.quester.ui.components.RoyalBackground // 👑 Importato il background regale
+import com.example.quester.ui.components.RoyalBackground // Importato il background regale
 import com.example.quester.ui.screens.customization.AvatarCustomizationScreen
 import com.example.quester.ui.screens.mission.MissionListScreen
 import com.example.quester.ui.theme.AppTheme

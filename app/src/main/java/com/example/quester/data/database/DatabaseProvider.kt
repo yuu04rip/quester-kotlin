@@ -261,7 +261,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_5_6)
                 .addMigrations(MIGRATION_6_7)
                 .addMigrations(MIGRATION_7_8)
-                .addMigrations(MIGRATION_8_9) // 🛠️ Registrata la nuova migrazione
+                .addMigrations(MIGRATION_8_9) // Registrata la nuova migrazione
                 .fallbackToDestructiveMigration() // Utile in fase di sviluppo per evitare crash di migrazione
                 .build()
 

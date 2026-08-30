@@ -26,7 +26,7 @@ fun ArcadeBackground(
             .fillMaxSize()
             .background(
                 if (isArcade) {
-                    // ✅ SFONDO ARCADE (con immagine)
+                    // SFONDO ARCADE (con immagine)
                     Brush.verticalGradient(
                         colors = listOf(
                             Color(0xFF0A0A0F),
@@ -35,7 +35,7 @@ fun ArcadeBackground(
                         )
                     )
                 } else {
-                    // ✅ SFONDO FANTASY
+                    // SFONDO FANTASY
                     Brush.verticalGradient(
                         colors = listOf(
                             Color(0xFF0D0B14),
@@ -46,7 +46,7 @@ fun ArcadeBackground(
                 }
             )
     ) {
-        // ✅ Se Arcade, mostra l'immagine pixelata come overlay
+        // Se Arcade, mostra l'immagine pixelata come overlay
         if (isArcade) {
             Image(
                 painter = painterResource(id = R.drawable.bg_arcade_pixel),

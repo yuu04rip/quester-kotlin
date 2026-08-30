@@ -27,7 +27,7 @@ data class User(
     // XP Totale (se supera 63750, lo blocchiamo subito alla fonte)
     val xpTotale: Int = 0,
 
-    // 👑 LIVELLO PERSISTENTE NEL DB
+    // LIVELLO PERSISTENTE NEL DB
     val livello: Int = 1,
 
     val coins: Int = 0,
