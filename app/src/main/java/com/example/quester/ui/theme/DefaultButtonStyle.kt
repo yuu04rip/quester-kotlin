@@ -54,8 +54,8 @@ open class DefaultButtonStyle : ButtonStyle {
         )
     }
 
-    override fun getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
-        return Modifier
+    override fun Modifier.getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
+        return this
     }
 
     @Composable

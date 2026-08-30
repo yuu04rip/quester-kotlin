@@ -28,8 +28,8 @@ interface ButtonStyle {
     @Composable
     fun getTextStyle(): TextStyle
 
-    // Modificatore per effetto press (opzionale)
-    fun getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier
+    // Modificatore per effetto press (firmato come extension function)
+    fun Modifier.getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier
 
     // Colore del testo per errori/warning
     @Composable

@@ -14,12 +14,13 @@ object ThemeManager {
     private val _currentTheme = MutableStateFlow(AppTheme.DEFAULT)
     val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
 
-    // Riferimento opzionale per il salvataggio automatico
+    // Riferimento thread-safe o istanza globale disaccoppiata dal contesto UI
     private var themePreferences: ThemePreferences? = null
 
     fun initPreferences(context: Context) {
         if (themePreferences == null) {
-            themePreferences = ThemePreferences(context)
+            // Usiamo sempre applicationContext per evitare qualsiasi memory leak di Activity/Fragment
+            themePreferences = ThemePreferences(context.applicationContext)
         }
     }
 
@@ -42,7 +43,7 @@ object ThemeManager {
     fun isThemeOwned(theme: AppTheme, ownedItems: List<String>): Boolean {
         val themeId = when (theme) {
             AppTheme.DEFAULT -> return true // Il tema base è sempre posseduto
-            AppTheme.FANTASY -> "theme_fantasy" // Tema bacheca fantasy sbloccabile
+            AppTheme.FANTASY -> "theme_fantasy"
             AppTheme.ARCADE -> "theme_arcade"
             AppTheme.REGALE -> "reward_tema_regale"
         }

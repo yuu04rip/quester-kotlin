@@ -11,25 +11,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 
-// RIMUOVI "private" per renderlo accessibile
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "theme_preferences")
 
-class ThemePreferences(private val context: Context) {
+class ThemePreferences(context: Context) {
+
+    private val applicationContext = context.applicationContext
 
     companion object {
         private val THEME_KEY = stringPreferencesKey("selected_theme")
     }
 
-    // Salva il tema
     suspend fun saveTheme(theme: AppTheme) {
-        context.dataStore.edit { preferences ->
+        applicationContext.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
         }
     }
 
-    // Legge il tema salvato (Flow)
     fun getThemeFlow(): Flow<AppTheme> {
-        return context.dataStore.data.map { preferences ->
+        return applicationContext.dataStore.data.map { preferences ->
             val themeName = preferences[THEME_KEY] ?: AppTheme.DEFAULT.name
             try {
                 AppTheme.valueOf(themeName)
@@ -39,9 +38,8 @@ class ThemePreferences(private val context: Context) {
         }
     }
 
-    // Lettura singola (sospesa)
     suspend fun getTheme(): AppTheme {
-        val preferences = context.dataStore.data.first()
+        val preferences = applicationContext.dataStore.data.first()
         val themeName = preferences[THEME_KEY] ?: AppTheme.DEFAULT.name
         return try {
             AppTheme.valueOf(themeName)

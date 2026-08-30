@@ -61,10 +61,10 @@ class FantasyBoardButtonStyle : ButtonStyle {
     }
 
     // Gestione del modificatore dinamico per applicare animazioni o effetti grafici vincolati agli eventi di pressione
-    override fun getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
-        // In questa implementazione di base restituiamo un Modifier vuoto. La funzione esiste per
+    override fun Modifier.getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
+        // In questa implementazione di base restituiamo l'istanza corrente del Modifier. La funzione esiste per
         // l'eventuale integrazione futura di effetti tattili complessi, variazioni di scala o ombre dinamiche (elevation).
-        return Modifier
+        return this
     }
 
     // Restituzione della codifica cromatica associata ad avvisi critici o errori semantici

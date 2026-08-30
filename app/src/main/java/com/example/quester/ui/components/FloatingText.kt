@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 @Composable
 fun FloatingTextPopup(
@@ -40,7 +42,7 @@ fun FloatingTextPopup(
         Text(
             text = text,
             modifier = Modifier
-                .offset(y = offsetY.value.dp)
+                .offset { IntOffset(0, offsetY.value.roundToInt()) }
                 .size(200.dp),
             color = if (isArcade) Color(0xFF00FF41) else Color(0xFFFFD700),
             fontSize = if (isArcade) 20.sp else 18.sp,

@@ -58,21 +58,20 @@ class ArcadeButtonStyle : DefaultButtonStyle() {
     @Composable
     override fun getTextStyle(): TextStyle {
         return TextStyle(
-            // USA IL VERO FONT PIXELATO
-            fontFamily = QuesterPixel,  // ← Invece di FontFamily.Monospace
+            fontFamily = QuesterPixel,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             letterSpacing = 1.5.sp
         )
     }
 
-    override fun getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
+    override fun Modifier.getButtonModifier(pressed: Boolean, enabled: Boolean): Modifier {
         return if (pressed) {
-            Modifier
+            this
                 .padding(bottom = 6.dp)
                 .offset(y = 4.dp)
         } else {
-            Modifier
+            this
                 .drawBehind {
                     drawRoundRect(
                         color = Color.Black,

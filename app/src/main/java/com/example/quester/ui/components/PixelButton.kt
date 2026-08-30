@@ -18,8 +18,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 
 private data class PixelButtonColors(
     val background: Color,
@@ -64,7 +66,7 @@ fun PixelButton(
 
     Box(
         modifier = modifier
-            .offset(y = offsetY.value.dp)
+            .offset { IntOffset(0, offsetY.value.roundToInt()) }
             .drawBehind {
                 drawRoundRect(
                     color = Color.Black,
